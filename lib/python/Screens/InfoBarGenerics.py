@@ -308,11 +308,6 @@ class InfoBarScreenSaver:
 				self.show()
 			self.ScreenSaverTimerStart()
 
-class HideVBILine(Screen):
-	def __init__(self, session):
-		self.skin = """<screen position="0,0" size="%s,%s" flags="wfNoBorder" zPosition="1"/>""" % (getDesktop(0).size().width(), getDesktop(0).size().height() / 360 + 1)
-		Screen.__init__(self, session)
-
 class SecondInfoBar(Screen):
 	ADD_TIMER = 0
 	REMOVE_TIMER = 1
@@ -587,13 +582,6 @@ class InfoBarShowHide(InfoBarScreenSaver):
 		if isStandardInfoBar(self):
 			self.SwitchSecondInfoBarScreen()
 		self.onLayoutFinish.append(self.__layoutFinished)
-		self.onExecBegin.append(self.__onExecBegin)
-
-		self.hideVBILineScreen = self.session.instantiateDialog(HideVBILine)
-		self.hideVBILineScreen.show()
-
-	def __onExecBegin(self):
-		self.showHideVBI()
 
 	def __layoutFinished(self):
 		if self.secondInfoBarScreen:
@@ -606,7 +594,6 @@ class InfoBarShowHide(InfoBarScreenSaver):
 				pass
 		except:
 			self.pvrStateDialog = None
-		self.hideVBILineScreen.hide()
 
 	def OkPressed(self):
 		self.toggleShow()
@@ -706,7 +693,6 @@ class InfoBarShowHide(InfoBarScreenSaver):
 		if self.execing:
 			if config.usage.show_infobar_on_zap.value:
 				self.doShow()
-		self.showHideVBI()
 
 	def startHideTimer(self):
 		if self.__state == self.STATE_SHOWN and not self.__locked:
@@ -913,27 +899,6 @@ class InfoBarShowHide(InfoBarScreenSaver):
 			self.__locked = 0
 		if self.execing:
 			self.startHideTimer()
-
-	def checkHideVBI(self):
-		service = self.session.nav.getCurrentlyPlayingServiceReference()
-		servicepath = service and service.getPath()
-		if servicepath and servicepath.startswith("/"):
-			if service.toString().startswith("1:"):
-				info = eServiceCenter.getInstance().info(service)
-				service = info and info.getInfoString(service, iServiceInformation.sServiceref)
-				FLAG_HIDE_VBI = 512
-				return service and eDVBDB.getInstance().getFlag(eServiceReference(service)) & FLAG_HIDE_VBI and True
-			else:
-				return ".hidvbi." in servicepath.lower()
-		service = self.session.nav.getCurrentService()
-		info = service and service.info()
-		return info and info.getInfo(iServiceInformation.sHideVBI)
-
-	def showHideVBI(self):
-		if self.checkHideVBI():
-			self.hideVBILineScreen.show()
-		else:
-			self.hideVBILineScreen.hide()
 
 	def openEventView(self, simple=False):
 		try:
@@ -3834,19 +3799,12 @@ class InfoBarSeek:
 			return
 		prevstate = self.seekstate
 
-		setpause = getMachineBuild() in ('hd51',) and 1 # 0/1 enable workaround for some boxes these in pause mode not seek to new position
 		if self.seekstate == self.SEEK_STATE_EOF:
 			if prevstate == self.SEEK_STATE_PAUSE:
 				self.setSeekState(self.SEEK_STATE_PAUSE)
 			else:
 				self.setSeekState(self.SEEK_STATE_PLAY)
-		elif setpause and self.seekstate == self.SEEK_STATE_PAUSE:
-			print "[InfoBarGenerics] workaround jump in pause mode"
-			setpause = 2
-			self.setSeekState(self.SEEK_STATE_PLAY)
 		seekable.seekRelative(pts<0 and -1 or 1, abs(pts))
-		if setpause == 2:
-			self.setSeekState(self.SEEK_STATE_PAUSE)
 		if abs(pts) > 100 and config.usage.show_infobar_on_skip.value:
 			self.showAfterSeek()
 
