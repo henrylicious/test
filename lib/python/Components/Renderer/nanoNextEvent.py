@@ -2,7 +2,7 @@
 #
 #    Next Event Renderer for Dreambox/Enigma-2
 #    Version: 1.0
-#    Coded by Vali (c)2010-2011 
+#    Coded by Vali (c)2010-2011
 #
 #######################################################################
 
@@ -17,7 +17,7 @@ class nanoNextEvent(Renderer, VariableText):
 		VariableText.__init__(self)
 		self.epgcache = eEPGCache.getInstance()
 	GUI_WIDGET = eLabel
-	
+
 	def changed(self, what):
 		ref = self.source.service
 		info = ref and self.source.info

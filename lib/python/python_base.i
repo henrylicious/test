@@ -150,21 +150,21 @@ eTimerPy_get_cb_list(eTimerPy *self, void *closure)
 }
 
 static PyObject *
-eTimerPy_timeout(eTimerPy *self, void *closure) 
+eTimerPy_timeout(eTimerPy *self, void *closure)
 { //used for compatibilty with the old eTimer
 	Org_Py_INCREF((PyObject*)self);
 	return (PyObject*)self;
 }
 
 static PyGetSetDef eTimerPy_getseters[] = {
-	{"callback",
+	{(char*)"callback",
 	 (getter)eTimerPy_get_cb_list, (setter)0,
-	 "returns the callback python list",
+	 (char*)"returns the callback python list",
 	 NULL},
 
-	{"timeout", //used for compatibilty with the old eTimer
+	{(char*)"timeout", //used for compatibilty with the old eTimer
 	 (getter)eTimerPy_timeout, (setter)0,
-	 "synonym for our self",
+	 (char*)"synonym for our self",
 	 NULL},
 
 	{NULL} /* Sentinel */
@@ -348,9 +348,9 @@ eSocketNotifierPy_get_cb_list(eSocketNotifierPy *self, void *closure)
 }
 
 static PyGetSetDef eSocketNotifierPy_getseters[] = {
-	{"callback",
+	{(char*)"callback",
 	 (getter)eSocketNotifierPy_get_cb_list, (setter)0,
-	 "returns the callback python list",
+	 (char*)"returns the callback python list",
 	 NULL},
 	{NULL} /* Sentinel */
 };

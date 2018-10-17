@@ -66,13 +66,13 @@ eAMLTSMPEGDecoder::eAMLTSMPEGDecoder(eDVBDemux *demux, int decoder)
 : m_demux(demux),
 m_vpid(-1), m_vtype(-1), m_apid(-1), m_atype(-1), m_pcrpid(-1), m_textpid(-1),
 m_width(-1), m_height(-1), m_framerate(-1), m_aspect(-1), m_progressive(-1),
-m_changed(0), m_decoder(decoder), m_radio_pic_on(0), m_video_clip_fd(-1), 
+m_changed(0), m_decoder(decoder), m_radio_pic_on(0), m_video_clip_fd(-1),
 m_showSinglePicTimer(eTimer::create(eApp)), m_VideoRead(eTimer::create(eApp))
 {
 	TRACE__
 	if (m_demux)
 	{
-		m_demux->connectEvent(slot(*this, &eAMLTSMPEGDecoder::demux_event), m_demux_event_conn);
+		m_demux->connectEvent(sigc::mem_fun(*this, &eAMLTSMPEGDecoder::demux_event), m_demux_event_conn);
 	}
 	memset(&m_codec, 0, sizeof(codec_para_t ));
 	m_codec.handle = -1;
@@ -177,6 +177,11 @@ RESULT eAMLTSMPEGDecoder::setVideoPID(int vpid, int type)
 #endif
 		}
 		eDebug("%s() vpid=%d, type=%d",__PRETTY_FUNCTION__, vpid, type);
+		
+#if HAVE_ALIEN5
+
+		aml_change_vpid(vpid, m_codec.video_type);
+#endif
 	}
 	return 0;
 }
@@ -263,6 +268,7 @@ RESULT eAMLTSMPEGDecoder::setSyncMaster(int who)
 RESULT eAMLTSMPEGDecoder::set()
 {
 	TRACE__
+
 	return 0;
 }
 
@@ -312,7 +318,7 @@ RESULT eAMLTSMPEGDecoder::play()
 	else if (m_state == statePause) {
 
 		aml_resume();
-		
+
 		if (m_demux && m_demux->m_pvr_fd >= 0)
 			::ioctl(m_demux->m_pvr_fd, PVR_P3);
 
@@ -413,8 +419,8 @@ RESULT eAMLTSMPEGDecoder::showSinglePic(const char *filename)
 			finishShowSinglePic();
 #endif
 
-			m_codec.has_video = 1;	
-			m_codec.has_audio = 0;	
+			m_codec.has_video = 1;
+			m_codec.has_audio = 0;
 			m_codec.stream_type = STREAM_TYPE_ES_VIDEO;
 			ret = codec_init(&m_codec);
 			if(ret == CODEC_ERROR_NONE)
@@ -508,7 +514,7 @@ void eAMLTSMPEGDecoder::parseVideoInfo()
 		event.framerate = m_framerate;
 		video_event(event);
 	}
-	else if (m_width > 0 && m_progressive == -1) 
+	else if (m_width > 0 && m_progressive == -1)
 	{
 		CFile::parseIntHex(&m_progressive, "/proc/stb/vmpeg/0/progressive");
 		if (m_progressive != 2)
@@ -521,7 +527,7 @@ void eAMLTSMPEGDecoder::parseVideoInfo()
 	}
 }
 
-RESULT eAMLTSMPEGDecoder::connectVideoEvent(const Slot1<void, struct videoEvent> &event, ePtr<eConnection> &conn)
+RESULT eAMLTSMPEGDecoder::connectVideoEvent(const sigc::slot1<void, struct videoEvent> &event, ePtr<eConnection> &conn)
 {
 	TRACE__
 	conn = new eConnection(this, m_video_event.connect(event));

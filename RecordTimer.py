@@ -5,11 +5,11 @@ from time import localtime, strftime, ctime, time
 from bisect import insort
 from sys import maxint
 import os
-from enigma import eEPGCache, getBestPlayableServiceReference, eServiceReference, eServiceCenter, iRecordableService, quitMainloop, eActionMap, setPreferredTuner
+from enigma import eEPGCache, getBestPlayableServiceReference, eStreamServer, eServiceReference, iRecordableService, quitMainloop, eActionMap, setPreferredTuner, eServiceCenter
+
 from Components.config import config
 from Components import Harddisk
-from Components.UsageConfig import defaultMoviePath, calcFrontendPriorityIntval
-from Components.SystemInfo import SystemInfo
+from Components.UsageConfig import defaultMoviePath, calcFrontendPriorityIntval, ConfigSelection, ConfigSelectionNumber
 from Components.TimerSanityCheck import TimerSanityCheck
 import Components.RecordingConfig
 from Screens.MessageBox import MessageBox
@@ -19,7 +19,7 @@ from Tools.XMLTools import stringToXML
 import timer
 import NavigationInstance
 from ServiceReference import ServiceReference
-from enigma import pNavigation
+from enigma import pNavigation, eDVBFrontend
 
 # ok, for descriptions etc we have:
 # service reference	 (to get the service name)
@@ -28,6 +28,9 @@ from enigma import pNavigation
 # event data		 (ONLY for time adjustments etc.)
 
 wasRecTimerWakeup = False
+InfoBar = False
+def powermessagetimeout(self):
+	messagetimeout = config.usage.window_timeout.value
 #
 debug = False
 #
@@ -214,10 +217,6 @@ class RecordTimerEntry(timer.TimerEntry, object):
 			self.log(0, ("Mount '%s' is not writeable." % dirname))
 			return False
 
-		# ToDo: Develop a check that really works
-		self.log(0, "Skipped free space check, assuming enough free space")
-		return True
-
 		s = os.statvfs(dirname)
 		if (s.f_bavail * s.f_bsize) / 1000000 < 1024:
 			self.log(0, _("Not enough free space to record"))
@@ -330,7 +329,13 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		self.log(10, "backoff: retry in %d seconds" % self.backoff)
 
 	def activate(self):
-		global wasRecTimerWakeup
+		global wasRecTimerWakeup, InfoBar
+		if not InfoBar:
+			try:
+				from Screens.InfoBar import InfoBar
+			except Exception, e:
+				print "[RecordTimer] import from 'Screens.InfoBar import InfoBar' failed:", e
+
 		if os.path.exists("/tmp/was_rectimer_wakeup") and not wasRecTimerWakeup:
 			wasRecTimerWakeup = int(open("/tmp/was_rectimer_wakeup", "r").read()) and True or False
 
@@ -351,7 +356,14 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				return False
 
 			if not self.justplay and not self.freespace():
-				Notifications.AddPopup(text = _("Write error while recording. Disk full?\n%s") % self.name, type = MessageBox.TYPE_ERROR, timeout = 25, id = "DiskFullMessage")
+				message = _("Write error while recording. Disk full?\n%s") % self.name
+				messageboxtyp = MessageBox.TYPE_ERROR
+				timeout = 5
+				id = "DiskFullMessage"
+				if InfoBar and InfoBar.instance:
+					InfoBar.instance.openInfoBarMessage(message, messageboxtyp, timeout)
+				else:
+					Notifications.AddPopup(message, messageboxtyp, timeout = timeout, id = id)
 				self.failed = True
 				self.next_activation = time()
 				self.end = time() + 5
@@ -359,6 +371,7 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				return True
 
 			if self.always_zap:
+				Screens.Standby.TVinStandby.skipHdmiCecNow('zapandrecordtimer')
 				if Screens.Standby.inStandby:
 					self.wasInStandby = True
 					#eActionMap.getInstance().bindAction('', -maxint - 1, self.keypress)
@@ -371,8 +384,6 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				else:
 					cur_zap_ref = NavigationInstance.instance.getCurrentlyPlayingServiceReference()
 					if cur_zap_ref and not cur_zap_ref.getPath():# we do not zap away if it is no live service
-						self.messageString += _("The TV was switched to the recording service!\n")
-						self.messageStringShow = True
 						self.setRecordingPreferredTuner()
 						self.failureCB(True)
 						self.log(5, "zap to recording service")
@@ -381,7 +392,13 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				if debug:
 					self.log(6, "prepare ok, waiting for begin")
 				if self.messageStringShow:
-					Notifications.AddNotification(MessageBox, _("In order to record a timer, a tuner was freed successfully:\n\n") + self.messageString, type=MessageBox.TYPE_INFO, timeout=20)
+					message = _("In order to record a timer, a tuner was freed successfully:\n\n") + self.messageString
+					messageboxtyp = MessageBox.TYPE_INFO
+					timeout = 20
+					if InfoBar and InfoBar.instance:
+						InfoBar.instance.openInfoBarMessage(message, messageboxtyp, timeout)
+					else:
+						Notifications.AddNotification(MessageBox, message, messageboxtyp, timeout = timeout)
 				# create file to "reserve" the filename
 				# because another recording at the same time on another service can try to record the same event
 				# i.e. cable / sat.. then the second recording needs an own extension... when we create the file
@@ -400,10 +417,13 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				return True
 
 			self.log(7, "prepare failed")
+			if eStreamServer.getInstance().getConnectedClients():
+				eStreamServer.getInstance().stopStream()
+				return False
 			if self.first_try_prepare == 0:
 				# (0) try to make a tuner available by disabling PIP
 				self.first_try_prepare += 1
-				from Screens.InfoBar import InfoBar
+				if not InfoBar: from Screens.InfoBar import InfoBar
 				from Screens.InfoBarGenerics import InfoBarPiP
 				from Components.ServiceEventTracker import InfoBarCount
 				InfoBarInstance = InfoBarCount == 1 and InfoBar.instance
@@ -411,7 +431,15 @@ class RecordTimerEntry(timer.TimerEntry, object):
 					if config.recording.ask_to_abort_pip.value == "ask":
 						self.log(8, "asking user to disable PIP")
 						self.messageBoxAnswerPending = True
-						Notifications.AddNotificationWithCallback(self.failureCB_pip, MessageBox, _("A timer failed to record!\nDisable PIP and try again?\n"), timeout=20)
+						callback = self.failureCB_pip
+						message = _("A timer failed to record!\nDisable PIP and try again?\n")
+						messageboxtyp = MessageBox.TYPE_YESNO
+						timeout = 20
+						default = True
+						if InfoBar and InfoBar.instance:
+							InfoBar.instance.openInfoBarMessageWithCallback(callback, message, messageboxtyp, timeout, default)
+						else:
+							Notifications.AddNotificationWithCallback(callback, MessageBox, message, messageboxtyp, timeout = timeout, default = default)
 					elif config.recording.ask_to_abort_pip.value in ("abort_no_msg", "abort_msg"):
 						self.log(8, "disable PIP without asking")
 						self.setRecordingPreferredTuner()
@@ -428,7 +456,15 @@ class RecordTimerEntry(timer.TimerEntry, object):
 					if config.recording.ask_to_abort_pseudo_rec.value == "ask":
 						self.log(8, "asking user to abort pseudo recordings")
 						self.messageBoxAnswerPending = True
-						Notifications.AddNotificationWithCallback(self.failureCB_pseudo_rec, MessageBox, _("A timer failed to record!\nAbort pseudo recordings (e.g. EPG refresh) and try again?\n"), timeout=20)
+						callback = self.failureCB_pseudo_rec
+						message = _("A timer failed to record!\nAbort pseudo recordings (e.g. EPG refresh) and try again?\n")
+						messageboxtyp = MessageBox.TYPE_YESNO
+						timeout = 20
+						default = True
+						if InfoBar and InfoBar.instance:
+							InfoBar.instance.openInfoBarMessageWithCallback(callback, message, messageboxtyp, timeout, default)
+						else:
+							Notifications.AddNotificationWithCallback(callback, MessageBox, message, messageboxtyp, timeout = timeout, default = default)
 					elif config.recording.ask_to_abort_pseudo_rec.value in ("abort_no_msg", "abort_msg"):
 						self.log(8, "abort pseudo recordings without asking")
 						self.setRecordingPreferredTuner()
@@ -445,7 +481,15 @@ class RecordTimerEntry(timer.TimerEntry, object):
 					if config.recording.ask_to_abort_streaming.value == "ask":
 						self.log(8, "asking user to abort streaming")
 						self.messageBoxAnswerPending = True
-						Notifications.AddNotificationWithCallback(self.failureCB_streaming, MessageBox, _("A timer failed to record!\nAbort streaming and try again?\n"), timeout=20)
+						callback = self.failureCB_streaming
+						message = _("A timer failed to record!\nAbort streaming and try again?\n")
+						messageboxtyp = MessageBox.TYPE_YESNO
+						timeout = 20
+						default = True
+						if InfoBar and InfoBar.instance:
+							InfoBar.instance.openInfoBarMessageWithCallback(callback, message, messageboxtyp, timeout, default)
+						else:
+							Notifications.AddNotificationWithCallback(callback, MessageBox, message, messageboxtyp, timeout = timeout, default = default)
 					elif config.recording.ask_to_abort_streaming.value in ("abort_no_msg", "abort_msg"):
 						self.log(8, "abort streaming without asking")
 						self.setRecordingPreferredTuner()
@@ -466,7 +510,15 @@ class RecordTimerEntry(timer.TimerEntry, object):
 					elif not config.recording.asktozap.value:
 						self.log(8, "asking user to zap away")
 						self.messageBoxAnswerPending = True
-						Notifications.AddNotificationWithCallback(self.failureCB, MessageBox, _("A timer failed to record!\nDisable TV and try again?\n"), timeout=20)
+						callback = self.failureCB
+						message = _("A timer failed to record!\nDisable TV and try again?\n")
+						messageboxtyp = MessageBox.TYPE_YESNO
+						timeout = 20
+						default = True
+						if InfoBar and InfoBar.instance:
+							InfoBar.instance.openInfoBarMessageWithCallback(callback, message, messageboxtyp, timeout, default)
+						else:
+							Notifications.AddNotificationWithCallback(callback, MessageBox, message, messageboxtyp, timeout = timeout, default = default)
 					else: # zap without asking
 						self.log(9, "zap without asking")
 						self.setRecordingPreferredTuner()
@@ -497,6 +549,7 @@ class RecordTimerEntry(timer.TimerEntry, object):
 				return True
 
 			if self.justplay:
+				Screens.Standby.TVinStandby.skipHdmiCecNow('zaptimer')
 				if Screens.Standby.inStandby:
 					self.wasInStandby = True
 					#eActionMap.getInstance().bindAction('', -maxint - 1, self.keypress)
@@ -595,13 +648,26 @@ class RecordTimerEntry(timer.TimerEntry, object):
 					self.record_service = None
 
 			NavigationInstance.instance.RecordTimer.saveTimer()
-			self.autostate = Screens.Standby.inStandby
-			isRecordTime = abs(NavigationInstance.instance.RecordTimer.getNextRecordingTime() - time()) <= 900 or NavigationInstance.instance.RecordTimer.getStillRecording()
-			if debug: print "[RECORDTIMER] self.autostate=%s" % self.autostate, "wasRecTimerWakeup=%s" % wasRecTimerWakeup, "self.wasInStandby=%s" % self.wasInStandby, "self.afterEvent=%s" % self.afterEvent
 
+			box_instandby = Screens.Standby.inStandby
+			tv_notactive = Screens.Standby.TVinStandby.getTVstate('notactive')
+			isRecordTime = abs(NavigationInstance.instance.RecordTimer.getNextRecordingTime() - time()) <= 900 or NavigationInstance.instance.RecordTimer.getStillRecording()
+
+			if debug: print "[RECORDTIMER] box_instandby=%s" % box_instandby, "tv_notactive=%s" % tv_notactive, "wasRecTimerWakeup=%s" % wasRecTimerWakeup, "self.wasInStandby=%s" % self.wasInStandby, "self.afterEvent=%s" % self.afterEvent, "isRecordTime=%s" % isRecordTime
+
+			timeout = (config.usage.window_timeout.value)
+			default = True
+			messageboxtyp = MessageBox.TYPE_YESNO
 			if self.afterEvent == AFTEREVENT.STANDBY or (self.afterEvent == AFTEREVENT.AUTO and self.wasInStandby and (not wasRecTimerWakeup or (wasRecTimerWakeup and isRecordTime))):
-				if not Screens.Standby.inStandby: # not already in standby
-					Notifications.AddNotificationWithCallback(self.sendStandbyNotification, MessageBox, _("A finished record timer wants to set your\n%s %s to standby. Do that now?") % (getMachineBrand(), getMachineName()), timeout = 180)
+				if not box_instandby and not tv_notactive:# not already in standby
+					callback = self.sendStandbyNotification
+					message = _("A finished record timer wants to set your\n%s %s to standby. Do that now?") % (getMachineBrand(), getMachineName())
+					if InfoBar and InfoBar.instance:
+						InfoBar.instance.openInfoBarMessageWithCallback(callback, message, messageboxtyp, timeout, default)
+					else:
+						Notifications.AddNotificationWithCallback(callback, MessageBox, message, messageboxtyp, timeout = timeout, default = default)
+				elif not box_instandby:
+					self.sendStandbyNotification(True)
 
 			if isRecordTime or abs(NavigationInstance.instance.RecordTimer.getNextZapTime() - time()) <= 900:
 				if self.afterEvent == AFTEREVENT.DEEPSTANDBY or (wasRecTimerWakeup and self.afterEvent == AFTEREVENT.AUTO and self.wasInStandby) or (self.afterEvent == AFTEREVENT.AUTO and wasRecTimerWakeup):
@@ -617,17 +683,21 @@ class RecordTimerEntry(timer.TimerEntry, object):
 
 			if self.afterEvent == AFTEREVENT.DEEPSTANDBY or (wasRecTimerWakeup and self.afterEvent == AFTEREVENT.AUTO and self.wasInStandby):
 				if not Screens.Standby.inTryQuitMainloop: # no shutdown messagebox is open
-					if Screens.Standby.inStandby: # in standby
+					if not box_instandby and not tv_notactive: # not already in standby
+						callback = self.sendTryQuitMainloopNotification
+						message = _("A finished record timer wants to shut down\nyour %s %s. Shutdown now?") % (getMachineBrand(), getMachineName())
+						if InfoBar and InfoBar.instance:
+							InfoBar.instance.openInfoBarMessageWithCallback(callback, message, messageboxtyp, timeout, default)
+						else:
+							Notifications.AddNotificationWithCallback(callback, MessageBox, message, messageboxtyp, timeout = timeout, default = default)
+					else:
 						print "[RecordTimer] quitMainloop #1"
 						quitMainloop(1)
-					else:
-						Notifications.AddNotificationWithCallback(self.sendTryQuitMainloopNotification, MessageBox, _("A finished record timer wants to shut down\nyour %s %s. Shutdown now?") % (getMachineBrand(), getMachineName()), default = True, timeout = 180)
 			elif self.afterEvent == AFTEREVENT.AUTO and wasRecTimerWakeup:
 				if not Screens.Standby.inTryQuitMainloop: # no shutdown messagebox is open
 					if Screens.Standby.inStandby: # in standby
 						print "[RecordTimer] quitMainloop #2"
 						quitMainloop(1)
-
 			self.wasInStandby = False
 			resetTimerWakeup()
 			return True
@@ -662,22 +732,31 @@ class RecordTimerEntry(timer.TimerEntry, object):
 		if self.needChangePriorityFrontend:
 			elem = None
 			if not self.change_frontend and not setdefault:
-				elem = (self.setAdvancedPriorityFrontend is not None and self.setAdvancedPriorityFrontend) or config.usage.recording_frontend_priority.value
+				elem = config.usage.recording_frontend_priority_intval.value
 				self.change_frontend = True
 			elif self.change_frontend and setdefault:
-				elem = config.usage.frontend_priority.value
+				elem = config.usage.frontend_priority_intval.value
 				self.change_frontend = False
-				self.setAdvancedPriorityFrontend = None
 			if elem is not None:
 				setPreferredTuner(int(elem))
 
 	def sendStandbyNotification(self, answer):
 		if answer:
-			Notifications.AddNotification(Screens.Standby.Standby)
+			session = Screens.Standby.Standby
+			option = None
+			if InfoBar and InfoBar.instance:
+				InfoBar.instance.openInfoBarSession(session, option)
+			else:
+				Notifications.AddNotification(session)
 
 	def sendTryQuitMainloopNotification(self, answer):
 		if answer:
-			Notifications.AddNotification(Screens.Standby.TryQuitMainloop, 1)
+			session = Screens.Standby.TryQuitMainloop
+			option = 1
+			if InfoBar and InfoBar.instance:
+				InfoBar.instance.openInfoBarSession(session, option)
+			else:
+				Notifications.AddNotification(session, option)
 
 	def getNextActivation(self, getNextStbPowerOn = False):
 		self.isStillRecording = False
@@ -724,7 +803,8 @@ class RecordTimerEntry(timer.TimerEntry, object):
 	def failureCB_pip(self, answer):
 		if answer:
 			self.log(13, "ok, disable PIP")
-			from Screens.InfoBar import InfoBar
+			global InfoBar
+			if not InfoBar: from Screens.InfoBar import InfoBar
 			from Screens.InfoBarGenerics import InfoBarPiP
 			from Components.ServiceEventTracker import InfoBarCount
 			InfoBarInstance = InfoBarCount == 1 and InfoBar.instance
@@ -839,7 +919,8 @@ class RecordTimerEntry(timer.TimerEntry, object):
 
 	def switchToAll(self):
 		refStr = self.service_ref.ref.toString()
-		from Screens.InfoBar import InfoBar
+		global InfoBar
+		if not InfoBar: from Screens.InfoBar import InfoBar
 		if refStr.startswith('1:0:2:'):
 			if InfoBar.instance.servicelist.mode != 1:
 				InfoBar.instance.servicelist.setModeRadio()
@@ -1197,7 +1278,6 @@ class RecordTimer(timer.Timer):
 
 	def record(self, entry, ignoreTSC=False, dosave=True): # wird von loadTimer mit dosave=False aufgerufen
 		timersanitycheck = TimerSanityCheck(self.timer_list,entry)
-		answer = None
 		if not timersanitycheck.check():
 			if not ignoreTSC:
 				print "[RecordTimer] timer conflict detected!"
@@ -1205,11 +1285,8 @@ class RecordTimer(timer.Timer):
 				return timersanitycheck.getSimulTimerList()
 			else:
 				print "[RecordTimer] ignore timer conflict..."
-				if not dosave:
-					entry.disabled = True
-					answer = timersanitycheck.getSimulTimerList()
 		elif timersanitycheck.doubleCheck():
-			print "[RecordTimer] ignore double timer..."
+			print "ignore double timer"
 			return None
 		entry.timeChanged()
 		print "[Timer] Record " + str(entry)
@@ -1217,9 +1294,9 @@ class RecordTimer(timer.Timer):
 		self.addTimerEntry(entry)
 		if dosave:
 			self.saveTimer()
-		return answer
+		return None
 
-	def isInTimer(self, eventid, begin, duration, service):
+	def isInTimer(self, eventid, begin, duration, service, getTimer = False):
 		returnValue = None
 		type = 0
 		time_match = 0

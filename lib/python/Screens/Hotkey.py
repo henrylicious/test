@@ -15,14 +15,16 @@ from enigma import eServiceReference, eActionMap
 from Components.Label import Label
 import os
 
-updateversion = "17.03.2017"
+updateversion = "31.07.2018"
 
 def getHotkeys():
 	return [(_("OK long"), "okbutton_long", "Infobar/openInfoBarEPG"),
 	(_("Exit "), "exit", ""),
 	(_("Exit long"), "exit_long", ""),
-	(_("Left"), "cross_left", ""),
-	(_("Right"), "cross_right", ""),
+	(_("Left"), "cross_left", "Infobar/zapDown"),
+	(_("Right"), "cross_right", "Infobar/zapUp"),
+	(_("Left long *"), "cross_left_long", ""),
+	(_("Right long *"), "cross_right_long", ""),
 	(_("Up"), "cross_up", "Infobar/switchChannelUp"),
 	(_("Down"), "cross_down", "Infobar/switchChannelDown"),
 	(_("Red"), "red", "Infobar/activateRedButton"),
@@ -33,7 +35,7 @@ def getHotkeys():
 	(_("Yellow long"), "yellow_long", ""),
 	(_("Blue"), "blue", "Infobar/showExtensionSelection"),
 	(_("Blue long"), "blue_long", "Infobar/showPluginBrowser"),
-	(_("Info (EPG)"), "info", "Infobar/openSingleServiceEPG"),
+	(_("Info (EPG)"), "info", "Infobar/openGraphEPG"),
 	(_("Info (EPG) long"), "info_long", "Infobar/showEventInfoPlugins"),
 	(_("Epg/Guide"), "epg", "Infobar/openSingleServiceEPG"),
 	(_("Epg/Guide long"), "epg_long", "Infobar/showEventInfoPlugins"),
@@ -45,16 +47,26 @@ def getHotkeys():
 	(_("F3 long"), "f3_long", ""),
 	(_("F4"), "f4", "Plugins/Extensions/HDF-Toolbox/1"),
 	(_("F4 long"), "f4_long", ""),
+	(_("F5"), "f5", "Plugins/Extensions/EnhancedMovieCenter/1"),
+	(_("F5 long"), "f5_long", "Infobar/showMovies"),
+	(_("F6"), "f6", "Plugins/Extensions/EnhancedMovieCenter/1"),
+	(_("F6 long"), "f6_long", "Infobar/showMovies"),
 	(_("Audio"), "audio", "Infobar/audioSelection"),
 	(_("Audio long"), "audio_long", ""),
 	(_("Back "), "back", "Infobar/historyZap"),
 	(_("Back long"), "back_long", "Plugins/Extensions/ZapHistoryBrowser/1"),
 	(_("Channel up"), "channelup", "Infobar/zapUp"),
 	(_("Channel down"), "channeldown", "Infobar/zapDown"),
+	(_("Channel up long *"), "channelup_long", ""),
+	(_("Channel down long *"), "channeldown_long", ""),
 	(_("Volume up"), "volumeUp", ""),
 	(_("Volume down"), "volumeDown", ""),
+	(_("Volume up long *"), "volumeUplong", ""),
+	(_("Volume down long *"), "volumeDownlong", ""),
 	(_("Context"), "contextMenu", "Infobar/showExtensionSelection"),
 	(_("Context long"), "context_long", "Infobar/showExtensionSelection"),
+	(_("Option"), "option", "Infobar/audioSelection"),
+	(_("Option long"), "option_long", ""),
 	(_("End"), "end", "Infobar/historyBack"),
 	(_("End long"), "end_long", ""),
 	(_("History"), "historyBack", ""),
@@ -62,24 +74,32 @@ def getHotkeys():
 	(_("Favorites"), "favor", "Infobar/openFavouritesList"),
 	(_("Favorites long"), "favor_long", "Infobar/openSatellites"),
 	(_("Fastforward"), "fastforward", ""),
-	(_("File"), "file", "Plugins/Extensions/EnhancedMovieCenter/2"),
+	(_("File"), "file", "Plugins/Extensions/EnhancedMovieCenter/1"),
 	(_("File long"), "file_long", "Infobar/showMovies"),
+	(_("Angle"), "angle", "Plugins/Extensions/EnhancedMovieCenter/1"),
+	(_("Angle long"), "angle_long", "Infobar/showMovies"),
 	(_("Help"), "helpshow", "Infobar/showHelp"),
 	(_("Help long"), "helpshow_long", "Module/Screens.Hotkey/HotkeySetup"),
 	(_("HDMI Rx"), "HDMIin", ""),
 	(_("HDMI Rx long"), "HDMIin_long", ""),
+	(_("Aspect"), "aspect", "Infobar/vmodeSelection"),
+	(_("Aspect long"), "aspect_long", ""),
 	(_("Home"), "home", "Infobar/showMovies"),
 	(_("Home long"), "home_long", ""),
 	(_("Homepage/Portal"), "homepage", ""),
 	(_("Homepage/Portal long"), "homepage_long", ""),
-	(_("List/Fav/PVR"), "list", "Plugins/Extensions/EnhancedMovieCenter/2"),
+	(_("List/Fav/PVR"), "list", "Plugins/Extensions/EnhancedMovieCenter/1"),
 	(_("List/Fav/PVR long"), "list_long", "Infobar/showMovies"),
+	(_("PVR"), "pvr", "Plugins/Extensions/EnhancedMovieCenter/1"),
+	(_("PVR long"), "pvr_long", "Infobar/showMovies"),
 	(_("Mark/Portal/Playlist"), "mark", "Plugins/Extensions/EtPortal/1"),
 	(_("Mark/Portal/Playlist long"), "mark_long", ""),
-	(_("Media"), "showMovies", "Plugins/Extensions/EnhancedMovieCenter/2"),
+	(_("Media"), "showMovies", "Plugins/Extensions/EnhancedMovieCenter/1"),
 	(_("Media long"), "showMovies_long", "Infobar/showMovies"),
-	(_("Menu"), "menu", "Infobar/mainMenu"),
-	(_("Menu long"), "menu_long", "Module/Screens.ServiceInfo/ServiceInfo"),
+	(_("Open/Media"), "open", "Plugins/Extensions/EnhancedMovieCenter/1"),
+	(_("Open/Media long"), "open_long", "Infobar/showMovies"),
+	(_("Menu"), "mainMenu", "Infobar/mainMenu"),
+	(_("Menu long"), "menu_long", ""),
 	(_("Mute long"), "mute_long", "Infobar/audioSelection"),
 	(_("Next"), "next", "Infobar/historyZapForward"),
 	(_("Next long"), "next_long", ""),
@@ -87,7 +107,9 @@ def getHotkeys():
 	(_("Pause long"), "pause_long", "Infobar/startTimeshift"),
 	(_("Play "), "play", "Infobar/startTimeshift"),
 	(_("Play long"), "play_long", "Infobar/startTimeshift"),
-	(_("Playlist"), "playlist", "Plugins/Extensions/EnhancedMovieCenter/2"),
+	(_("Playpause"), "playpause", "Infobar/startTimeshift"),
+	(_("Playpause long"), "playpause_long", "Infobar/startTimeshift"),
+	(_("Playlist"), "playlist", "Plugins/Extensions/EnhancedMovieCenter/1"),
 	(_("Playlist long"), "playlist_long", "Infobar/showMovies"),
 	(_("Picture in Picture"), "activatePiP", "Infobar/showPiP"),
 	(_("Picture in Picture long"), "activatePiP_long", "Infobar/swapPiP"),
@@ -118,17 +140,20 @@ def getHotkeys():
 	(_("Subtitle"), "subtitle", "Infobar/subtitleSelection"),
 	(_("Subtitle long"), "subtitle_long", "Infobar/subserviceSelection"),
 	(_("Teletext"), "text", "Infobar/startTeletext"),
+	(_("Teletext long"), "text_long", ""),
 	(_("Timer"), "timer", "Module/Screens.TimerEdit/TimerEditList"),
 	(_("Timer long"), "timer_long", "Module/Screens.PowerTimerEdit/PowerTimerEditList"),
+	(_("Program"), "prog", "Module/Screens.TimerEdit/TimerEditList"),
+	(_("Program long"), "prog_long", ""),
 	(_("Timeshift"), "timeshift", "Infobar/startTimeshift"),
 	(_("Timeshift long"), "timeshift_long", "Infobar/stopTimeshift"),
 	(_("TV"), "showTv", "Infobar/showTv"),
-	(_("TV long"), "showTv_long", ""),
+	(_("TV long"), "showTv_long", "Infobar/seekFwdVod"),
 	(_("UHF/Slow"), "slow", ""),
 	(_("UHF/Slow long"), "slow_long", ""),
-	(_("V-Key"), "vkey", "Plugins/Extensions/EnhancedMovieCenter/2"),
+	(_("V-Key"), "vkey", "Plugins/Extensions/EnhancedMovieCenter/1"),
 	(_("V-Key long"), "vkey_long", "Infobar/showMovies"),
-	(_("Y-Tube/WWW"), "www", ""),
+	(_("Y-Tube/WWW"), "www", "Plugins/Extensions/HDF-Toolbox/1"),
 	(_("Y-Tube/WWW long"), "www_long", ""),
 	(_("Directory "), "directory", ""),
 	(_("Directory long"), "directory_long", ""),
@@ -165,7 +190,6 @@ def getHotkeyFunctions():
 			twinPlugins.append(plugin.name)
 	hotkeyFunctions.append((_("Show Graphical Multi EPG"), "Infobar/openGraphEPG", "EPG"))
 	hotkeyFunctions.append((_("Show Event View"), "Infobar/openEventView", "EPG"))
-	#hotkeyFunctions.append((_("Show Event Info"), "Infobar/showEventInfo", "EPG"))
 	hotkeyFunctions.append((_("Show Event Info Plugins"), "Infobar/showEventInfoPlugins", "EPG"))
 	hotkeyFunctions.append((_("Show Single Service EPG"), "Infobar/openSingleServiceEPG", "EPG"))
 	hotkeyFunctions.append((_("Show Multi Service EPG"), "Infobar/openMultiServiceEPG", "EPG"))
@@ -185,8 +209,8 @@ def getHotkeyFunctions():
 	hotkeyFunctions.append((_("Switch Channel up in Infobar"), "Infobar/switchChannelUp", "InfoBar"))
 	hotkeyFunctions.append((_("Switch Channel down in Infobar"), "Infobar/switchChannelDown", "InfoBar"))
 	hotkeyFunctions.append((_("Show Service List"), "Infobar/openServiceList", "InfoBar"))
-	hotkeyFunctions.append((_("History Zap Menu +"), "Infobar/historyZapForward", "InfoBar"))
-	hotkeyFunctions.append((_("History Zap Menu -"), "Infobar/historyZapBackward", "InfoBar"))
+	hotkeyFunctions.append((_("History Zap Menu Plus"), "Infobar/historyZapForward", "InfoBar"))
+	hotkeyFunctions.append((_("History Zap Menu Minus"), "Infobar/historyZapBackward", "InfoBar"))
 	hotkeyFunctions.append((_("History back"), "Infobar/historyBack", "InfoBar"))
 	hotkeyFunctions.append((_("History next"), "Infobar/historyNext", "InfoBar"))
 	hotkeyFunctions.append((_("Show Audioselection"), "Infobar/audioSelection", "InfoBar"))
@@ -194,13 +218,12 @@ def getHotkeyFunctions():
 	hotkeyFunctions.append((_("Disable digital downmix"), "Infobar/audioDownmixOff", "InfoBar"))
 	hotkeyFunctions.append((_("Switch to Radio Mode"), "Infobar/showRadio", "InfoBar"))
 	hotkeyFunctions.append((_("Switch to TV Mode"), "Infobar/showTv", "InfoBar"))
+	hotkeyFunctions.append((_("Toggle between TV and Radio mode"), "Infobar/toogleTvRadio", "InfoBar"))
 	hotkeyFunctions.append((_("Show Favourites List"), "Infobar/openFavouritesList", "InfoBar"))
 	hotkeyFunctions.append((_("Show Satellites List"), "Infobar/openSatellites", "InfoBar"))
 	hotkeyFunctions.append((_("Show Movies"), "Infobar/showMovies", "InfoBar"))
 	hotkeyFunctions.append((_("Instant Record"), "Infobar/instantRecord", "InfoBar"))
 	hotkeyFunctions.append((_("Start instant recording"), "Infobar/startInstantRecording", "InfoBar"))
-	#hotkeyFunctions.append((_("Activate timeshift End"), "Infobar/activateTimeshiftEnd", "InfoBar"))
-	#hotkeyFunctions.append((_("Activate timeshift end and pause"), "Infobar/activateTimeshiftEndAndPause", "InfoBar"))
 	hotkeyFunctions.append((_("Start Timeshift"), "Infobar/startTimeshift", "InfoBar"))
 	hotkeyFunctions.append((_("Stop Timeshift"), "Infobar/stopTimeshift", "InfoBar"))
 	hotkeyFunctions.append((_("Start Teletext"), "Infobar/startTeletext", "InfoBar"))
@@ -210,18 +233,27 @@ def getHotkeyFunctions():
 	hotkeyFunctions.append((_("Letterbox Zoom"), "Infobar/vmodeSelection", "InfoBar"))
 	hotkeyFunctions.append((_("ZoomInOut"), "InfobarGenerics/ZoomInOut", "InfoBar"))
 	hotkeyFunctions.append((_("ZoomOff"), "InfobarGenerics/ZoomInOut", "InfoBar"))
+	hotkeyFunctions.append((_("Show Seekbar"), "Infobar/seekFwdVod", "InfoBar"))
 	hotkeyFunctions.append((_("Do nothing"), "Void", "InfoBar"))
 	if SystemInfo["PIPAvailable"]:
 		hotkeyFunctions.append((_("Show Picture In Picture"), "Infobar/showPiP", "InfoBar"))
 		hotkeyFunctions.append((_("Swap Picture In Picture"), "Infobar/swapPiP", "InfoBar"))
 		hotkeyFunctions.append((_("Move Picture In Picture"), "Infobar/movePiP", "InfoBar"))
 		hotkeyFunctions.append((_("Toggle Picture In Picture Zap"), "Infobar/togglePipzap", "InfoBar"))
-	hotkeyFunctions.append((_("Activate HbbTV (Redbutton)"), "Infobar/activateRedButton", "InfoBar"))		
-	hotkeyFunctions.append((_("Toggle HDMI-In Full Screen"), "Infobar/HDMIInFull", "InfoBar"))
-	hotkeyFunctions.append((_("Toggle HDMI-In Picture In Picture"), "Infobar/HDMIInPiP", "InfoBar"))
+	hotkeyFunctions.append((_("Activate HbbTV (Redbutton)"), "Infobar/activateRedButton", "InfoBar"))
+	if SystemInfo["HDMIin"]:
+		hotkeyFunctions.append((_("Toggle HDMI-In Full Screen"), "Infobar/HDMIInFull", "InfoBar"))
+		hotkeyFunctions.append((_("Toggle HDMI-In Picture In Picture"), "Infobar/HDMIInPiP", "InfoBar"))
+	if SystemInfo["LcdLiveTV"]:
+		hotkeyFunctions.append((_("Toggle LCD LiveTV"), "Infobar/ToggleLCDLiveTV", "InfoBar"))
+	if SystemInfo["HaveMultiBootHD"]:
+		hotkeyFunctions.append((_("MultiBoot Selector"), "Module/Screens.MultiBootStartup/MultiBootStartup", "InfoBar"))
+	if SystemInfo["HaveMultiBootGB"]:
+		hotkeyFunctions.append((_("MultiBoot Selector"), "Module/Screens.MultiBootStartupGB/MultiBootStartup", "InfoBar"))
 	hotkeyFunctions.append((_("HotKey Setup"), "Module/Screens.Hotkey/HotkeySetup", "Setup"))
 	hotkeyFunctions.append((_("Software Update"), "Module/Screens.SoftwareUpdate/UpdatePlugin", "Setup"))
 	hotkeyFunctions.append((_("CI (Common Interface) Setup"), "Module/Screens.Ci/CiSelection", "Setup"))
+	hotkeyFunctions.append((_("Videosetup"), "Module/Screens.VideoMode/VideoSetup", "Setup"))
 	hotkeyFunctions.append((_("Tuner Configuration"), "Module/Screens.Satconfig/NimSelection", "Scanning"))
 	hotkeyFunctions.append((_("Manual Scan"), "Module/Screens.ScanSetup/ScanSetup", "Scanning"))
 	hotkeyFunctions.append((_("Automatic Scan"), "Module/Screens.ScanSetup/ScanSimple", "Scanning"))
@@ -229,6 +261,7 @@ def getHotkeyFunctions():
 		hotkeyFunctions.append((plugin[0], "MenuPlugin/scan/" + plugin[2], "Scanning"))
 	hotkeyFunctions.append((_("Network Adapter"), "Module/Screens.NetworkSetup/NetworkAdapterSelection", "Setup"))
 	hotkeyFunctions.append((_("Network Menu"), "Infobar/showNetworkMounts", "Setup"))
+	hotkeyFunctions.append((_("VPN"), "Module/Screens.NetworkSetup/NetworkOpenvpn", "Setup"))
 	hotkeyFunctions.append((_("Plugin Browser"), "Module/Screens.PluginBrowser/PluginBrowser", "Setup"))
 	hotkeyFunctions.append((_("Channel Info"), "Module/Screens.ServiceInfo/ServiceInfo", "Setup"))
 	hotkeyFunctions.append((_("Timer"), "Module/Screens.TimerEdit/TimerEditList", "Setup"))
@@ -260,17 +293,17 @@ def getHotkeyFunctions():
 	if os.path.isdir("/usr/scripts"):
 		for x in [x for x in os.listdir("/usr/scripts") if x.endswith(".sh")]:
 			x = x[:-3]
-			hotkeyFunctions.append((_("Shellscript") + " " + x, "Shellscript/" + x, "Shellscripts"))
+			hotkeyFunctions.append((_(" ") + " " + x, "Shellscript/" + x, "Shellscripts"))
 	return hotkeyFunctions
 
 class HotkeySetup(Screen):
 	def __init__(self, session, args=None):
 		Screen.__init__(self, session)
-		self['description'] = Label(_('Click on your remote on the button you want to change, then click on OK'))
+		self['description'] = Label(_('Click on your remote on the button you want to change, then click on OK\n\n* to use this long button functions, please activate the keymap.lng'))
 		self.session = session
 		self.setTitle(_("Hotkey Setup") + " - Version " + updateversion)
 		self["key_red"] = Button(_("Exit"))
-		self["key_green"] = Button(_("Toggle Extra Keys"))		
+		self["key_green"] = Button(_("Toggle Extra Keys"))
 		self.list = []
 		self.hotkeys = getHotkeys()
 		self.hotkeyFunctions = getHotkeyFunctions()
@@ -340,14 +373,9 @@ class HotkeySetup(Screen):
 		if key:
 			selected = []
 			for x in eval("config.misc.hotkey." + key + ".value.split(',')"):
-				if x.startswith("ZapPanic"):
-					selected.append(ChoiceEntryComponent('',((_("Panic to") + " " + ServiceReference(eServiceReference(x.split("/", 1)[1]).toString()).getServiceName()), x)))
-				elif x.startswith("Zap"):
-					selected.append(ChoiceEntryComponent('',((_("Zap to") + " " + ServiceReference(eServiceReference(x.split("/", 1)[1]).toString()).getServiceName()), x)))
-				else:
-					function = list(function for function in self.hotkeyFunctions if function[1] == x )
-					if function:
-						selected.append(ChoiceEntryComponent('',((function[0][0]), function[0][1])))
+				function = list(function for function in self.hotkeyFunctions if function[1] == x )
+				if function:
+					selected.append(ChoiceEntryComponent('',((function[0][0]), function[0][1])))
 			self["choosen"].setList(selected)
 
 class HotkeySetupSelect(Screen):
@@ -377,7 +405,7 @@ class HotkeySetupSelect(Screen):
 		self.prevselected = self.selected[:]
 		self["choosen"] = ChoiceList(list=self.selected, selection=0)
 		self["list"] = ChoiceList(list=self.getFunctionList(), selection=0)
-		self["actions"] = ActionMap(["OkCancelActions", "ColorActions", "DirectionActions", "KeyboardInputActions"], 
+		self["actions"] = ActionMap(["OkCancelActions", "ColorActions", "DirectionActions", "KeyboardInputActions"],
 		{
 			"ok": self.keyOk,
 			"cancel": self.cancel,
@@ -405,7 +433,7 @@ class HotkeySetupSelect(Screen):
 		functionslist = []
 		catagories = {}
 		for function in self.hotkeyFunctions:
-			if not catagories.has_key(function[2]):
+			if function[2] not in catagories:
 				catagories[function[2]] = []
 			catagories[function[2]].append(function)
 		for catagorie in sorted(list(catagories)):
@@ -444,8 +472,10 @@ class HotkeySetupSelect(Screen):
 					self.selected.remove(currentSelected[:2])
 				else:
 					if currentSelected[0][1].startswith("ZapPanic"):
+						from Screens.ChannelSelection import SimpleChannelSelection
 						self.session.openWithCallback(self.zaptoCallback, SimpleChannelSelection, _("Hotkey Panic") + " " + self.key[0][0], currentBouquet=True)
 					elif currentSelected[0][1].startswith("Zap"):
+						from Screens.ChannelSelection import SimpleChannelSelection
 						self.session.openWithCallback(self.zaptoCallback, SimpleChannelSelection, _("Hotkey zap") + " " + self.key[0][0], currentBouquet=True)
 					else:
 						self.selected.append(currentSelected[:2])
@@ -627,6 +657,7 @@ class InfoBarHotkey():
 			elif selected[0].startswith("Zap"):
 				if selected[0] == "ZapPanic":
 					self.servicelist.history = []
+					self.pipShown() and self.showPiP()
 				self.servicelist.servicelist.setCurrent(eServiceReference("/".join(selected[1:])))
 				self.servicelist.zap(enable_pipzap = True)
 				if hasattr(self, "lastservice"):
@@ -644,6 +675,8 @@ class InfoBarHotkey():
 				if os.path.isfile(command) and os.path.isdir('/usr/lib/enigma2/python/Plugins/Extensions/PPanel'):
 					from Plugins.Extensions.PPanel.ppanel import Execute
 					self.session.open(Execute, selected[1] + " shellscript", None, command)
+				else:
+					os.system(command)
 			elif selected[0] == "EMC":
 				try:
 					from Plugins.Extensions.EnhancedMovieCenter.plugin import showMoviesNew

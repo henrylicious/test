@@ -12,7 +12,7 @@
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
-#    
+#
 #######################################################################
 from Components.Converter.Converter import Converter
 from enigma import iServiceInformation, iPlayableService, iPlayableServicePtr, eServiceReference, eEPGCache
@@ -28,7 +28,7 @@ class g16ServiceNameEventNobile(Converter, object):
 	ENDTIME = 4
 	EXTENDED_DESCRIPTION = 5
 	EXTENDED_DESCRIPTION_EVENT = 6
-          	
+
 	def __init__(self, type):
 		Converter.__init__(self, type)
 		self.epgQuery = eEPGCache.getInstance().lookupEventTime
@@ -39,14 +39,14 @@ class g16ServiceNameEventNobile(Converter, object):
 		elif type == "StartTime":
 			self.type = self.STARTTIME
 		elif type == "Duration":
-			self.type = self.DURATION			
+			self.type = self.DURATION
 		elif type == "EndTime":
 			self.type = self.ENDTIME
 		elif type == "ExtendedDescription":
 			self.type = self.EXTENDED_DESCRIPTION
 		elif type == "ExtendedDescriptionEvent" or type == "ExtendedDescriptionEventSingle":
 			self.type = self.EXTENDED_DESCRIPTION_EVENT
-      			
+
 	@cached
 	def getText(self):
 		no_desc = ""
@@ -55,7 +55,7 @@ class g16ServiceNameEventNobile(Converter, object):
 			if isinstance(service, iPlayableServicePtr):
 				info = service and service.info()
 				ref = None
-			else: 
+			else:
 				info = service and self.source.info
 				ref = service
 			if info is None:
@@ -73,7 +73,7 @@ class g16ServiceNameEventNobile(Converter, object):
 					return "%s - %s" % (name, no_desc)
 				else:
 					return "%s - %s" % (name, act_event.getEventName())
-			act_event = None				
+			act_event = None
 			try:
 				act_event = self.epgQuery(eServiceReference(service.toString()), -1, 1)
 			except: pass
@@ -97,7 +97,7 @@ class g16ServiceNameEventNobile(Converter, object):
 			short = act_event.getShortDescription()
 			tmp = act_event.getExtendedDescription()
 			if tmp == "" or tmp is None:
-				tmp = short		
+				tmp = short
 				if tmp == "" or tmp is None:
 					tmp = no_desc
 				else:

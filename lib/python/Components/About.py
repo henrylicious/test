@@ -30,15 +30,10 @@ def getKernelVersionString():
 		return kernelversion
 	except:
 		return _("unknown")
-	
-def getModelString():	
-	try:
-		file = open("/proc/stb/info/boxtype", "r")
-		model = file.readline().strip()
-		file.close()
+
+def getModelString():
+		model = getBoxType()
 		return model
-	except IOError:
-		return "unknown"		
 
 def getChipSetString():
 	if getMachineBuild() in ('dm7080','dm820'):
@@ -59,8 +54,10 @@ def getChipSetString():
 			return "unavailable"
 
 def getCPUString():
-	if getMachineBuild() in ('vuuno4k', 'vuultimo4k','vusolo4k', 'hd51', 'hd52', 'sf4008', 'dm900', 'gb7252', 'dags7252', 'vs1500'):
-		return "Broadcom"
+	if getMachineBuild() in ('vuuno4k', 'vuultimo4k','vusolo4k', 'hd51', 'hd52', 'sf4008', 'dm900', 'gb7252', 'dags7252', 'vs1500', 'h7', '8100s'):
+		return "Broadcom "
+	elif getMachineBuild() in ('u5','u51','u52','u53','u5pvr','h9','sf8008'):
+		return "Hisilicon"
 	else:
 		try:
 			system="unknown"
@@ -82,11 +79,13 @@ def getCPUString():
 def getCPUSpeedString():
 	if getMachineBuild() in ('vusolo4k'):
 		return "1,5 GHz"
-	elif getMachineBuild() in ('vuuno4k','vuultimo4k','dm900'):
+	elif getMachineBuild() in ('vuuno4k','dm900', 'gb7252', 'dags7252'):
 		return "1,7 GHz"
-	elif getMachineBuild() in ('formuler1', 'triplex'):
+	elif getMachineBuild() in ('u5','u51','u52','u53','u5pvr','h9','sf8008'):
+		return "1,6 GHz"
+	elif getMachineBuild() in ('formuler1tc','formuler1', 'triplex'):
 		return "1,3 GHz"
-	elif getMachineBuild() in ('hd51','hd52','sf4008'):
+	elif getMachineBuild() in ('hd51','hd52','sf4008','vs1500','et1x000','h7','8100s'):
 		try:
 			import binascii
 			f = open('/sys/firmware/devicetree/base/cpus/cpu@0/clock-frequency', 'rb')
@@ -123,7 +122,9 @@ def getCpuCoresString():
 			if len(splitted) > 1:
 				splitted[1] = splitted[1].replace('\n','')
 				if splitted[0].startswith("processor"):
-					if int(splitted[1]) > 0:
+					if getMachineBuild() in ('u5','u51','u52','u53','u5pvr','h9','sf8008'):
+						cores = 4
+					elif int(splitted[1]) > 0:
 						cores = 2
 					else:
 						cores = 1

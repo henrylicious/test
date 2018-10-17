@@ -23,7 +23,7 @@ struct service
 	bool scrambled;
 };
 
-class eDVBScan: public Object, public iObject
+class eDVBScan: public sigc::trackable, public iObject
 {
 	DECLARE_REF(eDVBScan);
 		/* chid helper functions: */
@@ -63,8 +63,8 @@ class eDVBScan: public Object, public iObject
 	bool m_pmt_running;
 	bool m_abort_current_pmt;
 
-	std::list<ePtr<iDVBFrontendParameters> > m_ch_toScan, m_ch_scanned, m_ch_unavailable;
-	ePtr<iDVBFrontendParameters> m_ch_current;
+	std::list<ePtr<iDVBFrontendParameters> > m_ch_toScan, m_ch_scanned, m_ch_unavailable, m_ch_blindscan;
+	ePtr<iDVBFrontendParameters> m_ch_current, m_ch_blindscan_result;
 	eDVBChannelID m_chid_current;
 	eTransportStreamID m_pat_tsid;
 
@@ -89,7 +89,7 @@ class eDVBScan: public Object, public iObject
 
 	void channelDone();
 
-	Signal1<void,int> m_event;
+	sigc::signal1<void,int> m_event;
 	RESULT processSDT(eDVBNamespace dvbnamespace, const ServiceDescriptionSection &sdt);
 	RESULT processVCT(eDVBNamespace dvbnamespace, const VirtualChannelTableSection &vct, int onid);
 
@@ -97,7 +97,7 @@ class eDVBScan: public Object, public iObject
 	int m_networkid;
 	bool m_usePAT;
 	bool m_scan_debug;
-	
+
 	FILE *m_lcn_file;
 	void addLcnToDB(eDVBNamespace ns, eOriginalNetworkID onid, eTransportStreamID tsid, eServiceID sid, uint16_t lcn, uint32_t signal);
 public:
@@ -108,12 +108,13 @@ public:
 		scanNetworkSearch = 1, scanSearchBAT = 2,
 		scanRemoveServices = 4, scanDontRemoveFeeds = 8,
 		scanDontRemoveUnscanned = 16,
-		clearToScanOnFirstNIT = 32, scanOnlyFree = 64 };
+		clearToScanOnFirstNIT = 32, scanOnlyFree = 64,
+		scanBlindSearch = 128 };
 
 	void start(const eSmartPtrList<iDVBFrontendParameters> &known_transponders, int flags, int networkid = 0);
 
 	enum { evtUpdate, evtNewService, evtFinish, evtFail };
-	RESULT connectEvent(const Slot1<void,int> &event, ePtr<eConnection> &connection);
+	RESULT connectEvent(const sigc::slot1<void,int> &event, ePtr<eConnection> &connection);
 	void insertInto(iDVBChannelList *db, bool backgroundscanresult=false);
 
 	void getStats(int &transponders_done, int &transponders_total, int &services);

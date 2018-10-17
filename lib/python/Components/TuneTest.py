@@ -1,4 +1,4 @@
-from enigma import eDVBFrontendParametersSatellite, eDVBFrontendParametersTerrestrial, eDVBFrontendParametersCable, eDVBFrontendParameters, eDVBResourceManager, eTimer
+from enigma import eDVBFrontendParametersSatellite, eDVBFrontendParametersTerrestrial, eDVBFrontendParametersCable, eDVBFrontendParametersATSC, eDVBFrontendParameters, eDVBResourceManager, eTimer
 
 class Tuner:
 	def __init__(self, frontend, ignore_rotor=False):
@@ -21,6 +21,14 @@ class Tuner:
 			parm.modulation = transponder[7]
 			parm.rolloff = transponder[8]
 			parm.pilot = transponder[9]
+			if len(transponder) > 12:
+				parm.is_id = transponder[10]
+				parm.pls_mode = transponder[11]
+				parm.pls_code = transponder[12]
+			else:
+				parm.is_id = eDVBFrontendParametersSatellite.No_Stream_Id_Filter
+				parm.pls_mode = 0
+				parm.pls_code = 1
 			self.tuneSatObj(parm)
 
 	def tuneSatObj(self, transponderObj):
@@ -73,6 +81,23 @@ class Tuner:
 		if self.frontend:
 			feparm = eDVBFrontendParameters()
 			feparm.setDVBC(transponderObj)
+			self.lastparm = feparm
+			self.frontend.tune(feparm)
+
+	def tuneATSC(self, transponder):
+		if self.frontend:
+			print "[TuneTest] tuning to transponder with data", transponder
+			parm = eDVBFrontendParametersATSC()
+			parm.frequency = transponder[0]
+			parm.modulation = transponder[1]
+			parm.inversion = transponder[2]
+			parm.system = transponder[3]
+			self.tuneATSCObj(parm)
+
+	def tuneATSCObj(self, transponderObj):
+		if self.frontend:
+			feparm = eDVBFrontendParameters()
+			feparm.setATSC(transponderObj)
 			self.lastparm = feparm
 			self.frontend.tune(feparm)
 

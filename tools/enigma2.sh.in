@@ -4,47 +4,48 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 datarootdir=@datarootdir@
 
-if [ -f @sysconfdir@/enigma2/bootlogo.mvi ]; then
-		echo found @sysconfdir@/enigma2/bootlogo.mvi
-		@bindir@/showiframe @sysconfdir@/enigma2/bootlogo.mvi
-	elif [ -f @datadir@/bootlogo.mvi ]; then
-		echo found @datadir@/bootlogo.mvi
-		@bindir@/showiframe @datadir@/bootlogo.mvi
-fi
-
 # workaround for corrupt ssl files
 if ! grep ^config.misc.firstrun=false /etc/enigma2/settings >/dev/null; then
 	rm -rf /etc/enigma2/cert.pem &
 	rm -rf /etc/enigma2/key.pem &
 fi
 
-# update NTP time if NTP Time Enabled
-if grep ^config.misc.SyncTimeUsing=1 /etc/enigma2/settings >/dev/null; then
-	/usr/sbin/ntpdate -s -u pool.ntp.org &
+if [ -e /proc/stb/info/boxtype ]; then
+	stbcheck=`cat /proc/stb/info/boxtype | cut -c1-6`
+	if [ $stbcheck == "sf8008" ]; then
+		count=`ps -ef |grep libreader |grep -v "grep" |wc -l`
+		if [ 0 == $count ];then
+			libreader 720P_50
+		fi
+	fi
+fi
+
+#check for installed vfdcontrol
+if grep ^config.misc.vfdcontrol=true /etc/enigma2/settings >/dev/null; then
+	if [ -e /usr/lib/enigma2/python/Plugins/SystemPlugins/VFDControl/plugin.pyo ]; then
+		echo "vfdcontrol installed"
+	else
+		opkg update
+		opkg install --force-reinstall enigma2-plugin-systemplugins-vfdcontrol
+	fi
+fi
+if ! grep ^config.misc.vfdcontrol=true /etc/enigma2/settings >/dev/null; then
+	if [ -e /usr/lib/enigma2/python/Plugins/SystemPlugins/VFDControl/plugin.pyo ]; then
+		opkg remove enigma2-plugin-systemplugins-vfdcontrol
+		rm -rf /usr/lib/enigma2/python/Plugins/SystemPlugins/VFDControl
+	fi
 fi
 
 [ -L /usr/lib/libssl.so.0.9.8 ] || ln -s /usr/lib/libssl.so.1.0.0 /usr/lib/libssl.so.0.9.8
 
 [ -L /usr/lib/libcrypto.so.0.9.8 ] || ln -s /usr/lib/libcrypto.so.1.0.0 /usr/lib/libcrypto.so.0.9.8
 
-[ -d /home/root ] && cd /home/root
-
-if [ -e /proc/stb/info/hwmodel ]; then
-    stbcheck=`cat /proc/stb/info/hwmodel | cut -c1-8`
-    if [ $stbcheck == "optimuss" ]; then
-        string=`mount | grep 'sda1' | cut -d " " -f3`
-        if [ -e $string/sat-soft/settings.sh ]; then
-            chmod 755 $string/sat-soft/settings.sh
-            $string/sat-soft/settings.sh
-        fi
-    fi
-fi
-
 # check if media/net directory exists
 [ -d /media/net ] || mkdir /media/net
 
 # check if usr/scripts directory exists
 [ -d /usr/scripts ] || mkdir /usr/scripts
+chmod -R 755 /usr/scripts
 
 # check for settings files
 [ -f @sysconfdir@/enigma2/settings ] || cp @datadir@/enigma2/defaults/* @sysconfdir@/enigma2/
@@ -68,13 +69,31 @@ fi
 
 touch /etc/enigma2/settings
 
+if [ -x @bindir@/showiframe ]; then
+	if [[ ! `cat /proc/stb/info/boxtype` =~ "u5" ]]; then
+		killall -9 showiframe; sleep 1
+	fi
+	if [ -f /etc/enigma2/bootlogo.mvi ]; then
+		/usr/bin/showiframe /etc/enigma2/bootlogo.mvi
+	elif [ -f /usr/share/backdrop.mvi ]; then
+		/usr/bin/showiframe /usr/share/backdrop.mvi
+	fi
+fi
+
 # hook to execute scripts always before enigma2 start
 [ -x @bindir@/enigma2_pre_start.sh ] && @bindir@/enigma2_pre_start.sh
+[ -x @bindir@/enigma2_pre_start_ciplus.sh ] && @bindir@/enigma2_pre_start_ciplus.sh
+
+if [ -d /home/root ]; then
+	cd /home/root
+	export HOME=/home/root
+fi
 
 sync
+sysctl -p
 
 (sleep 2; echo "enigma2 is the main pvr application... adjust oom score!"; PID=$(pidof enigma2); \
-        [ -e /proc/$PID/oom_score_adj ] && echo "-999" > /proc/$PID/oom_score_adj || echo "-17" > /proc/$PID/oom_adj;) &
+	[ -e /proc/$PID/oom_score_adj ] && echo "-999" > /proc/$PID/oom_score_adj || echo "-17" > /proc/$PID/oom_adj;) &
 
 if [ "$(grep config.crash.enabledebug /etc/enigma2/settings)" == "config.crash.enabledebug=true" ]; then
 	RANDOMIZE1970=''
@@ -86,7 +105,7 @@ if [ "$(grep config.crash.enabledebug /etc/enigma2/settings)" == "config.crash.e
 	if [ -z $CONFIG_CRASH_DEBUG_PATH ]; then
 		LD_PRELOAD=$LIBS /usr/bin/enigma2 --debug-no-color &> /home/root/logs/Enigma2-debug-$(date +%Y%m%d_%H-%M-%S)$RANDOMIZE1970.log
 	else
-		LD_PRELOAD=$LIBS /usr/bin/enigma2 --debug-no-color &> ${CONFIG_CRASH_DEBUG_PATH}Enigma2-debug-$(date +%Y%m%d_%H-%M-%S)$RANDOMIZE1970.log		
+		LD_PRELOAD=$LIBS /usr/bin/enigma2 --debug-no-color &> ${CONFIG_CRASH_DEBUG_PATH}Enigma2-debug-$(date +%Y%m%d_%H-%M-%S)$RANDOMIZE1970.log
 	fi
 else
 	# in case $TERM is "linux" the serial output is activated - discard debug output
@@ -106,6 +125,23 @@ fi
 # >128 signal
 
 ret=$?
+
+if [ "$ret" -ne "1" ]; then
+	if [ -e /proc/stb/info/boxtype ]; then
+		stbcheck=`cat /proc/stb/info/boxtype | cut -c1-2`
+		if [ $stbcheck == "u5" ]; then
+			killall -9 showiframe; sleep 5
+		fi
+		if [ $stbcheck == "cc" ]; then
+			killall -9 libreader; sleep 5
+		fi
+		stbcheck=`cat /proc/stb/info/boxtype | cut -c1-6`
+		if [ $stbcheck == "sf8008" ]; then
+			killall -9 libreader; sleep 5
+		fi
+	fi
+fi
+
 case $ret in
 	1)
 		/sbin/halt
@@ -117,6 +153,7 @@ case $ret in
 		/sbin/reboot
 		;;
 	3)
+		rm -fR /home/root/.gstreamer-0.10
 		rm -f /tmp/.listen.camd.socket.ignore
 		;;
 	4)

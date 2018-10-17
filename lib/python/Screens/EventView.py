@@ -3,7 +3,6 @@ from time import localtime, mktime, time, strftime
 from enigma import eEPGCache, eTimer, eServiceReference, ePoint
 
 from Screens.Screen import Screen
-from Screens.TimerEdit import TimerSanityConflict
 from Screens.ChoiceBox import ChoiceBox
 from Components.ActionMap import ActionMap
 from Components.Button import Button
@@ -174,6 +173,10 @@ class EventViewBase:
 						if change_time:
 							simulTimerList = self.session.nav.RecordTimer.record(entry)
 					if simulTimerList is not None:
+						try:
+							from Screens.TimerEdit import TimerSanityConflict
+						except: # maybe already been imported from another module
+							pass
 						self.session.openWithCallback(self.finishSanityCorrection, TimerSanityConflict, simulTimerList)
 			self["key_green"].setText(_("Change timer"))
 			self.key_green_choice = self.REMOVE_TIMER
@@ -237,24 +240,40 @@ class EventViewBase:
 
 		if not beginTimeString:
 			return
-		if beginTimeString.find(', ') > -1:
-			begintime = beginTimeString.split(', ')[1].split(':')
-			begindate = beginTimeString.split(', ')[0].split('.')
-		else:
-			if len(beginTimeString.split(' ')) > 1:
-				begintime = beginTimeString.split(' ')[1].split(':')
-			else:
-				return
-			begindate = beginTimeString.split(' ')[0].split('.')
+		begintime = begindate = []
+		for x in beginTimeString.split(' '):
+			x = x.rstrip(',').rstrip('.')
+			if ':' in x:
+				begintime = x.split(':')
+			elif '.' in x:
+				begindate = x.split('.')
+			elif '/' in x:
+				begindate = x.split('/')
+				begindate.reverse()
+		###check
+		fail = False
+		try:
+			if len(begintime) < 2 and len(begindate) < 2 or int(begintime[0]) > 23 or int(begintime[1]) > 59 or int(begindate[0]) > 31 or int(begindate[1]) > 12:
+				fail = True
+		except:
+			fail = True
+
+		if fail:
+			print 'wrong timestamp detected: source = %s ,date = %s ,time = %s' %(beginTimeString,begindate,begintime)
+			return
+		###
+
 		nowt = time()
 		now = localtime(nowt)
+
 		begin = localtime(int(mktime((now.tm_year, int(begindate[1]), int(begindate[0]), int(begintime[0]), int(begintime[1]), 0, now.tm_wday, now.tm_yday, now.tm_isdst))))
 		end = localtime(int(mktime((now.tm_year, int(begindate[1]), int(begindate[0]), int(begintime[0]), int(begintime[1]), 0, now.tm_wday, now.tm_yday, now.tm_isdst))) + event.getDuration())
+
 		self["datetime"].setText(strftime(_("%d.%m.   "), begin) + strftime(_("%-H:%M - "), begin) + strftime(_("%-H:%M"), end))
 		self["duration"].setText(_("%d min")%(event.getDuration()/60))
 		if self.SimilarBroadcastTimer is not None:
 			self.SimilarBroadcastTimer.start(400, True)
-			
+
 		serviceref = self.currentService
 		eventid = self.event.getEventId()
 		refstr = ':'.join(serviceref.ref.toString().split(':')[:11])
@@ -292,7 +311,7 @@ class EventViewBase:
 			ret.sort(self.sort_func)
 			for x in ret:
 				t = localtime(x[1])
-				text += _('\n%d.%d.%d, %2d:%02d  -  %s')%(t[2], t[1], t[0], t[3], t[4], x[0])
+				text += strftime(_("\n%Y/%m/%d  %H:%M - "), t) + x[0]
 			descr = self["epg_description"]
 			descr.setText(descr.getText()+text)
 			descr = self["FullDescription"]
@@ -361,7 +380,7 @@ class EventViewEPGSelect(Screen, EventViewBase):
 		else:
 			self["key_yellow"] = Button("")
 			self["yellow"].hide()
-			
+
 		if multiEPGCB:
 			self["key_blue"] = Button(_("Multi EPG"))
 			self["epgactions3"] = ActionMap(["EventViewEPGActions"],

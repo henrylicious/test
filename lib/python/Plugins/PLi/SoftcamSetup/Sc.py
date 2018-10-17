@@ -27,10 +27,10 @@ class ConfigAction(ConfigElement):
 		ConfigElement.__init__(self)
 		self.value = "(OK)"
 		self.action = action
-		self.actionargs = args 
+		self.actionargs = args
 	def handleKey(self, key):
 		if (key == KEY_OK):
-			self.action(*self.actionargs) 
+			self.action(*self.actionargs)
 
 class ScSelection(Screen):
 	skin = """
@@ -59,7 +59,7 @@ class ScSelection(Screen):
 			<convert type="ServiceInfo">VideoHeight</convert></widget>
 			<eLabel font="Regular;18" halign="left" valign="top" position="10,320" size="500,26" text="----------------------------------------------------------------------------------------" zPosition="2" transparent="1" />
 		</screen>"""
-		
+
 	def __init__(self, session):
 		Screen.__init__(self, session)
 
@@ -97,9 +97,9 @@ class ScSelection(Screen):
 			self.list.append(getConfigListEntry(_("Select Card Server"), self.cardservers))
 
 		self.list.append(getConfigListEntry(_("Restart softcam"), ConfigAction(self.restart, "s")))
-		if cardservers: 
-			self.list.append(getConfigListEntry(_("Restart cardserver"), ConfigAction(self.restart, "c"))) 
-			self.list.append(getConfigListEntry(_("Restart both"), ConfigAction(self.restart, "sc"))) 
+		if cardservers:
+			self.list.append(getConfigListEntry(_("Restart cardserver"), ConfigAction(self.restart, "c")))
+			self.list.append(getConfigListEntry(_("Restart both"), ConfigAction(self.restart, "sc")))
 
 		self["key_red"] = Label(_("Cancel"))
 		self["key_green"] = Label(_("OK"))
@@ -110,10 +110,10 @@ class ScSelection(Screen):
 
 	def keyRight(self):
 		self["entries"].handleKey(KEY_RIGHT)
-		
+
 	def ok(self):
 		self["entries"].handleKey(KEY_OK)
-	
+
 	def blue(self):
 		if os.path.exists("/tmp/ecm.info") is True:
 			self.session.open(Console,_("ECM -> ecm.info"),["cat /tmp/ecm.info"])
@@ -154,7 +154,7 @@ class ScSelection(Screen):
 
 	def doStart(self):
 		self.activityTimer.stop()
-		del self.activityTimer 
+		del self.activityTimer
 		if "c" in self.what:
                         self.cardserver.select(self.cardservers.value)
 			self.cardserver.command('start')
@@ -169,7 +169,7 @@ class ScSelection(Screen):
 	def restartCardServer(self):
 		if hasattr(self, 'cardservers'):
 			self.restart("c")
-	
+
 	def restartSoftcam(self):
 		self.restart("s")
 

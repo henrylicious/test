@@ -1,7 +1,7 @@
 /*
  * LIRC support based on LIRC for VDR, which was written by
  * Carsten Koch.
- * 
+ *
 */
 
 #include <netinet/in.h>
@@ -394,7 +394,7 @@ void eLircInputDevice::handleCode(long arg)
 {
 	const lircEvent* event = (const lircEvent*)arg;
 	int code, flags;
-	
+
 	if (event->repeat == true) {
 		flags = eRCKey::flagRepeat;
 	} else if (event->release == true) {

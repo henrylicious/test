@@ -51,7 +51,7 @@ public:
 class eSecCommandList;
 
 #endif
-class eDVBFrontend: public iDVBFrontend, public Object
+class eDVBFrontend: public iDVBFrontend, public sigc::trackable
 {
 #ifndef SWIG
 public:
@@ -88,7 +88,7 @@ public:
 		TAKEOVER_RELEASE,
 		NUM_DATA_ENTRIES
 	};
-	Signal1<void,iDVBFrontend*> m_stateChanged;
+	sigc::signal1<void,iDVBFrontend*> m_stateChanged;
 	enum class enumDebugOptions:uint64_t {
 		DISSABLE_ALL_DEBUG_OUTPUTS,	//prevents all debug issues with respect to this object
 		DEBUG_DELIVERY_SYSTEM,
@@ -112,6 +112,7 @@ private:
 	bool m_rotor_mode;
 	bool m_need_rotor_workaround;
 	bool m_need_delivery_system_workaround;
+	bool m_blindscan;
 	bool m_multitype;
 	std::map<fe_delivery_system_t, int> m_modelist;
 	std::map<fe_delivery_system_t, bool> m_delsys, m_delsys_whitelist;
@@ -137,6 +138,7 @@ private:
 
 	int m_timeoutCount; // needed for timeout
 	int m_retryCount; // diseqc retry for rotor
+	int m_configRetuneNoPatEntry;
 
 	void feEvent(int);
 	void timeout();
@@ -144,6 +146,7 @@ private:
 	int tuneLoopInt();
 	void setFrontend(bool recvEvents=true);
 	bool setSecSequencePos(int steps);
+	int calculateSignalPercentage(int signalqualitydb);
 	void calculateSignalQuality(int snr, int &signalquality, int &signalqualitydb);
 
 	static int PriorityOrder;
@@ -160,12 +163,12 @@ public:
 	int readInputpower();
 	int getCurrentType(){return m_type;}
 	void overrideType(int type){m_type = type;} //workaraound for dvb api < 5
-	RESULT tune(const iDVBFrontendParameters &where);
+	RESULT tune(const iDVBFrontendParameters &where, bool blindscan = false);
 	RESULT prepare_sat(const eDVBFrontendParametersSatellite &, unsigned int timeout);
 	RESULT prepare_cable(const eDVBFrontendParametersCable &);
 	RESULT prepare_terrestrial(const eDVBFrontendParametersTerrestrial &);
 	RESULT prepare_atsc(const eDVBFrontendParametersATSC &);
-	RESULT connectStateChange(const Slot1<void,iDVBFrontend*> &stateChange, ePtr<eConnection> &connection);
+	RESULT connectStateChange(const sigc::slot1<void,iDVBFrontend*> &stateChange, ePtr<eConnection> &connection);
 	RESULT getState(int &state);
 	RESULT setTone(int tone);
 	RESULT setVoltage(int voltage);
@@ -177,6 +180,9 @@ public:
 	RESULT getData(int num, long &data);
 	RESULT setData(int num, long val);
 	bool changeType(int type);
+	void checkRetune();
+	void retune();
+	void setConfigRetuneNoPatEntry(int value);
 
 	int readFrontendData(int type); // iFrontendInformation_ENUMS
 	void getFrontendStatus(ePtr<iDVBFrontendStatus> &dest);
