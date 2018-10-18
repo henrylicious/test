@@ -24,6 +24,7 @@ addons:
     - libavahi-client-dev
     - libjpeg-turbo8-dev
     - libgif-dev
+    - libboost-all-dev
 
 matrix:
   include:
@@ -52,6 +53,7 @@ matrix:
             - libavahi-client-dev
             - libjpeg-turbo8-dev
             - libgif-dev
+            - libboost-all-dev
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
@@ -80,6 +82,7 @@ matrix:
             - libavahi-client-dev
             - libjpeg-turbo8-dev
             - libgif-dev
+            - libboost-all-dev
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 
@@ -108,6 +111,7 @@ matrix:
             - libavahi-client-dev
             - libjpeg-turbo8-dev
             - libgif-dev
+            - libboost-all-dev
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
@@ -136,6 +140,7 @@ matrix:
             - libavahi-client-dev
             - libjpeg-turbo8-dev
             - libgif-dev
+            - libboost-all-dev
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
