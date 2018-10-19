@@ -55,7 +55,7 @@ enigma2_LDADD = \
 	-ltuxtxt -ltuxtxt32bpp -lcrypt -lrt -ldl
 
 enigma2_LDFLAGS = -Wl,--export-dynamic \
-	$(BOOST_LDFLAGS)
+	-lboost_python
 
 if HAVE_GIT_DIR
 GIT_DIR = $(top_srcdir)/.git
