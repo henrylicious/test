@@ -51,7 +51,7 @@ enigma2_LDADD = \
 	@LIBHIACCEL_LIBS@ \
 	@BOOST_SYSTEM_LIB@ \
 	@BOOST_THREAD_LIB@ \
-	@BOOST_PYTHON_LIB@ \
+	-lboost_python \
 	-ltuxtxt -ltuxtxt32bpp -lcrypt -lrt -ldl
 
 enigma2_LDFLAGS = -Wl,--export-dynamic \
