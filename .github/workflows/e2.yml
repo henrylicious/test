@@ -1,4 +1,4 @@
-ame: Enigma2 CI
+name: Enigma2 CI
 
 on:
   push:
