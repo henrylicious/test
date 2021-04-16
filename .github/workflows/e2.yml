@@ -4,6 +4,9 @@ on: [push, pull_request]
 
 jobs:
   build:
+    env:
+      CC: "gcc-${{ matrix.gcc }}"
+      CXX: "g++-${{ matrix.gcc }}"
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -43,18 +46,12 @@ jobs:
         pip install --upgrade pip tox six
         python -V
     - name: Getting gstreamer
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
       run: |
         python -V 
         cd /tmp/
         curl -L https://people.freedesktop.org/~slomo/gstreamer.tar.gz | tar xz
         sed -i "s;prefix=/root/gstreamer;prefix=$PWD/gstreamer;g" $PWD/gstreamer/lib/x86_64-linux-gnu/pkgconfig/*.pc
     - name: Getting libdvbsi++
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
       run: |
         cd /tmp
         git clone --depth 1 git://git.opendreambox.org/git/obi/libdvbsi++.git
@@ -65,9 +62,6 @@ jobs:
         sudo make install
         echo $PATH
     - name: Getting tuxtxt
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
       run: |
         export PATH=$PATH:/tmp/gstreamer/bin
         export LD_LIBRARY_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
@@ -87,9 +81,6 @@ jobs:
         make
         sudo make install
     - name: build enigma2
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
       run: |
         export PATH=$PATH:/tmp/gstreamer/bin
         export LD_LIBRARY_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
@@ -97,6 +88,6 @@ jobs:
         GST_PLUGIN_SYSTEM_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/gstreamer-1.0
         GST_PLUGIN_SCANNER=/tmp/gstreamer/libexec/gstreamer-1.0/gst-plugin-scanner
         autoreconf -i
-        ./configure --with-libsdl=no --with-boxtype=nobox --enable-dependency-tracking ac_cv_prog_c_openmp=-fopenmp --with-textlcd
+        ./configure --with-libsdl=no --with-boxtype=nobox --enable-dependency-tracking ac_cv_prog_c_openmp=-fopenmp --with-textlcd --with-gstversion=1.0 
         make
         python -m compileall .
