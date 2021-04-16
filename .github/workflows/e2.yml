@@ -42,20 +42,10 @@ jobs:
         sudo apt install python2.7-dev python-pip
         pip install --upgrade pip tox six
         python -V
-    - name: Getting gstreamer
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
+    - name: build enigma2 dependencies
       run: |
-        python -V 
-        cd /tmp/
-        curl -L https://people.freedesktop.org/~slomo/gstreamer.tar.gz | tar xz
-        sed -i "s;prefix=/root/gstreamer;prefix=$PWD/gstreamer;g" $PWD/gstreamer/lib/x86_64-linux-gnu/pkgconfig/*.pc
-    - name: Getting libdvbsi++
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
-      run: |
+        echo installing libdvbsi++
+        pushd .
         cd /tmp
         git clone --depth 1 git://git.opendreambox.org/git/obi/libdvbsi++.git
         cd libdvbsi++
@@ -63,17 +53,9 @@ jobs:
         ./configure
         make
         sudo make install
-        echo $PATH
-    - name: Getting tuxtxt
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
-      run: |
-        export PATH=$PATH:/tmp/gstreamer/bin
-        export LD_LIBRARY_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
-        PKG_CONFIG_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/pkgconfig
-        GST_PLUGIN_SYSTEM_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/gstreamer-1.0
-        GST_PLUGIN_SCANNER=/tmp/gstreamer/libexec/gstreamer-1.0/gst-plugin-scanner
+        popd
+        echo installing tuxbox
+        pushd .
         cd /tmp
         git clone --depth 1 https://github.com/OpenPLi/tuxtxt.git
         cd tuxtxt/libtuxtxt
@@ -86,17 +68,12 @@ jobs:
         ./configure --with-boxtype=generic DVB_API_VERSION=5
         make
         sudo make install
+        popd
     - name: build enigma2
-      env: 
-        CC: "gcc-${{ matrix.gcc }}"
-        CXX: "g++-${{ matrix.gcc }}"
       run: |
-        export PATH=$PATH:/tmp/gstreamer/bin
-        export LD_LIBRARY_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
-        PKG_CONFIG_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/pkgconfig
-        GST_PLUGIN_SYSTEM_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/gstreamer-1.0
-        GST_PLUGIN_SCANNER=/tmp/gstreamer/libexec/gstreamer-1.0/gst-plugin-scanner
+        echo compiling enigma2
         autoreconf -i
-        ./configure --with-libsdl=no --with-boxtype=nobox --enable-dependency-tracking ac_cv_prog_c_openmp=-fopenmp --with-textlcd
+        ./configure --with-libsdl=no --with-boxtype=nobox --enable-dependency-tracking ac_cv_prog_c_openmp=-fopenmp --with-gstversion=1.0 --with-textlcd
         make
         python -m compileall .
+        echo done!
