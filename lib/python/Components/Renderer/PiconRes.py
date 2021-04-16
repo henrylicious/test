@@ -9,6 +9,7 @@ from Components.config import config, ConfigBoolean
 searchPaths = []
 lastPiconPath = None
 
+
 def initPiconPaths():
 	global searchPaths
 	searchPaths = []
@@ -18,6 +19,7 @@ def initPiconPaths():
 		mp = path = os.path.join(part.mountpoint, 'usr/share/enigma2')
 		onMountpointAdded(part.mountpoint)
 		onMountpointAdded(mp)
+
 
 def onMountpointAdded(mountpoint):
 	global searchPaths
@@ -32,6 +34,7 @@ def onMountpointAdded(mountpoint):
 	except Exception, ex:
 		print "[Picon] Failed to investigate %s:" % mountpoint, ex
 
+
 def onMountpointRemoved(mountpoint):
 	global searchPaths
 	path = os.path.join(mountpoint, 'picon') + '/'
@@ -41,11 +44,13 @@ def onMountpointRemoved(mountpoint):
 	except:
 		pass
 
+
 def onPartitionChange(why, part):
 	if why == 'add':
 		onMountpointAdded(part.mountpoint)
 	elif why == 'remove':
 		onMountpointRemoved(part.mountpoint)
+
 
 def findPicon(serviceName):
 	global lastPiconPath
@@ -74,30 +79,24 @@ def findPicon(serviceName):
 		else:
 			return ""
 
+
 def getPiconName(serviceName):
-	#remove the path and name fields, and replace ':' by '_'
 	sname = '_'.join(GetWithAlternative(serviceName).split(':', 10)[:10])
 	pngname = findPicon(sname)
 	if not pngname:
 		fields = sname.split('_', 3)
-		if len(fields) > 2 and fields[2] != '2':
-			#fallback to 1 for tv services with nonstandard servicetypes
-			fields[2] = '1'
-		if len(fields) > 0 and fields[0] == '4097':	#fallback to 1 for IPTV streams
-			fields[0] = '1'
-		if len(fields) > 0 and fields[0] == '5001': #fallback to 1 for IPTV streams
-			fields[0] = '1'
-		if len(fields) > 0 and fields[0] == '5002': #fallback to 1 for IPTV streams
+		if len(fields) > 0 and fields[0] != '1':
 			fields[0] = '1'
 		pngname = findPicon('_'.join(fields))
 	return pngname
+
 
 class PiconRes(Renderer):
 	def __init__(self):
 		Renderer.__init__(self)
 		self.PicLoad = ePicLoad()
 		self.PicLoad.PictureData.get().append(self.updatePicon)
-		self.piconsize = (0,0)
+		self.piconsize = (0, 0)
 		self.pngname = ""
 		self.lastPath = None
 		pngname = findPicon("picon_default")
@@ -126,7 +125,7 @@ class PiconRes(Renderer):
 		for (attrib, value) in self.skinAttributes:
 			if attrib == "path":
 				self.addPath(value)
-				attribs.remove((attrib,value))
+				attribs.remove((attrib, value))
 			elif attrib == "size":
 				self.piconsize = value
 		self.skinAttributes = attribs
@@ -157,6 +156,7 @@ class PiconRes(Renderer):
 					else:
 						self.instance.hide()
 					self.pngname = pngname
+
 
 harddiskmanager.on_partition_list_change.append(onPartitionChange)
 initPiconPaths()

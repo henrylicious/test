@@ -157,6 +157,16 @@ RESULT eBouquet::setListName(const std::string &name)
 	return 0;
 }
 
+const eDVBService::cacheID eDVBService::audioCacheTags[] = {
+	eDVBService::cMPEGAPID, eDVBService::cAC3PID,
+	eDVBService::cAACHEAPID, eDVBService::cDDPPID,
+	eDVBService::cDTSPID, eDVBService::cAACAPID,
+	eDVBService::cLPCMPID, eDVBService::cDTSHDPID,
+};
+
+const int eDVBService::nAudioCacheTags = sizeof(eDVBService::audioCacheTags) / sizeof(eDVBService::audioCacheTags[0]);
+
+
 eDVBService::eDVBService()
 	:m_cache(0), m_flags(0)
 {
@@ -367,6 +377,15 @@ bool eDVBService::cacheEmpty()
 	return true;
 }
 
+bool eDVBService::cacheAudioEmpty()
+{
+	if (m_cache)
+		for (int i=0; i < nAudioCacheTags; ++i)
+			if (m_cache[audioCacheTags[i]] != -1)
+				return false;
+	return true;
+}
+
 void eDVBService::initCache()
 {
 	m_cache = new int[cacheMax];
@@ -466,13 +485,15 @@ static ePtr<eDVBFrontendParameters> parseFrontendData(char* line, int version)
 				modulation=eDVBFrontendParametersSatellite::Modulation_QPSK,
 				rolloff=eDVBFrontendParametersSatellite::RollOff_alpha_0_35,
 				pilot=eDVBFrontendParametersSatellite::Pilot_Unknown,
-				is_id = NO_STREAM_ID_FILTER,
-				pls_code = 0,
-				pls_mode = eDVBFrontendParametersSatellite::PLS_Gold;
-			sscanf(line+2, "%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d",
+				is_id = eDVBFrontendParametersSatellite::No_Stream_Id_Filter,
+				pls_code = eDVBFrontendParametersSatellite::PLS_Default_Gold_Code,
+				pls_mode = eDVBFrontendParametersSatellite::PLS_Gold,
+				t2mi_plp_id = eDVBFrontendParametersSatellite::No_T2MI_PLP_Id,
+				t2mi_pid = eDVBFrontendParametersSatellite::T2MI_Default_Pid;
+			sscanf(line+2, "%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d:%d",
 				&frequency, &symbol_rate, &polarisation, &fec, &orbital_position,
 				&inversion, &flags, &system, &modulation, &rolloff, &pilot,
-				&is_id, &pls_code, &pls_mode);
+				&is_id, &pls_code, &pls_mode, &t2mi_plp_id, &t2mi_pid);
 			sat.frequency = frequency;
 			sat.symbol_rate = symbol_rate;
 			sat.polarisation = polarisation;
@@ -497,6 +518,8 @@ static ePtr<eDVBFrontendParameters> parseFrontendData(char* line, int version)
 				//else ...
 				if (strncmp(options, "MIS/PLS:", 8) == 0)
 					sscanf(options+8, "%d:%d:%d", &is_id, &pls_code, &pls_mode);
+				if (strncmp(options, "T2MI:", 5) == 0)
+					sscanf(options+5, "%d:%d", &t2mi_plp_id, &t2mi_pid);
 				options = next;
 			}
 			sat.is_id = is_id;
@@ -508,6 +531,8 @@ static ePtr<eDVBFrontendParameters> parseFrontendData(char* line, int version)
 				sat.pls_mode = eDVBFrontendParametersSatellite::PLS_Gold;
 				sat.pls_code = root2gold(sat.pls_code);
 			}
+			sat.t2mi_plp_id = t2mi_plp_id;
+			sat.t2mi_pid = t2mi_pid;
 			feparm->setDVBS(sat);
 			feparm->setFlags(flags);
 			break;
@@ -672,7 +697,7 @@ void eDVBDB::loadServiceListV5(FILE * f)
 			scount++;
 		}
 	}
-	eDebug("[eDVBDB] loaded %d channels/transponders and %d services", tcount, scount);
+	eDebug("loaded %d channels/transponders and %d services", tcount, scount);
 }
 
 void eDVBDB::loadServicelist(const char *file)
@@ -784,7 +809,7 @@ void eDVBDB::saveServicelist(const char *file)
 		fprintf(g, "eDVB services /5/\n");
 		fprintf(g, "# Transponders: t:dvb_namespace:transport_stream_id:original_network_id,FEPARMS\n");
 		fprintf(g, "#     DVBS  FEPARMS:   s:frequency:symbol_rate:polarisation:fec:orbital_position:inversion:flags\n");
-		fprintf(g, "#     DVBS2 FEPARMS:   s:frequency:symbol_rate:polarisation:fec:orbital_position:inversion:flags:system:modulation:rolloff:pilot[,MIS/PLS:is_id:pls_code:pls_mode]\n");
+		fprintf(g, "#     DVBS2 FEPARMS:   s:frequency:symbol_rate:polarisation:fec:orbital_position:inversion:flags:system:modulation:rolloff:pilot[,MIS/PLS:is_id:pls_code:pls_mode][,T2MI:t2mi_plp_id:t2mi_pid]\n");
 		fprintf(g, "#     DVBT  FEPARMS:   t:frequency:bandwidth:code_rate_HP:code_rate_LP:modulation:transmission_mode:guard_interval:hierarchy:inversion:flags:system:plp_id\n");
 		fprintf(g, "#     DVBC  FEPARMS:   c:frequency:symbol_rate:inversion:modulation:fec_inner:flags:system\n");
 		fprintf(g, "#     ATSC  FEPARMS:   a:frequency:inversion:modulation:flags:system\n");
@@ -834,7 +859,23 @@ void eDVBDB::saveServicelist(const char *file)
 					if (g)
 						fprintf(g, ",MIS/PLS:%d:%d:%d", sat.is_id, sat.pls_code & 0x3FFFF, sat.pls_mode & 3);
 				}
+				else if (static_cast<unsigned int>(sat.t2mi_plp_id) != eDVBFrontendParametersSatellite::No_T2MI_PLP_Id)
+				{
+					/*
+					 * Old lamedb format cannot have multiple optional values
+					 * so we must pad lamedb with default multistream values
+					 * otherwise the t2mi values will be stored on mulistream ones
+					 */
+					fprintf(f, ":%d:%d:%d", eDVBFrontendParametersSatellite::No_Stream_Id_Filter,
+						eDVBFrontendParametersSatellite::PLS_Default_Gold_Code, eDVBFrontendParametersSatellite::PLS_Gold);
+				}
 
+				if (static_cast<unsigned int>(sat.t2mi_plp_id) != eDVBFrontendParametersSatellite::No_T2MI_PLP_Id)
+				{
+					fprintf(f, ":%d:%d", sat.t2mi_plp_id, sat.t2mi_pid);
+					if (g)
+						fprintf(g, ",T2MI:%d:%d", sat.t2mi_plp_id, sat.t2mi_pid);
+				}
 			}
 			fprintf(f, "\n");
 			if (g)
@@ -1316,7 +1357,7 @@ PyObject *eDVBDB::readSatellites(ePyObject sat_list, ePyObject sat_dict, ePyObje
 	}
 
 	int tmp, *dest = NULL,
-		modulation, system, freq, sr, pol, fec, inv, pilot, rolloff, is_id, pls_code, pls_mode, tsid, onid;
+		modulation, system, freq, sr, pol, fec, inv, pilot, rolloff, is_id, pls_code, pls_mode, t2mi_plp_id, t2mi_pid, tsid, onid;
 	char *end_ptr;
 
 	xmlNode *root_element = xmlDocGetRootElement(doc);
@@ -1380,10 +1421,11 @@ PyObject *eDVBDB::readSatellites(ePyObject sat_list, ePyObject sat_dict, ePyObje
 				inv = eDVBFrontendParametersSatellite::Inversion_Unknown;
 				pilot = eDVBFrontendParametersSatellite::Pilot_Unknown;
 				rolloff = eDVBFrontendParametersSatellite::RollOff_alpha_0_35;
-				is_id = NO_STREAM_ID_FILTER;
-
-				pls_code = 0;
+				is_id = eDVBFrontendParametersSatellite::No_Stream_Id_Filter;
+				pls_code = eDVBFrontendParametersSatellite::PLS_Default_Gold_Code;
 				pls_mode = eDVBFrontendParametersSatellite::PLS_Gold;
+				t2mi_plp_id = eDVBFrontendParametersSatellite::No_T2MI_PLP_Id;
+				t2mi_pid = eDVBFrontendParametersSatellite::T2MI_Default_Pid;
 				tsid = -1;
 				onid = -1;
 
@@ -1402,6 +1444,8 @@ PyObject *eDVBDB::readSatellites(ePyObject sat_list, ePyObject sat_dict, ePyObje
 					else if (name == "is_id") dest = &is_id;
 					else if (name == "pls_code") dest = &pls_code;
 					else if (name == "pls_mode") dest = &pls_mode;
+					else if (name == "t2mi_plp_id") dest = &t2mi_plp_id;
+					else if (name == "t2mi_pid") dest = &t2mi_pid;
 					else if (name == "tsid") dest = &tsid;
 					else if (name == "onid") dest = &onid;
 					else continue;
@@ -1424,7 +1468,7 @@ PyObject *eDVBDB::readSatellites(ePyObject sat_list, ePyObject sat_dict, ePyObje
 						pls_mode = eDVBFrontendParametersSatellite::PLS_Gold;
 						pls_code = root2gold(pls_code);
 					}
-					tuple = PyTuple_New(15);
+					tuple = PyTuple_New(17);
 					PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(0));
 					PyTuple_SET_ITEM(tuple, 1, PyInt_FromLong(freq));
 					PyTuple_SET_ITEM(tuple, 2, PyInt_FromLong(sr));
@@ -1438,8 +1482,10 @@ PyObject *eDVBDB::readSatellites(ePyObject sat_list, ePyObject sat_dict, ePyObje
 					PyTuple_SET_ITEM(tuple, 10, PyInt_FromLong(is_id));
 					PyTuple_SET_ITEM(tuple, 11, PyInt_FromLong(pls_mode & 3));
 					PyTuple_SET_ITEM(tuple, 12, PyInt_FromLong(pls_code & 0x3FFFF));
-					PyTuple_SET_ITEM(tuple, 13, PyInt_FromLong(tsid));
-					PyTuple_SET_ITEM(tuple, 14, PyInt_FromLong(onid));
+					PyTuple_SET_ITEM(tuple, 13, PyInt_FromLong(t2mi_plp_id));
+					PyTuple_SET_ITEM(tuple, 14, PyInt_FromLong(t2mi_pid));
+					PyTuple_SET_ITEM(tuple, 15, PyInt_FromLong(tsid));
+					PyTuple_SET_ITEM(tuple, 16, PyInt_FromLong(onid));
 					PyList_Append(tplist, tuple);
 					Py_DECREF(tuple);
 				}
@@ -2340,6 +2386,22 @@ RESULT eDVBDB::startQuery(ePtr<iDVBChannelListQuery> &query, eDVBChannelQuery *q
 	else
 		query = new eDVBDBQuery(this, source, q);
 	return 0;
+}
+
+bool eDVBDB::isValidService(int tsid, int onid, int sid)
+{
+	eServiceID Sid(sid);
+	eTransportStreamID Tsid(tsid);
+	eOriginalNetworkID Onid(onid);
+	for (std::map<eServiceReferenceDVB, ePtr<eDVBService> >::iterator sit(m_services.begin());
+		sit != m_services.end(); ++sit)
+	{
+		if (sit->first.getTransportStreamID() == Tsid &&
+			sit->first.getOriginalNetworkID() == Onid &&
+			sit->first.getServiceID() == Sid)
+			return true;
+	}
+	return false;
 }
 
 eServiceReference eDVBDB::searchReference(int tsid, int onid, int sid)

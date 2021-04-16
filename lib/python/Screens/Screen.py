@@ -7,30 +7,31 @@ from Components.Sources.Source import Source
 profile("LOAD:GUIComponent")
 from Components.GUIComponent import GUIComponent
 profile("LOAD:eRCInput")
-from enigma import eRCInput
+from enigma import eRCInput, eTimer
+
 
 class Screen(dict, GUISkin):
 
-	False, SUSPEND_STOPS, SUSPEND_PAUSES = range(3)
-	ALLOW_SUSPEND = False
+	NO_SUSPEND, SUSPEND_STOPS, SUSPEND_PAUSES = range(3)
+	ALLOW_SUSPEND = NO_SUSPEND
 
 	global_screen = None
 
-	def __init__(self, session, parent = None):
+	def __init__(self, session, parent=None):
 		dict.__init__(self)
 		self.skinName = self.__class__.__name__
 		self.session = session
 		self.parent = parent
 		GUISkin.__init__(self)
 
-		self.onClose = [ ]
-		self.onFirstExecBegin = [ ]
-		self.onExecBegin = [ ]
-		self.onExecEnd = [ ]
-		self.onShown = [ ]
+		self.onClose = []
+		self.onFirstExecBegin = []
+		self.onExecBegin = []
+		self.onExecEnd = []
+		self.onShown = []
 
-		self.onShow = [ ]
-		self.onHide = [ ]
+		self.onShow = []
+		self.onHide = []
 
 		self.execing = False
 
@@ -38,11 +39,11 @@ class Screen(dict, GUISkin):
 		# already shown is false until the screen is really shown (after creation)
 		self.already_shown = False
 
-		self.renderer = [ ]
+		self.renderer = []
 
 		# in order to support screens *without* a help,
 		# we need the list in every screen. how ironic.
-		self.helpList = [ ]
+		self.helpList = []
 
 		self.close_on_next_exec = None
 
@@ -69,7 +70,7 @@ class Screen(dict, GUISkin):
 			rcinput.setKeyboardMode(self.keyboardMode)
 
 	def execBegin(self):
-		self.active_components = [ ]
+		self.active_components = []
 		if self.close_on_next_exec is not None:
 			tmp = self.close_on_next_exec
 			self.close_on_next_exec = None
@@ -100,11 +101,10 @@ class Screen(dict, GUISkin):
 	def execEnd(self):
 		active_components = self.active_components
 #		for (name, val) in self.items():
-		self.active_components = None
-		if active_components is not None:
-			for val in active_components:
-				val.execEnd()
-#		assert self.session != None, "execEnd on non-execing screen!"
+		self.active_components = []
+		for val in active_components:
+			val.execEnd()
+#		assert self.session is not None, "execEnd on non-execing screen!"
 #		self.session = None
 		self.execing = False
 		for x in self.onExecEnd:
@@ -132,7 +132,7 @@ class Screen(dict, GUISkin):
 			val.destroy()
 			del self[name]
 
-		self.renderer = [ ]
+		self.renderer = []
 
 		# really delete all elements now
 		self.__dict__.clear()
@@ -185,3 +185,8 @@ class Screen(dict, GUISkin):
 			return self.global_screen
 		else:
 			return None
+
+	def callLater(self, function):
+		self.__callLaterTimer = eTimer()
+		self.__callLaterTimer.callback.append(function)
+		self.__callLaterTimer.start(0, True)

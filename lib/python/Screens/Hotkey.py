@@ -13,9 +13,17 @@ from Tools.BoundFunction import boundFunction
 from ServiceReference import ServiceReference
 from enigma import eServiceReference, eActionMap
 from Components.Label import Label
+from boxbranding import getHaveHDMIinHD, getHaveHDMIinFHD, getHaveCI
 import os
 
-updateversion = "31.07.2018"
+updateversion = "11.07.2019"
+
+if os.uname()[4] == "aarch64":
+	pathLen = 26
+else:
+	pathLen = 24
+ppath = os.environ['PYTHONPATH'].split(os.pathsep)[0]
+
 
 def getHotkeys():
 	return [(_("OK long"), "okbutton_long", "Infobar/openInfoBarEPG"),
@@ -51,8 +59,8 @@ def getHotkeys():
 	(_("F5 long"), "f5_long", "Infobar/showMovies"),
 	(_("F6"), "f6", "Plugins/Extensions/EnhancedMovieCenter/1"),
 	(_("F6 long"), "f6_long", "Infobar/showMovies"),
-	(_("Audio"), "audio", "Infobar/audioSelection"),
-	(_("Audio long"), "audio_long", ""),
+#	(_("Audio"), "audio", "Infobar/audioSelection"),
+#	(_("Audio long"), "audio_long", "Infobar/subtitleSelection"),
 	(_("Back "), "back", "Infobar/historyZap"),
 	(_("Back long"), "back_long", "Plugins/Extensions/ZapHistoryBrowser/1"),
 	(_("Channel up"), "channelup", "Infobar/zapUp"),
@@ -116,6 +124,8 @@ def getHotkeys():
 	(_("Plugin"), "mark", "Infobar/showMovies"),
 	(_("Prov/Fav"), "ab", "Infobar/openFavouritesList"),
 	(_("Prov/Fav long"), "ab_long", ""),
+	(_("Eject"), "ejectcd", "Infobar/vmodeSelection"),
+	(_("Eject long"), "ejectcd_long", ""),
 	(_("Power (use button menu)"), "powerstandby", ""),
 	(_("Power long (use button menu)"), "powerstandby_long", ""),
 	(_("Previous"), "previous", "Infobar/historyZapBackward"),
@@ -157,12 +167,18 @@ def getHotkeys():
 	(_("Y-Tube/WWW long"), "www_long", ""),
 	(_("Directory "), "directory", ""),
 	(_("Directory long"), "directory_long", ""),
-	(_("Zoom"), "ZoomInOut", "InfobarGenerics/ZoomInOut"),]
+	(_("MOUSE"), "mouse", "Module/Screens.ServiceInfo/ServiceInfo"),
+	(_("MOUSE long"), "mouse_long", ""),
+	(_("VOD"), "vod", "Infobar/seekFwdVod"),
+	(_("VOD long"), "vod_long", ""),
+	(_("Zoom"), "ZoomInOut", "InfobarGenerics/ZoomInOut"), ]
+
 
 config.misc.hotkey = ConfigSubsection()
 config.misc.hotkey.additional_keys = ConfigYesNo(default=True)
 for x in getHotkeys():
 	exec "config.misc.hotkey." + x[1] + " = ConfigText(default='" + x[2] + "')"
+
 
 def getHotkeyFunctions():
 	hotkeyFunctions = []
@@ -172,21 +188,21 @@ def getHotkeyFunctions():
 	pluginlist.sort(key=lambda p: p.name)
 	for plugin in pluginlist:
 		if plugin.name not in twinPlugins and plugin.path and 'selectedevent' not in plugin.__call__.func_code.co_varnames:
-			if twinPaths.has_key(plugin.path[24:]):
-				twinPaths[plugin.path[24:]] += 1
+			if twinPaths.has_key(plugin.path[pathLen:]):
+				twinPaths[plugin.path[pathLen:]] += 1
 			else:
-				twinPaths[plugin.path[24:]] = 1
-			hotkeyFunctions.append((plugin.name, plugin.path[24:] + "/" + str(twinPaths[plugin.path[24:]]) , "EPG"))
+				twinPaths[plugin.path[pathLen:]] = 1
+			hotkeyFunctions.append((plugin.name, plugin.path[pathLen:] + "/" + str(twinPaths[plugin.path[pathLen:]]), "EPG"))
 			twinPlugins.append(plugin.name)
 	pluginlist = plugins.getPlugins([PluginDescriptor.WHERE_PLUGINMENU, PluginDescriptor.WHERE_EXTENSIONSMENU, PluginDescriptor.WHERE_EVENTINFO])
 	pluginlist.sort(key=lambda p: p.name)
 	for plugin in pluginlist:
 		if plugin.name not in twinPlugins and plugin.path:
-			if twinPaths.has_key(plugin.path[24:]):
-				twinPaths[plugin.path[24:]] += 1
+			if twinPaths.has_key(plugin.path[pathLen:]):
+				twinPaths[plugin.path[pathLen:]] += 1
 			else:
-				twinPaths[plugin.path[24:]] = 1
-			hotkeyFunctions.append((plugin.name, plugin.path[24:] + "/" + str(twinPaths[plugin.path[24:]]) , "Plugins"))
+				twinPaths[plugin.path[pathLen:]] = 1
+			hotkeyFunctions.append((plugin.name, plugin.path[pathLen:] + "/" + str(twinPaths[plugin.path[pathLen:]]), "Plugins"))
 			twinPlugins.append(plugin.name)
 	hotkeyFunctions.append((_("Show Graphical Multi EPG"), "Infobar/openGraphEPG", "EPG"))
 	hotkeyFunctions.append((_("Show Event View"), "Infobar/openEventView", "EPG"))
@@ -211,6 +227,7 @@ def getHotkeyFunctions():
 	hotkeyFunctions.append((_("Show Service List"), "Infobar/openServiceList", "InfoBar"))
 	hotkeyFunctions.append((_("History Zap Menu Plus"), "Infobar/historyZapForward", "InfoBar"))
 	hotkeyFunctions.append((_("History Zap Menu Minus"), "Infobar/historyZapBackward", "InfoBar"))
+	hotkeyFunctions.append((_("History Zap Menu"), "Infobar/historyZapMenu", "InfoBar"))
 	hotkeyFunctions.append((_("History back"), "Infobar/historyBack", "InfoBar"))
 	hotkeyFunctions.append((_("History next"), "Infobar/historyNext", "InfoBar"))
 	hotkeyFunctions.append((_("Show Audioselection"), "Infobar/audioSelection", "InfoBar"))
@@ -241,18 +258,17 @@ def getHotkeyFunctions():
 		hotkeyFunctions.append((_("Move Picture In Picture"), "Infobar/movePiP", "InfoBar"))
 		hotkeyFunctions.append((_("Toggle Picture In Picture Zap"), "Infobar/togglePipzap", "InfoBar"))
 	hotkeyFunctions.append((_("Activate HbbTV (Redbutton)"), "Infobar/activateRedButton", "InfoBar"))
-	if SystemInfo["HDMIin"]:
+	if getHaveHDMIinHD() in ('True') or getHaveHDMIinFHD() in ('True'):
 		hotkeyFunctions.append((_("Toggle HDMI-In Full Screen"), "Infobar/HDMIInFull", "InfoBar"))
 		hotkeyFunctions.append((_("Toggle HDMI-In Picture In Picture"), "Infobar/HDMIInPiP", "InfoBar"))
 	if SystemInfo["LcdLiveTV"]:
 		hotkeyFunctions.append((_("Toggle LCD LiveTV"), "Infobar/ToggleLCDLiveTV", "InfoBar"))
-	if SystemInfo["HaveMultiBootHD"]:
-		hotkeyFunctions.append((_("MultiBoot Selector"), "Module/Screens.MultiBootStartup/MultiBootStartup", "InfoBar"))
-	if SystemInfo["HaveMultiBootGB"]:
-		hotkeyFunctions.append((_("MultiBoot Selector"), "Module/Screens.MultiBootStartupGB/MultiBootStartup", "InfoBar"))
+	if SystemInfo["canMultiBoot"]:
+		hotkeyFunctions.append((_("MultiBootSelector"), "Module/Screens.MultiBootSelector/MultiBootSelector", "InfoBar"))
 	hotkeyFunctions.append((_("HotKey Setup"), "Module/Screens.Hotkey/HotkeySetup", "Setup"))
 	hotkeyFunctions.append((_("Software Update"), "Module/Screens.SoftwareUpdate/UpdatePlugin", "Setup"))
-	hotkeyFunctions.append((_("CI (Common Interface) Setup"), "Module/Screens.Ci/CiSelection", "Setup"))
+	if getHaveCI() in ('True'):
+		hotkeyFunctions.append((_("CI (Common Interface) Setup"), "Module/Screens.Ci/CiSelection", "Setup"))
 	hotkeyFunctions.append((_("Videosetup"), "Module/Screens.VideoMode/VideoSetup", "Setup"))
 	hotkeyFunctions.append((_("Tuner Configuration"), "Module/Screens.Satconfig/NimSelection", "Scanning"))
 	hotkeyFunctions.append((_("Manual Scan"), "Module/Screens.ScanSetup/ScanSetup", "Scanning"))
@@ -284,7 +300,9 @@ def getHotkeyFunctions():
 	hotkeyFunctions.append((_("Subtitles Settings"), "Setup/subtitlesetup", "Setup"))
 	hotkeyFunctions.append((_("Language"), "Module/Screens.LanguageSelection/LanguageSelection", "Setup"))
 	hotkeyFunctions.append((_("Skin setup"), "Module/Screens.SkinSelector/SkinSelector", "Setup"))
-	if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/Kodi/plugin.pyo"):
+	hotkeyFunctions.append((_("OscamInfo"), "Module/Screens.OScamInfo/OscamInfoMenu", "Plugins"))
+	hotkeyFunctions.append((_("CCcamInfo"), "Module/Screens.CCcamInfo/CCcamInfoMain", "Plugins"))
+	if os.path.isfile(ppath + "/Plugins/Extensions/Kodi/plugin.pyo"):
 		hotkeyFunctions.append((_("Kodi Media Center"), "Kodi/", "Plugins"))
 	if os.path.isdir("/etc/ppanel"):
 		for x in [x for x in os.listdir("/etc/ppanel") if x.endswith(".xml")]:
@@ -295,6 +313,7 @@ def getHotkeyFunctions():
 			x = x[:-3]
 			hotkeyFunctions.append((_(" ") + " " + x, "Shellscript/" + x, "Shellscripts"))
 	return hotkeyFunctions
+
 
 class HotkeySetup(Screen):
 	def __init__(self, session, args=None):
@@ -308,8 +327,8 @@ class HotkeySetup(Screen):
 		self.hotkeys = getHotkeys()
 		self.hotkeyFunctions = getHotkeyFunctions()
 		for x in self.hotkeys:
-			self.list.append(ChoiceEntryComponent('',(x[0], x[1])))
-		self["list"] = ChoiceList(list=self.list[:config.misc.hotkey.additional_keys.value and len(self.hotkeys) or 16], selection = 0)
+			self.list.append(ChoiceEntryComponent('', (x[0], x[1])))
+		self["list"] = ChoiceList(list=self.list[:config.misc.hotkey.additional_keys.value and len(self.hotkeys) or 16], selection=0)
 		self["choosen"] = ChoiceList(list=[])
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions", "DirectionActions"],
 		{
@@ -372,17 +391,18 @@ class HotkeySetup(Screen):
 		key = self["list"].l.getCurrentSelection()[0][1]
 		if key:
 			selected = []
-			for x in eval("config.misc.hotkey." + key + ".value.split(',')"):
-				function = list(function for function in self.hotkeyFunctions if function[1] == x )
+			for x in getattr(config.misc.hotkey, key).value.split(','):
+				function = next((function for function in self.hotkeyFunctions if function[1] == x), None)
 				if function:
-					selected.append(ChoiceEntryComponent('',((function[0][0]), function[0][1])))
+					selected.append(ChoiceEntryComponent('', ((function[0]), function[1])))
 			self["choosen"].setList(selected)
+
 
 class HotkeySetupSelect(Screen):
 	def __init__(self, session, key, args=None):
 		Screen.__init__(self, session)
 		self['description'] = Label(_('Select the desired function and click on OK to assign it. Use CH+/- to toggle between the lists. Select an assigned function and click on OK to de-assign it.'))
-		self.skinName="ButtonSetupSelect"
+		self.skinName = "ButtonSetupSelect"
 		self.session = session
 		self.key = key
 		self.setTitle(_("Hotkey Setup") + " " + key[0][0])
@@ -390,18 +410,13 @@ class HotkeySetupSelect(Screen):
 		self["key_green"] = Button(_("Save"))
 		self.mode = "list"
 		self.hotkeyFunctions = getHotkeyFunctions()
-		self.config = eval("config.misc.hotkey." + key[0][1])
+		self.config = getattr(config.misc.hotkey, key[0][1])
 		self.expanded = []
 		self.selected = []
 		for x in self.config.value.split(','):
-			if x.startswith("ZapPanic"):
-				self.selected.append(ChoiceEntryComponent('',((_("Panic to") + " " + ServiceReference(eServiceReference(x.split("/", 1)[1]).toString()).getServiceName()), x)))
-			elif x.startswith("Zap"):
-				self.selected.append(ChoiceEntryComponent('',((_("Zap to") + " " + ServiceReference(eServiceReference(x.split("/", 1)[1]).toString()).getServiceName()), x)))
-			else:
-				function = list(function for function in self.hotkeyFunctions if function[1] == x )
-				if function:
-					self.selected.append(ChoiceEntryComponent('',((function[0][0]), function[0][1])))
+			function = next((function for function in self.hotkeyFunctions if function[1] == x), None)
+			if function:
+				self.selected.append(ChoiceEntryComponent('', ((function[0]), function[1])))
 		self.prevselected = self.selected[:]
 		self["choosen"] = ChoiceList(list=self.selected, selection=0)
 		self["list"] = ChoiceList(list=self.getFunctionList(), selection=0)
@@ -438,14 +453,14 @@ class HotkeySetupSelect(Screen):
 			catagories[function[2]].append(function)
 		for catagorie in sorted(list(catagories)):
 			if catagorie in self.expanded:
-				functionslist.append(ChoiceEntryComponent('expanded',((catagorie), "Expander")))
+				functionslist.append(ChoiceEntryComponent('expanded', ((catagorie), "Expander")))
 				for function in catagories[catagorie]:
-					functionslist.append(ChoiceEntryComponent('verticalline',((function[0]), function[1])))
+					functionslist.append(ChoiceEntryComponent('verticalline', ((function[0]), function[1])))
 				if catagorie == "InfoBar":
-					functionslist.append(ChoiceEntryComponent('verticalline',((_("Zap to")), "Zap")))
-					functionslist.append(ChoiceEntryComponent('verticalline',((_("Panic to")), "ZapPanic")))
+					functionslist.append(ChoiceEntryComponent('verticalline', ((_("Zap to")), "Zap")))
+					functionslist.append(ChoiceEntryComponent('verticalline', ((_("Panic to")), "ZapPanic")))
 			else:
-				functionslist.append(ChoiceEntryComponent('expandable',((catagorie), "Expander")))
+				functionslist.append(ChoiceEntryComponent('expandable', ((catagorie), "Expander")))
 		return functionslist
 
 	def toggleMode(self):
@@ -488,7 +503,7 @@ class HotkeySetupSelect(Screen):
 	def zaptoCallback(self, *args):
 		if args:
 			currentSelected = self["list"].l.getCurrentSelection()[:]
-			currentSelected[1]=currentSelected[1][:-1] + (currentSelected[0][0] + " " + ServiceReference(args[0]).getServiceName(),)
+			currentSelected[1] = currentSelected[1][:-1] + (currentSelected[0][0] + " " + ServiceReference(args[0]).getServiceName(),)
 			self.selected.append([(currentSelected[0][0], currentSelected[0][1] + "/" + args[0].toString()), currentSelected[1]])
 
 	def keyLeft(self):
@@ -536,6 +551,7 @@ class HotkeySetupSelect(Screen):
 	def cancelCallback(self, answer):
 		answer and self.close()
 
+
 class hotkeyActionMap(ActionMap):
 	def action(self, contexts, action):
 		if (action in tuple(x[1] for x in getHotkeys()) and self.actions.has_key(action)):
@@ -545,6 +561,7 @@ class hotkeyActionMap(ActionMap):
 			return 1
 		else:
 			return ActionMap.action(self, contexts, action)
+
 
 class helpableHotkeyActionMap(HelpableActionMap):
 	def action(self, contexts, action):
@@ -556,11 +573,12 @@ class helpableHotkeyActionMap(HelpableActionMap):
 		else:
 			return ActionMap.action(self, contexts, action)
 
+
 class InfoBarHotkey():
 	def __init__(self):
 		self.hotkeys = getHotkeys()
 		self["HotkeyButtonActions"] = helpableHotkeyActionMap(self, "HotkeyActions",
-			dict((x[1],(self.hotkeyGlobal, boundFunction(self.getHelpText, x[1]))) for x in self.hotkeys), -10)
+			dict((x[1], (self.hotkeyGlobal, boundFunction(self.getHelpText, x[1]))) for x in self.hotkeys), -10)
 		self.onExecBegin.append(self.clearLongkeyPressed)
 
 	def clearLongkeyPressed(self):
@@ -577,7 +595,7 @@ class InfoBarHotkey():
 			elif x.startswith("Zap"):
 				selected.append(((_("Zap to") + " " + ServiceReference(eServiceReference(x.split("/", 1)[1]).toString()).getServiceName()), x))
 			else:
-				function = list(function for function in getHotkeyFunctions() if function[1] == x )
+				function = list(function for function in getHotkeyFunctions() if function[1] == x)
 				if function:
 					selected.append(function[0])
 		return selected
@@ -615,11 +633,11 @@ class InfoBarHotkey():
 				pluginlist.sort(key=lambda p: p.name)
 				for plugin in pluginlist:
 					if plugin.name not in twinPlugins and plugin.path and 'selectedevent' not in plugin.__call__.func_code.co_varnames:
-						if twinPaths.has_key(plugin.path[24:]):
-							twinPaths[plugin.path[24:]] += 1
+						if twinPaths.has_key(plugin.path[pathLen:]):
+							twinPaths[plugin.path[pathLen:]] += 1
 						else:
-							twinPaths[plugin.path[24:]] = 1
-						if plugin.path[24:] + "/" + str(twinPaths[plugin.path[24:]])== "/".join(selected):
+							twinPaths[plugin.path[pathLen:]] = 1
+						if plugin.path[pathLen:] + "/" + str(twinPaths[plugin.path[pathLen:]]) == "/".join(selected):
 							self.runPlugin(plugin)
 							return
 						twinPlugins.append(plugin.name)
@@ -627,11 +645,11 @@ class InfoBarHotkey():
 				pluginlist.sort(key=lambda p: p.name)
 				for plugin in pluginlist:
 					if plugin.name not in twinPlugins and plugin.path:
-						if twinPaths.has_key(plugin.path[24:]):
-							twinPaths[plugin.path[24:]] += 1
+						if twinPaths.has_key(plugin.path[pathLen:]):
+							twinPaths[plugin.path[pathLen:]] += 1
 						else:
-							twinPaths[plugin.path[24:]] = 1
-						if plugin.path[24:] + "/" + str(twinPaths[plugin.path[24:]])== "/".join(selected):
+							twinPaths[plugin.path[pathLen:]] = 1
+						if plugin.path[pathLen:] + "/" + str(twinPaths[plugin.path[pathLen:]]) == "/".join(selected):
 							self.runPlugin(plugin)
 							return
 						twinPlugins.append(plugin.name)
@@ -647,19 +665,19 @@ class InfoBarHotkey():
 					return 0
 			elif selected[0] == "Module":
 				try:
-					exec "from " + selected[1] + " import *"
-					exec "self.session.open(" + ",".join(selected[2:]) + ")"
+					exec "from %s import %s" % (selected[1], selected[2])
+					exec "self.session.open(%s)" % ",".join(selected[2:])
 				except:
 					print "[Hotkey] error during executing module %s, screen %s" % (selected[1], selected[2])
 			elif selected[0] == "Setup":
-				exec "from Screens.Setup import *"
-				exec "self.session.open(Setup, \"" + selected[1] + "\")"
+				from Screens.Setup import Setup
+				exec "self.session.open(Setup, \"%s\")" % selected[1]
 			elif selected[0].startswith("Zap"):
 				if selected[0] == "ZapPanic":
 					self.servicelist.history = []
 					self.pipShown() and self.showPiP()
 				self.servicelist.servicelist.setCurrent(eServiceReference("/".join(selected[1:])))
-				self.servicelist.zap(enable_pipzap = True)
+				self.servicelist.zap(enable_pipzap=True)
 				if hasattr(self, "lastservice"):
 					self.lastservice = eServiceReference("/".join(selected[1:]))
 					self.close()
@@ -667,12 +685,12 @@ class InfoBarHotkey():
 					self.show()
 			elif selected[0] == "PPanel":
 				ppanelFileName = '/etc/ppanels/' + selected[1] + ".xml"
-				if os.path.isfile(ppanelFileName) and os.path.isdir('/usr/lib/enigma2/python/Plugins/Extensions/PPanel'):
+				if os.path.isfile(ppanelFileName) and os.path.isdir(ppath + "/Plugins/Extensions/PPanel"):
 					from Plugins.Extensions.PPanel.ppanel import PPanel
 					self.session.open(PPanel, name=selected[1] + ' PPanel', node=None, filename=ppanelFileName, deletenode=None)
 			elif selected[0] == "Shellscript":
 				command = '/usr/scripts/' + selected[1] + ".sh"
-				if os.path.isfile(command) and os.path.isdir('/usr/lib/enigma2/python/Plugins/Extensions/PPanel'):
+				if os.path.isfile(command) and os.path.isdir(ppath + "/Plugins/Extensions/PPanel"):
 					from Plugins.Extensions.PPanel.ppanel import Execute
 					self.session.open(Execute, selected[1] + " shellscript", None, command)
 				else:
@@ -685,7 +703,7 @@ class InfoBarHotkey():
 				except Exception as e:
 					print('[EMCPlayer] showMovies exception:\n' + str(e))
 			elif selected[0] == "Kodi":
-				if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/Kodi/plugin.pyo"):
+				if os.path.isfile(ppath + "/Plugins/Extensions/Kodi/plugin.pyo"):
 					from Plugins.Extensions.Kodi.plugin import KodiMainScreen
 					self.session.open(KodiMainScreen)
 			elif selected[0] == "DeviceManager":

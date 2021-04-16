@@ -1,5 +1,4 @@
 AM_CPPFLAGS = \
-	$(BOOST_CPPFLAGS) \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/include \
 	-include Python.h \
@@ -49,13 +48,9 @@ enigma2_LDADD = \
 	@DVBCSA_LIBS@ \
 	@AVAHI_LIBS@ \
 	@LIBHIACCEL_LIBS@ \
-	@BOOST_SYSTEM_LIB@ \
-	@BOOST_THREAD_LIB@ \
-	-lboost_python \
 	-ltuxtxt -ltuxtxt32bpp -lcrypt -lrt -ldl
 
-enigma2_LDFLAGS = -Wl,--export-dynamic \
-	-lboost_python
+enigma2_LDFLAGS = -Wl,--export-dynamic
 
 if HAVE_GIT_DIR
 GIT_DIR = $(top_srcdir)/.git

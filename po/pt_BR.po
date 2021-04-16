@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: enigma2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-01-30 22:11+0100\n"
-"PO-Revision-Date: 2014-01-22 23:31+0100\n"
+"PO-Revision-Date: 2019-08-27 05:25+0200\n"
 "Last-Translator: Andy Blackburn <andyblac@icloud.com>\n"
 "Language-Team: No-Team\n"
 "Language: pt\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 2.2.3\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
 
 msgid ""
@@ -7956,7 +7956,7 @@ msgstr ""
 msgid "This option moves the PVR status from the separate window into the Movie Player infobar."
 msgstr ""
 
-msgid "This option set the level of surpression of musquito noise (Musquito Noise is random aliasing as a result of strong compression). Obviously this goes at the cost of picture details."
+msgid "This option set the level of suppression of mosquito noise (Mosquito Noise is random aliasing as a result of strong compression). Obviously this goes at the cost of picture details."
 msgstr ""
 
 msgid "This option sets  the picture contrast."
@@ -8979,7 +8979,7 @@ msgstr "Definir limites"
 msgid "What Day of week ?"
 msgstr ""
 
-msgid "What action is required on complettion of the timer? 'Auto' lets the box return to the state it had when the timer started. 'Do nothing', 'Go to standby' and 'Go to deep standby' do ecaxtly that."
+msgid "What action is required on completion of the timer? 'Auto' lets the box return to the state it had when the timer started. 'Do nothing', 'Go to standby' and 'Go to deep standby' do ecaxtly that."
 msgstr ""
 
 msgid "What date of month ?"
@@ -9347,10 +9347,10 @@ msgstr "Espere por favor %s!"
 
 #, fuzzy
 msgid ""
-"You need a PC connected to your %s %s. If you need further instructions, please visit the website http://www.dm7025.de.\n"
+"You need a PC connected to your %s %s. If you need further instructions, please visit the website http://www.hdfreaks.cc.\n"
 "Your %s %s will now be halted. After you have performed the update instructions from the website, your new firmware will ask you to restore your settings."
 msgstr ""
-"Você precisa de um computador conectado ao receptor. Se você precisar de instruções adicionais, visite o website http://www.dm7025.de.\n"
+"Você precisa de um computador conectado ao receptor. Se você precisar de instruções adicionais, visite o website http://www.hdfreaks.cc.\n"
 "O seu receptor será interrompido agora. Depois de ter realizado as instruções de atualização do site, o seu novo firmware irá pedir para restaurar suas configurações."
 
 msgid "You seem to be in timeshift!"
@@ -10740,4 +10740,3 @@ msgstr "desencriptar e gravar ecm"
 
 msgid "zapped"
 msgstr "zapped"
-

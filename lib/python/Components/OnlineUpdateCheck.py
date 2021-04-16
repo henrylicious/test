@@ -13,6 +13,7 @@ def OnlineUpdateCheck(session=None, **kwargs):
 	onlineupdatecheckpoller = OnlineUpdateCheckPoller()
 	onlineupdatecheckpoller.start()
 
+
 class OnlineUpdateCheckPoller:
 	def __init__(self):
 		# Init Timer
@@ -57,7 +58,7 @@ class OnlineUpdateCheckPoller:
 				self.ipkg.startCmd(IpkgComponent.CMD_UPGRADE_LIST)
 			elif self.ipkg.currentCommand == IpkgComponent.CMD_UPGRADE_LIST:
 				self.total_packages = len(self.ipkg.getFetchedList())
-				print ('[OnlineVersionCheck] %s Updates available' % self.total_packages)
+				print('[OnlineVersionCheck] %s Updates available' % self.total_packages)
 				if self.total_packages:
 					from urllib import urlopen
 					import socket
@@ -65,7 +66,7 @@ class OnlineUpdateCheckPoller:
 					socket.setdefaulttimeout(3)
 					config.softwareupdate.updatefound.setValue(True)
 					try:
-						config.softwareupdate.updateisunstable.setValue(urlopen("http://www.status.hdfreaks.cc/status").read())
+						config.softwareupdate.updateisunstable.setValue(urlopen("http://status.hdfreaks.cc/status").read())
 					except:
 						config.softwareupdate.updateisunstable.setValue(1)
 					socket.setdefaulttimeout(currentTimeoutDefault)
@@ -74,6 +75,7 @@ class OnlineUpdateCheckPoller:
 			else:
 				config.softwareupdate.updatefound.setValue(False)
 		pass
+
 
 class VersionCheck:
 	def __init__(self):
@@ -100,5 +102,6 @@ class VersionCheck:
 				return False
 		else:
 			return False
+
 
 versioncheck = VersionCheck()

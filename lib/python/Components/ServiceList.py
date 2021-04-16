@@ -11,13 +11,15 @@ from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
 from Components.Renderer.Picon import getPiconName
 from Components.config import config
 
-def refreshServiceList(configElement = None):
+
+def refreshServiceList(configElement=None):
 	from Screens.InfoBar import InfoBar
 	InfoBarInstance = InfoBar.instance
 	if InfoBarInstance is not None:
 		servicelist = InfoBarInstance.servicelist
 		if servicelist:
 			servicelist.setMode()
+
 
 class ServiceList(HTMLComponent, GUIComponent):
 	MODE_NORMAL = 0
@@ -74,15 +76,15 @@ class ServiceList(HTMLComponent, GUIComponent):
 		self.ServiceNameFontSize = 22
 		self.ServiceInfoFontName = "Regular"
 		self.ServiceInfoFontSize = 18
-		self.progressBarWidth = 52
+		self.progressBarWidth = config.usage.serviceinfo_progressBarWidth.value
 		self.fieldMargins = 10
 
-		self.onSelectionChanged = [ ]
+		self.onSelectionChanged = []
 
 	def applySkin(self, desktop, parent):
-		attribs = [ ]
+		attribs = []
 		if self.skinAttributes is not None:
-			attribs = [ ]
+			attribs = []
 			for (attrib, value) in self.skinAttributes:
 				if attrib == "foregroundColorMarked":
 					self.l.setColor(eListboxServiceContent.markedForeground, parseColor(value))
@@ -131,15 +133,15 @@ class ServiceList(HTMLComponent, GUIComponent):
 				elif attrib == "serviceItemHeight":
 					self.ItemHeight = int(value)
 				elif attrib == "serviceNameFont":
-					font = parseFont(value, ((1,1),(1,1)) )
+					font = parseFont(value, ((1, 1), (1, 1)))
 					self.ServiceNameFontName = font.family
 					self.ServiceNameFontSize = font.pointSize
 				elif attrib == "serviceInfoFont":
-					font = parseFont(value, ((1,1),(1,1)) )
+					font = parseFont(value, ((1, 1), (1, 1)))
 					self.ServiceInfoFontName = font.family
 					self.ServiceInfoFontSize = font.pointSize
 				elif attrib == "serviceNumberFont":
-					font = parseFont(value, ((1,1),(1,1)) )
+					font = parseFont(value, ((1, 1), (1, 1)))
 					self.ServiceNumberFontName = font.family
 					self.ServiceNumberFontSize = font.pointSize
 				elif attrib == "progressbarHeight":
@@ -154,6 +156,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 		self.listHeight = self.instance.size().height()
 		self.listWidth = self.instance.size().width()
 		self.setItemsPerPage()
+		self.setServiceFontsize()
 		return rc
 
 	def connectSelChanged(self, fnc):
@@ -252,7 +255,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 
 	def setItemsPerPage(self):
 		if self.listHeight > 0:
-			itemHeight = self.listHeight / config.usage.serviceitems_per_page.value
+			itemHeight = int(self.listHeight / (config.usage.serviceitems_per_page.value / (1 + float(config.usage.servicelist_twolines.value))))
 		else:
 			itemHeight = 28
 		self.ItemHeight = itemHeight
@@ -285,7 +288,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 	def getRootServices(self):
 		serviceHandler = eServiceCenter.getInstance()
 		list = serviceHandler.list(self.root)
-		dest = [ ]
+		dest = []
 		if list is not None:
 			while 1:
 				s = list.getNext()
@@ -338,7 +341,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 		i = self.l
 		i.markedQueryStart()
 		ref = eServiceReference()
-		marked = [ ]
+		marked = []
 		while i.markedQueryNext(ref) == 0:
 			marked.append(ref.toString())
 			ref = eServiceReference()
@@ -354,6 +357,8 @@ class ServiceList(HTMLComponent, GUIComponent):
 		self.setItemsPerPage()
 		self.l.setItemHeight(self.ItemHeight)
 		self.l.setVisualMode(eListboxServiceContent.visModeComplex)
+		self.l.setServicePiconRatio(int(config.usage.servicelist_picon_ratio.value))
+		self.l.setShowTwoLines(config.usage.servicelist_twolines.value)
 
 		if config.usage.service_icon_enable.value:
 			self.l.setGetPiconNameFunc(getPiconName)
@@ -372,23 +377,24 @@ class ServiceList(HTMLComponent, GUIComponent):
 		self.l.setElementPosition(self.l.celServiceNumber, eRect(0, 0, channelNumberWidth, self.ItemHeight))
 
 		if "left" in config.usage.show_event_progress_in_servicelist.value:
-			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(channelNumberWidth+channelNumberSpace, 0, self.progressBarWidth , self.ItemHeight))
-			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth+channelNumberSpace + self.progressBarWidth + self.fieldMargins, 0, rowWidth - (channelNumberWidth+channelNumberSpace + self.progressBarWidth + self.fieldMargins), self.ItemHeight))
+			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(channelNumberWidth + channelNumberSpace, 0, self.progressBarWidth, self.ItemHeight))
+			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth + channelNumberSpace + self.progressBarWidth + self.fieldMargins, 0, rowWidth - (channelNumberWidth + channelNumberSpace + self.progressBarWidth + self.fieldMargins), self.ItemHeight))
 		elif "right" in config.usage.show_event_progress_in_servicelist.value:
 			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(rowWidth - self.progressBarWidth, 0, self.progressBarWidth, self.ItemHeight))
-			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth+channelNumberSpace, 0, rowWidth - (channelNumberWidth+channelNumberSpace + self.progressBarWidth + self.fieldMargins), self.ItemHeight))
+			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth + channelNumberSpace, 0, rowWidth - (channelNumberWidth + channelNumberSpace + self.progressBarWidth + self.fieldMargins), self.ItemHeight))
 		else:
 			self.l.setElementPosition(self.l.celServiceEventProgressbar, eRect(0, 0, 0, 0))
-			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth+channelNumberSpace, 0, rowWidth - (channelNumberWidth+channelNumberSpace), self.ItemHeight))
+			self.l.setElementPosition(self.l.celServiceName, eRect(channelNumberWidth + channelNumberSpace, 0, rowWidth - (channelNumberWidth + channelNumberSpace), self.ItemHeight))
 		self.l.setElementFont(self.l.celServiceName, self.ServiceNameFont)
 		self.l.setElementFont(self.l.celServiceNumber, self.ServiceNumberFont)
 		self.l.setElementFont(self.l.celServiceInfo, self.ServiceInfoFont)
 		if "perc" in config.usage.show_event_progress_in_servicelist.value:
 			self.l.setElementFont(self.l.celServiceEventProgressbar, self.ServiceInfoFont)
+		self.l.setHideNumberMarker(config.usage.hide_number_markers.value)
 		self.l.setServiceTypeIconMode(int(config.usage.servicetype_icon_mode.value))
 		self.l.setCryptoIconMode(int(config.usage.crypto_icon_mode.value))
 		self.l.setRecordIndicatorMode(int(config.usage.record_indicator_mode.value))
-		self.l.setColumnWidth(int(config.usage.servicelist_column.value))
+		self.l.setColumnWidth(-1 if config.usage.servicelist_twolines.value else int(config.usage.servicelist_column.value))
 
 	def selectionEnabled(self, enabled):
 		if self.instance is not None:

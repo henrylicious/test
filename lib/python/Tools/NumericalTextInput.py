@@ -52,15 +52,15 @@ MAP_DE = (
 	u"wxyz9WXYZ",
 	)
 MAP_ES = (
-	u"0,¿?¡!&@=*'+\"()€$~%#",
+	u"0,?!&@=*'+\"()$~%#",
 	u" 1.:;/-_",
-	u"abcçáà2ABCÁÀÇ",
+	u"abcáà2ABCÁÀ",
 	u"deéèf3DEFÉÈ",
 	u"ghiíì4GHIÍÌ",
 	u"jkl5JKL",
 	u"mnñoóò6MNÑOÓÒ",
 	u"pqrs7PQRS",
-	u"tuvúùü8TUVÚÙÜ",
+	u"tuvúù8TUVÚÙ",
 	u"wxyz9WXYZ",
 	)
 MAP_SE = (
@@ -77,6 +77,18 @@ MAP_SE = (
 	)
 MAP_CZ = (
 	u"0,?'+\"()@$!=&*%#",
+	u" 1.:;/-_",
+	u"abc2áčABCÁČ",
+	u"def3ďéěDEFĎÉĚ",
+	u"ghi4íGHIÍ",
+	u"jkl5JKL",
+	u"mno6ňóMNOŇÓ",
+	u"pqrs7řšPQRSŘŠ",
+	u"tuv8ťúůTUVŤÚŮ",
+	u"wxyz9ýžWXYZÝŽ",
+	)
+MAP_SK = (
+	u"0,?'+\"()@$!=&*%",
 	u" 1.:;/-_",
 	u"abc2áäčABCÁÄČ",
 	u"def3ďéěDEFĎÉĚ",
@@ -111,6 +123,18 @@ MAP_RU = (
 	u"tuvшщьы8TUVШЩЬЫ",
 	u"wxyzъэюя9WXYZЪЭЮЯ",
 	)
+MAP_LV = (
+	u"0,?!&@=*'+\"()$~%",
+	u" 1.:;/-_",
+	u"aābcč2AĀBCČ",
+	u"deēf3DEĒF",
+	u"gģhiī4GĢHIĪ",
+	u"jkķlļ5JKĶLĻ",
+	u"mnņo6MNŅO",
+	u"pqrsš7PQRSŠ",
+	u"tuūv8TUŪV",
+	u"wxyzž9WXYZŽ",
+	)
 MAP_NL = (
 	u"0,?!&@=*'+\"()$~%#",
 	u" 1.:;/-_",
@@ -129,16 +153,18 @@ MAPPINGS = {
 	'sv_SE': MAP_SE,
 	'fi_FI': MAP_SE,
 	'cs_CZ': MAP_CZ,
-	'sk_SK': MAP_CZ,
+	'sk_SK': MAP_SK,
 	'pl_PL': MAP_PL,
 	'ru_RU': MAP_RU,
+	'lv_LV': MAP_LV,
 	'nl_NL': MAP_NL,
 	}
 
+
 class NumericalTextInput:
-	def __init__(self, nextFunc=None, handleTimeout = True, search = False, mapping = None):
-		self.useableChars=None
-		self.nextFunction=nextFunc
+	def __init__(self, nextFunc=None, handleTimeout=True, search=False, mapping=None):
+		self.useableChars = None
+		self.nextFunction = nextFunc
 		if handleTimeout:
 			self.timer = eTimer()
 			self.timer.callback.append(self.timeout)
@@ -157,7 +183,7 @@ class NumericalTextInput:
 		self.useableChars = unicode(useable)
 
 	def getKey(self, num):
-		cnt=0
+		cnt = 0
 		if self.lastKey != num:
 			if self.lastKey != -1:
 				self.nextChar()

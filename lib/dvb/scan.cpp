@@ -80,8 +80,7 @@ int eDVBScan::isValidONIDTSID(int orbital_position, eOriginalNetworkID onid, eTr
 		ret = tsid != 0x4321;
 		break;
 	case 0x0002:
-		ret = absdiff(orbital_position, 282) < 6 && tsid != 2019;
-		// 12070H and 10936V have same tsid/onid.. but even the same services are provided
+		ret = absdiff(orbital_position, 282) < 6;
 		break;
 	case 0x2000:
 		ret = tsid != 0x1000;
@@ -781,7 +780,7 @@ int eDVBScan::sameChannel(iDVBFrontendParameters *ch1, iDVBFrontendParameters *c
 	int diff;
 	if (ch1->calculateDifference(ch2, diff, exact))
 		return 0;
-	if (diff < 4000) // more than 4mhz difference?
+	if (diff < 2000) // more than 2mhz difference?
 		return 1;
 	return 0;
 }
@@ -1180,9 +1179,9 @@ void eDVBScan::channelDone()
 			if( m_chid_current )
 				tsonid = ( m_chid_current.transport_stream_id.get() << 16 )
 					| m_chid_current.original_network_id.get();
-			service->m_service_name = convertDVBUTF8(sname,0,tsonid,0);
+			service->m_service_name = strip_non_graph(convertDVBUTF8(sname,-1,tsonid,0));
 			service->genSortName();
-			service->m_provider_name = convertDVBUTF8(pname,0,tsonid,0);
+			service->m_provider_name = strip_non_graph(convertDVBUTF8(pname,-1,tsonid,0));
 		}
 
 		if (!(m_flags & scanOnlyFree) || !m_pmt_in_progress->second.scrambled) {
@@ -1607,6 +1606,7 @@ RESULT eDVBScan::processSDT(eDVBNamespace dvbnamespace, const ServiceDescription
 					{
 					/* DISH/BEV servicetypes: */
 					case 128:
+					case 131: /*Sky UK OpenTV EPG channel */ 
 					case 133:
 					case 137:
 					case 144:
@@ -1625,11 +1625,11 @@ RESULT eDVBScan::processSDT(eDVBNamespace dvbnamespace, const ServiceDescription
 
 					ref.setServiceType(servicetype);
 					int tsonid=(sdt.getTransportStreamId() << 16) | sdt.getOriginalNetworkId();
-					service->m_service_name = convertDVBUTF8(d.getServiceName(),0,tsonid,0);
+					service->m_service_name = strip_non_graph(convertDVBUTF8(d.getServiceName(),-1,tsonid,0));
 					service->genSortName();
 
-					service->m_provider_name = convertDVBUTF8(d.getServiceProviderName(),0,tsonid,0);
-					SCAN_eDebug("[eDVBScan] name '%s', provider_name '%s'", service->m_service_name.c_str(), service->m_provider_name.c_str());
+					service->m_provider_name = strip_non_graph(convertDVBUTF8(d.getServiceProviderName(),-1,tsonid,0));
+					SCAN_eDebug("[eDVBScan]   name '%s', provider_name '%s'", service->m_service_name.c_str(), service->m_provider_name.c_str());
 					break;
 				}
 				case CA_IDENTIFIER_DESCRIPTOR:

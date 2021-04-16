@@ -4,6 +4,7 @@ from Source import Source
 from Components.Element import cached
 import NavigationInstance
 
+
 class CurrentService(PerServiceBase, Source):
 	def __init__(self, navcore):
 		Source.__init__(self)
@@ -18,6 +19,7 @@ class CurrentService(PerServiceBase, Source):
 				iPlayableService.evNewProgramInfo: self.serviceEvent,
 				iPlayableService.evCuesheetChanged: self.serviceEvent,
 				iPlayableService.evVideoSizeChanged: self.serviceEvent,
+				iPlayableService.evVideoGammaChanged: self.serviceEvent,
 				iPlayableService.evHBBTVInfo: self.serviceEvent
 			}, with_event=True)
 		self.navcore = navcore
@@ -45,4 +47,3 @@ class CurrentService(PerServiceBase, Source):
 	def destroy(self):
 		PerServiceBase.destroy(self)
 		Source.destroy(self)
-

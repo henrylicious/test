@@ -24,13 +24,15 @@ from boxbranding import getMachineBrand, getMachineName
 import os
 import sys
 
+
 def DiskEntry(model, size, removable):
 	if removable:
-		picture = LoadPixmap(cached = True, path = resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/DeviceManager/icons/diskusb.png"));
+		picture = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/DeviceManager/icons/diskusb.png"))
 	else:
-		picture = LoadPixmap(cached = True, path = resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/DeviceManager/icons/disk.png"));
+		picture = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/DeviceManager/icons/disk.png"))
 
 	return (picture, model, size)
+
 
 class HddSetup(Screen):
 	skin = """
@@ -57,7 +59,7 @@ class HddSetup(Screen):
 		</widget>
 	</screen>"""
 
-	def __init__(self, session, args = 0):
+	def __init__(self, session, args=0):
 		self.session = session
 		Screen.__init__(self, session)
 		self.disks = list()
@@ -68,7 +70,7 @@ class HddSetup(Screen):
 		self["menu"] = List(self.disks)
 		self["key_red"] = Button(_("Exit"))
 		self["key_green"] = Button(_("Info"))
-		self["key_yellow"] = Button(_("Initialize"))
+		#self["key_yellow"] = Button(_("Initialize"))
 		self["key_blue"] = Button(_("Partitions"))
 		self['key_ok'] = Button(_('Partitions'))
 		self["actions"] = ActionMap(["OkCancelActions", "ColorActions"],
@@ -170,18 +172,18 @@ class HddSetup(Screen):
 			self.result = result
 			if self.isExt4Supported():
 				self.session.openWithCallback(self.initialaze, ExtraMessageBox, _("Format as"), _("Partitioner"),
-											[ [ "Ext4", "partitionmanager.png" ],
-											[ "Ext3", "partitionmanager.png" ],
-											[ "NTFS", "partitionmanager.png" ],
-											[ "Fat32", "partitionmanager.png" ],
-											[ _("Cancel"), "cancel.png" ],
+											[["Ext4", "partitionmanager.png"],
+											["Ext3", "partitionmanager.png"],
+											["NTFS", "partitionmanager.png"],
+											["Fat32", "partitionmanager.png"],
+											[_("Cancel"), "cancel.png"],
 											], 1, 4)
 			else:
 				self.session.openWithCallback(self.initialaze, ExtraMessageBox, _("Format as"), _("Partitioner"),
-											[ [ "Ext3", "partitionmanager.png" ],
-											[ "NTFS", "partitionmanager.png" ],
-											[ "Fat32", "partitionmanager.png" ],
-											[ _("Cancel"), "cancel.png" ],
+											[["Ext3", "partitionmanager.png"],
+											["NTFS", "partitionmanager.png"],
+											["Fat32", "partitionmanager.png"],
+											[_("Cancel"), "cancel.png"],
 											], 1, 3)
 
 #	def yellow(self):
@@ -197,7 +199,7 @@ class HddSetup(Screen):
 #										], 1, 5)
 
 	def yellow(self):
-		self.session.open(MessageBox, _("Please use Harddisk Setup to initialize your drive."), MessageBox.TYPE_INFO, timeout = 10)
+		self.session.open(MessageBox, _("Please use Harddisk Setup to initialize your drive."), MessageBox.TYPE_INFO, timeout=10)
 
 	def green(self):
 		if len(self.mdisks.disks) > 0:

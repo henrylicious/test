@@ -1,6 +1,6 @@
 <!--suppress XmlUnboundNsPrefix -->
 <keymap>
-	<!-- "HDF Default Keymap 31.07.2018" -->
+	<!-- "HDF Default Keymap 09.09.2019" -->
 	<map context="2ndInfobarActions">
 		<key id="KEY_UP" mapto="pageUp" flags="mr" />
 		<key id="KEY_DOWN" mapto="pageDown" flags="mr" />
@@ -120,9 +120,8 @@
 	</map>
 
 	<map context="InfobarInstantRecord">
-		<key id="KEY_RECORD" mapto="instantRecord" flags="m" />
+		<key id="KEY_RECORD" mapto="instantRecord" flags="l" />
 		<key id="KEY_RECORD" mapto="ShortRecord" flags="b" />
-		<!--key id="KEY_RECORD" mapto="LongRecord" flags="l" /-->
 	</map>
 
 	<map context="InfobarExtensions">
@@ -263,9 +262,9 @@
 		<!--key id="KEY_DIRECTORY" mapto="showPluginBrowser" flags="mm" /-->
 	</map>
 
-	<!--map context="InfobarAudioSelectionActions">
+	<map context="InfobarAudioSelectionActions">
 		<key id="KEY_AUDIO" mapto="audioSelection" flags="m" />
-	</map-->
+	</map>
 
 	<!--map context="InfobarSubtitleSelectionActions">
 		<key id="KEY_SUBTITLE" mapto="subtitleSelection" flags="m" />
@@ -287,6 +286,7 @@
 
 	<!--map context="InfobarVmodeButtonActions">
 			<key id="KEY_VMODE" mapto="vmodeSelection" flags="m" />
+			<key id="KEY_ANGLE" mapto="vmodeSelection" flags="m" />
 	</map-->
 
 	<map context="InfobarPiPActions">
@@ -598,6 +598,7 @@
 		<key id="KEY_PREVIOUS" mapto="prevMarker" flags="m" />
 		<key id="KEY_FORWARD" mapto="nextMarker" flags="m" />
 		<key id="KEY_FAVORITES" mapto="showFavourites" flags="m"/>
+		<key id="KEY_TEXT" mapto="toggleTwoLines" flags="m"/>
 	</map>
 
 	<map context="ChannelSelectEPGActions">
@@ -1015,6 +1016,12 @@
 		<key id="KEY_DIRECTORY" mapto="directory_long" flags="l"/>
 		<key id="KEY_ARCHIVE" mapto="historyBack" flags="b" />
 		<key id="KEY_ARCHIVE" mapto="historyBack" flags="l" />
+		<key id="KEY_EJECTCD" mapto="ejectcd" flags="b"/>
+		<key id="KEY_EJECTCD" mapto="ejectcd_long" flags="l"/>
+		<key id="KEY_MOUSE" mapto="mouse" flags="b"/>
+		<key id="KEY_MOUSE" mapto="mouse_long" flags="l"/>
+		<key id="KEY_VOD" mapto="vod" flags="b"/>
+		<key id="KEY_VOD" mapto="vod_long" flags="l"/>
 	</map>
 
 	<map context="InfobarSeekActionsPTS">

@@ -3,7 +3,7 @@ from boxbranding import getBoxType, getMachineBuild
 
 
 def InitHdmiRecord():
-    full_hd = getMachineBuild() in ('et10000','dm900', 'dm920', 'et13000', 'sf5008', 'vuuno4kse') or getBoxType() in ('spycat4k','spycat4kcombo','gbquad4k')
+    full_hd = getMachineBuild() in ('et10000', 'dm900', 'dm920', 'et13000', 'sf5008', 'vuuno4kse') or getBoxType() in ('spycat4k', 'spycat4kcombo', 'gbquad4k')
 
     config.hdmirecord = ConfigSubsection()
 
@@ -73,8 +73,8 @@ def InitHdmiRecord():
     # Intentionally not a boolean because the API expects an integer parsed from the string
     config.hdmirecord.interlaced = ConfigSelection(
         choices=[
-            ("0", "No"),
-            ("1", "Yes"),
+            ("0", _("No")),
+            ("1", _("Yes")),
         ], default="0")
 
     config.hdmirecord.aspectratio = ConfigSelection(

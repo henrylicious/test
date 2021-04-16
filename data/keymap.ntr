@@ -1,6 +1,6 @@
 <!--suppress XmlUnboundNsPrefix -->
 <keymap>
-	<!-- "HDF Neutrino Keymap 29.04.2018" -->
+	<!-- "HDF Neutrino Keymap 09.09.2019" -->
 	<map context="2ndInfobarActions">
 		<key id="KEY_UP" mapto="pageUp" flags="mr" />
 		<key id="KEY_DOWN" mapto="pageDown" flags="mr" />
@@ -122,11 +122,10 @@
 		<key id="KEY_EPG" mapto="showEventGuidePlugin" flags="l" />
 	</map>
 
-	<map context="InfobarInstantRecord">
+	<!--map context="InfobarInstantRecord">
 		<key id="KEY_RECORD" mapto="instantRecord" flags="m" />
 		<key id="KEY_RECORD" mapto="ShortRecord" flags="b" />
-		<!--key id="KEY_RECORD" mapto="LongRecord" flags="l" /-->
-	</map>
+	</map -->
 
 	<map context="InfobarExtensions">
 		<key id="KEY_BLUE" mapto="extensions" flags="b" />
@@ -556,6 +555,7 @@
 		<key id="KEY_BACK" mapto="prevMarker" flags="m" />
 		<key id="KEY_FORWARD" mapto="nextMarker" flags="m" />
 		<key id="KEY_FAVORITES" mapto="showFavourites" flags="m"/>
+		<key id="KEY_TEXT" mapto="toggleTwoLines" flags="m"/>
 	</map>
 
 	<map context="ChannelSelectEPGActions">
@@ -923,6 +923,12 @@
         <key id="KEY_DIRECTORY" mapto="directory_long" flags="l"/>
 		<key id="KEY_ARCHIVE" mapto="historyBack" flags="b" />
 		<key id="KEY_ARCHIVE" mapto="historyBack" flags="l" />
+		<key id="KEY_EJECTCD" mapto="ejectcd" flags="b"/>
+		<key id="KEY_EJECTCD" mapto="ejectcd_long" flags="l"/>
+		<key id="KEY_MOUSE" mapto="mouse" flags="b"/>
+		<key id="KEY_MOUSE" mapto="mouse_long" flags="l"/>
+		<key id="KEY_VOD" mapto="vod" flags="b"/>
+		<key id="KEY_VOD" mapto="vod_long" flags="l"/>
 	</map>
 
 	<map context="SubtitlesActions">

@@ -6,15 +6,16 @@ msgstr ""
 "Project-Id-Version: tuxbox-enigma 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-10-26 16:32+0200\n"
-"PO-Revision-Date: 2013-10-26 15:41+0100\n"
+"PO-Revision-Date: 2019-08-27 05:25+0200\n"
 "Last-Translator: Andy Blackburn <andyblac@o2.co.uk>\n"
 "Language-Team: \n"
-"Language: \n"
+"Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.2.3\n"
 
 msgid ""
 "\n"
@@ -453,8 +454,10 @@ msgstr "Controllo aggiornamento in background in corso, attendere qualche minuto
 msgid ""
 "A configuration file (%s) has been modified since it was installed.\n"
 "Do you want to keep your modifications?"
-msgstr "Un file di configurazione (% s) è stato modificato da quando è stato installato.\n"
+msgstr ""
+"Un file di configurazione (% s) è stato modificato da quando è stato installato.\n"
 "Vuoi mantenere le modifiche?"
+
 #, python-format
 msgid ""
 "A configuration file (%s) was modified since Installation.\n"
@@ -1863,7 +1866,7 @@ msgstr ""
 msgid "Configure the netmask."
 msgstr ""
 
-msgid "Configure the number of days after which items are automaticaly removed from the trash can."
+msgid "Configure the number of days after which items are automatically removed from the trash can."
 msgstr ""
 
 msgid "Configure the number of days old timers are kept before they are automatically removed from the timer list."
@@ -3152,7 +3155,7 @@ msgid "Fulscreen"
 msgstr ""
 
 #, fuzzy
-msgid "Fulview resulution"
+msgid "Fulview Resolution"
 msgstr "Filmo vieta"
 
 msgid "Function of OK button"
@@ -7120,7 +7123,7 @@ msgstr ""
 msgid "Stop timeshift while recording?"
 msgstr ""
 
-msgid "Stop's timeshift being used if a recording is in progress. (adviseable for usb sticks)"
+msgid "Stop's timeshift being used if a recording is in progress. (advisable for usb sticks)"
 msgstr ""
 
 msgid "Stopped"
@@ -7676,10 +7679,10 @@ msgstr ""
 msgid "This option lets you show the option in the extension screen"
 msgstr ""
 
-msgid "This option moves the PVR status from the seprate window into the MoviePlayer infobar."
+msgid "This option moves the PVR status from the separate window into the MoviePlayer infobar."
 msgstr ""
 
-msgid "This option set the level of surpression of musquito noise (Musquito Noise is random aliasing as a result of strong compression). Obviously this goes at the cost of picture details."
+msgid "This option set the level of suppression of mosquito noise (Mosquito Noise is random aliasing as a result of strong compression). Obviously this goes at the cost of picture details."
 msgstr ""
 
 msgid "This option sets  the picture contrast."
@@ -8667,7 +8670,7 @@ msgstr ""
 msgid "What Day of week ?"
 msgstr ""
 
-msgid "What action is required on complettion of the timer? 'Auto' lets the box return to the state it had when the timer started. 'Do nothing', 'Go to standby' and 'Go to deep standby' do ecaxtly that."
+msgid "What action is required on completion of the timer? 'Auto' lets the box return to the state it had when the timer started. 'Do nothing', 'Go to standby' and 'Go to deep standby' do ecaxtly that."
 msgstr ""
 
 msgid "What do you want to scan?"
@@ -8754,7 +8757,7 @@ msgstr ""
 msgid "When enabled, the VCR scart option will be shown on the main menu"
 msgstr ""
 
-msgid "When enabled, the lenght of each recording will be shown in the movielist (this might cause some additional loading time)."
+msgid "When enabled, the length of each recording will be shown in the movielist (this might cause some additional loading time)."
 msgstr ""
 
 msgid "When enabled, the original line breaks will be removed from the teletext subtitles."
@@ -9014,10 +9017,10 @@ msgid "You have to wait %s!"
 msgstr "Jūs turite laukti %s!"
 
 msgid ""
-"You need a PC connected to your %s %s. If you need further instructions, please visit the website http://www.dm7025.de.\n"
+"You need a PC connected to your %s %s. If you need further instructions, please visit the website http://www.hdfreaks.cc.\n"
 "Your %s %s will now be halted. After you have performed the update instructions from the website, your new firmware will ask you to restore your settings."
 msgstr ""
-"Jums reikės kompiuterio, prijungto prie imtuvo. Jeigu Jums reikės papildomos instrukcijos, prašome aplankyti tinklapį http://www.dm7025.de.\n"
+"Jums reikės kompiuterio, prijungto prie imtuvo. Jeigu Jums reikės papildomos instrukcijos, prašome aplankyti tinklapį http://www.hdfreaks.cc.\n"
 "Jūsų imtuvas turi būti sustabdytas. Po atnaujinimo nauja PĮ paprašys atkurti Jūsų nustatymus. "
 
 msgid "You seem to be in timeshift!"
@@ -10372,4 +10375,3 @@ msgstr "įrašas"
 
 msgid "zapped"
 msgstr "įjungta"
-

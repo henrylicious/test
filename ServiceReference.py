@@ -1,8 +1,9 @@
 from enigma import eServiceReference, eServiceCenter, getBestPlayableServiceReference
 import NavigationInstance
 
+
 class ServiceReference(eServiceReference):
-	def __init__(self, ref, reftype = eServiceReference.idInvalid, flags = 0, path = ''):
+	def __init__(self, ref, reftype=eServiceReference.idInvalid, flags=0, path=''):
 		if reftype != eServiceReference.idInvalid:
 			self.ref = eServiceReference(reftype, flags, path)
 		elif not isinstance(ref, eServiceReference):
@@ -35,7 +36,8 @@ class ServiceReference(eServiceReference):
 
 	def isRecordable(self):
 		ref = self.ref
-		return ref.flags & eServiceReference.isGroup or (ref.type == eServiceReference.idDVB or ref.type == eServiceReference.idDVB + 0x100 or ref.type == 0x2000 or ref.type == 0x1001)
+		return ref.flags & eServiceReference.isGroup or (ref.type in (eServiceReference.idDVB, eServiceReference.idDVB + eServiceReference.idServiceIsScrambled, eServiceReference.idServiceHDMIIn, eServiceReference.idServiceMP3))
+
 
 def getPlayingref(ref):
 	playingref = None
@@ -45,9 +47,11 @@ def getPlayingref(ref):
 		playingref = eServiceReference()
 	return playingref
 
+
 def isPlayableForCur(ref):
 	info = eServiceCenter.getInstance().info(ref)
-	return not not (info and info.isPlayable(ref, getPlayingref(ref)))
+	return info and info.isPlayable(ref, getPlayingref(ref))
+
 
 def resolveAlternate(ref):
 	nref = None

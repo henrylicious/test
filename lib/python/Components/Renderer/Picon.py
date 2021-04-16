@@ -1,4 +1,6 @@
-import os, re, unicodedata
+import os
+import re
+import unicodedata
 from Renderer import Renderer
 from enigma import ePixmap, ePicLoad
 from Tools.Alternatives import GetWithAlternative
@@ -10,6 +12,7 @@ from ServiceReference import ServiceReference
 searchPaths = []
 lastPiconPath = None
 
+
 def initPiconPaths():
 	global searchPaths
 	searchPaths = []
@@ -19,6 +22,7 @@ def initPiconPaths():
 		mp = path = os.path.join(part.mountpoint, 'usr/share/enigma2')
 		onMountpointAdded(part.mountpoint)
 		onMountpointAdded(mp)
+
 
 def onMountpointAdded(mountpoint):
 	global searchPaths
@@ -33,6 +37,7 @@ def onMountpointAdded(mountpoint):
 	except Exception, ex:
 		print "[Picon] Failed to investigate %s:" % mountpoint, ex
 
+
 def onMountpointRemoved(mountpoint):
 	global searchPaths
 	path = os.path.join(mountpoint, 'picon') + '/'
@@ -42,11 +47,13 @@ def onMountpointRemoved(mountpoint):
 	except:
 		pass
 
+
 def onPartitionChange(why, part):
 	if why == 'add':
 		onMountpointAdded(part.mountpoint)
 	elif why == 'remove':
 		onMountpointRemoved(part.mountpoint)
+
 
 def findPicon(serviceName):
 	global lastPiconPath
@@ -75,21 +82,10 @@ def findPicon(serviceName):
 		else:
 			return ""
 
+
 def getPiconName(serviceName):
-	#remove the path and name fields, and replace ':' by '_'
 	sname = '_'.join(GetWithAlternative(serviceName).split(':', 10)[:10])
 	pngname = findPicon(sname)
-	if not pngname:
-		fields = sname.split('_', 3)
-		if len(fields) > 2 and fields[2] != '1': #fallback to 1 for services with different service types
-			fields[2] = '1'
-		if len(fields) > 0 and fields[0] != '1': #fallback to 1 for IPTV streams
-			fields[0] = '1'
-		if len(fields) > 0 and fields[0] == '5001': #fallback to 1 for IPTV streams
-			fields[0] = '1'
-		if len(fields) > 0 and fields[0] == '5002': #fallback to 1 for IPTV streams
-			fields[0] = '1'
-		pngname = findPicon('_'.join(fields))
 	if not pngname: # picon by channel name
 		name = ServiceReference(serviceName).getServiceName()
 		name = unicodedata.normalize('NFKD', unicode(name, 'utf_8', errors='ignore')).encode('ASCII', 'ignore')
@@ -98,14 +94,36 @@ def getPiconName(serviceName):
 			pngname = findPicon(name)
 			if not pngname and len(name) > 2 and name.endswith('hd'):
 				pngname = findPicon(name[:-2])
+	if not pngname:
+		fields = sname.split('_', 3)
+		if len(fields) > 0 and fields[0] != '1':
+			fields[0] = '1'
+		pngname = findPicon('_'.join(fields))
+		if len(fields) > 2:
+			while not pngname:
+				tmp = ''
+				for i in range(256):
+					tmp = hex(i)[2:].upper().zfill(2)
+					fields[2] = tmp
+					pngname = findPicon('_'.join(fields))
+					if pngname:
+						newpng = '/usr/share/enigma2/picon/' + name + '.png'
+						try:
+							os.symlink(pngname, newpng)
+						except:
+							pass
+						break
+				if tmp == "FF":
+					break
 	return pngname
+
 
 class Picon(Renderer):
 	def __init__(self):
 		Renderer.__init__(self)
 		self.PicLoad = ePicLoad()
 		self.PicLoad.PictureData.get().append(self.updatePicon)
-		self.piconsize = (0,0)
+		self.piconsize = (0, 0)
 		self.pngname = ""
 		self.lastPath = None
 		pngname = findPicon("picon_default")
@@ -134,7 +152,7 @@ class Picon(Renderer):
 		for (attrib, value) in self.skinAttributes:
 			if attrib == "path":
 				self.addPath(value)
-				attribs.remove((attrib,value))
+				attribs.remove((attrib, value))
 			elif attrib == "size":
 				self.piconsize = value
 		self.skinAttributes = attribs
@@ -168,6 +186,7 @@ class Picon(Renderer):
 					else:
 						self.instance.hide()
 					self.pngname = pngname
+
 
 harddiskmanager.on_partition_list_change.append(onPartitionChange)
 initPiconPaths()
