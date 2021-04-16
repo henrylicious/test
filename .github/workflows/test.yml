@@ -34,5 +34,5 @@ jobs:
       run: |
         env | egrep "(A=|B=|C=|D=)"
         export | egrep "(A=|B=|C=|D=)"
-        echo C
-        echo D
+        echo $C
+        echo $D
