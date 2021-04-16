@@ -68,12 +68,12 @@ jobs:
       env: 
         CC: "gcc-${{ matrix.gcc }}"
         CXX: "g++-${{ matrix.gcc }}"
-        PKG_CONFIG_PATH: "/tmp/gstreamer/lib/x86_64-linux-gnu/pkgconfig"
-        GST_PLUGIN_SYSTEM_PATH: "/tmp/gstreamer/lib/x86_64-linux-gnu/gstreamer-1.0"
-        GST_PLUGIN_SCANNER: "/tmp/gstreamer/libexec/gstreamer-1.0/gst-plugin-scanner"
       run: |
         export PATH=$PATH:/tmp/gstreamer/bin
         export LD_LIBRARY_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+        PKG_CONFIG_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/pkgconfig
+        GST_PLUGIN_SYSTEM_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/gstreamer-1.0
+        GST_PLUGIN_SCANNER=/tmp/gstreamer/libexec/gstreamer-1.0/gst-plugin-scanner
         cd /tmp
         git clone --depth 1 https://github.com/OpenPLi/tuxtxt.git
         cd tuxtxt/libtuxtxt
@@ -90,15 +90,13 @@ jobs:
       env: 
         CC: "gcc-${{ matrix.gcc }}"
         CXX: "g++-${{ matrix.gcc }}"
-        PKG_CONFIG_PATH: "/tmp/gstreamer/lib/x86_64-linux-gnu/pkgconfig"
-        GST_PLUGIN_SYSTEM_PATH: "/tmp/gstreamer/lib/x86_64-linux-gnu/gstreamer-1.0"
-        GST_PLUGIN_SCANNER: "/tmp/gstreamer/libexec/gstreamer-1.0/gst-plugin-scanner"
       run: |
         export PATH=$PATH:/tmp/gstreamer/bin
         export LD_LIBRARY_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
-        echo compiling enigma2
+        PKG_CONFIG_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/pkgconfig
+        GST_PLUGIN_SYSTEM_PATH=/tmp/gstreamer/lib/x86_64-linux-gnu/gstreamer-1.0
+        GST_PLUGIN_SCANNER=/tmp/gstreamer/libexec/gstreamer-1.0/gst-plugin-scanner
         autoreconf -i
         ./configure --with-libsdl=no --with-boxtype=nobox --enable-dependency-tracking ac_cv_prog_c_openmp=-fopenmp --with-textlcd
         make
         python -m compileall .
-        echo done!
