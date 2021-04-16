@@ -36,3 +36,6 @@ jobs:
         export | egrep "(A=|B=|C=|D=)"
         echo $C
         echo $D
+        D=eval `$D`
+        echo $D
+
