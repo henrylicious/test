@@ -10,6 +10,7 @@ jobs:
       A: "FOO"
       B: "BAR"
       C: "${A}${B}"
+      D: ${A}${B}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -27,9 +28,11 @@ jobs:
       run: |
         export A=foo
         export B=bar
-        env | egrep "(A=|B=|C=)"
-        export | egrep "(A=|B=|C=)"
+        env | egrep "(A=|B=|C=|D=)"
+        export | egrep "(A=|B=|C=|D=)"
     - name: show env again
       run: |
-        env | egrep "(A=|B=|C=)"
-        export | egrep "(A=|B=|C=)"
+        env | egrep "(A=|B=|C=|D=)"
+        export | egrep "(A=|B=|C=|D=)"
+        echo C
+        echo D
