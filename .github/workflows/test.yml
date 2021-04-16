@@ -7,6 +7,9 @@ jobs:
     env:
       CC: "gcc-${{ matrix.gcc }}"
       CXX: "g++-${{ matrix.gcc }}"
+      A: "FOO"
+      B: "BAR"
+      C: "${A}${B}"
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -20,13 +23,13 @@ jobs:
       run: |
         env
         export
-    - name: Set A
+    - name: Set A, B
       run: |
         export A=foo
         export B=bar
-        env | egrep "(A=|B=)"
-        export | egrep "(A=|B=)"
+        env | egrep "(A=|B=|C=)"
+        export | egrep "(A=|B=|C=)"
     - name: show env again
       run: |
-        env | egrep "(A=|B=)"
-        export | egrep "(A=|B=)"
+        env | egrep "(A=|B=|C=)"
+        export | egrep "(A=|B=|C=)"
