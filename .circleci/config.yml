@@ -15,29 +15,37 @@ jobs:
           name: Build Docker image
           command: |
             docker build -t $IMAGE_NAME:latest .
-  publish-latest:
-    executor: docker-publisher
-    steps:
-      - setup_remote_docker
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             IMAGE_TAG="0.0.${CIRCLE_BUILD_NUM}"
-            docker tag ${IMAGE_NAME#*/} $IMAGE_NAME:latest
+            docker tag ${IMAGE_NAME} $IMAGE_NAME:latest
             docker push $IMAGE_NAME:latest
             docker push $IMAGE_NAME:$IMAGE_TAG
-  publish-tag:
-    executor: docker-publisher
-    steps:
-      - setup_remote_docker
-      - run:
-          name: Publish Docker Image to Docker Hub
-          command: |
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            IMAGE_TAG=${CIRCLE_TAG/v/''}
-            docker tag ${IMAGE_NAME#*/} $IMAGE_NAME:latest
-            docker push $IMAGE_NAME:$IMAGE_TAG
+#  publish-latest:
+#    executor: docker-publisher
+#    steps:
+#      - setup_remote_docker
+#      - run:
+#          name: Publish Docker Image to Docker Hub
+#          command: |
+#            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+#            IMAGE_TAG="0.0.${CIRCLE_BUILD_NUM}"
+#            docker tag ${IMAGE_NAME#*/} $IMAGE_NAME:latest
+#            docker push $IMAGE_NAME:latest
+#            docker push $IMAGE_NAME:$IMAGE_TAG
+#  publish-tag:
+#    executor: docker-publisher
+#    steps:
+#      - setup_remote_docker
+#      - run:
+#          name: Publish Docker Image to Docker Hub
+#          command: |
+#            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+#            IMAGE_TAG=${CIRCLE_TAG/v/''}
+#            docker tag ${IMAGE_NAME#*/} $IMAGE_NAME:latest
+#            docker push $IMAGE_NAME:$IMAGE_TAG
 workflows:
   version: 2
   build-python3:
@@ -46,12 +54,12 @@ workflows:
           filters:
             branches:
               only: python3
-      - publish-latest:
-          requires:
-            - build
-          filters:
-            branches:
-              only: python3
+#      - publish-latest:
+#          requires:
+#            - build
+#          filters:
+#            branches:
+#              only: python3
   build-tags:
     jobs:
       - build:
@@ -60,11 +68,11 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - publish-tag:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+#      - publish-tag:
+#          requires:
+#            - build
+#          filters:
+#            tags:
+#              only: /^v.*/
+#            branches:
+#              ignore: /.*/
