@@ -20,10 +20,11 @@ jobs:
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             echo 1
-            docker export $IMAGE_NAME > ${IMAGE_NAME#*/}.tar
+            docker run -t ${IMAGE_NAME#*/} $IMAGE_NAME
             echo 2
-            cat ${IMAGE_NAME#*/}.tar | docker import - ${IMAGE_NAME}:latest
+            docker save ${IMAGE_NAME#*/} -o ${IMAGE_NAME#*/}.tar
             echo 3
+            cat ${IMAGE_NAME#*/}.tar | docker load - ${IMAGE_NAME}:latest
             docker push ${IMAGE_NAME}:latest
 #  publish-latest:
 #    executor: docker-publisher
