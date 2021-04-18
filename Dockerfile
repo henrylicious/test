@@ -19,4 +19,4 @@ RUN cd tuxtxt/libtuxtxt; autoreconf -i; ./configure --with-boxtype=generic DVB_A
 RUN mkdir /enigma2 || true
 COPY . /enigma2/
 
-#RUN cd /enigma2;  autoreconf -i; ./configure --with-libsdl=no --with-boxtype=nobox --enable-dependency-tracking ac_cv_prog_c_openmp=-fopenmp --with-textlcd --with-gstversion=1.0; make; python -m compileall .
+RUN cd /enigma2;  autoreconf -i; ./configure --with-libsdl=no --with-boxtype=nobox --enable-dependency-tracking ac_cv_prog_c_openmp=-fopenmp --with-textlcd --with-gstversion=1.0; make; python -m compileall .
