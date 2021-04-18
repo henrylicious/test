@@ -18,6 +18,7 @@ jobs:
   publish-latest:
     executor: docker-publisher
     steps:
+      - setup_remote_docker
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
@@ -29,6 +30,7 @@ jobs:
   publish-tag:
     executor: docker-publisher
     steps:
+      - setup_remote_docker
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
