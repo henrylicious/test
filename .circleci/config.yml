@@ -19,8 +19,8 @@ jobs:
           name: Publish Docker Image to Docker Hub
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            docker export $IMAGE_NAME > $IMAGE_NAME.tar
-            cat $IMAGE_NAME.tar | docker import - $IMAGE_NAME:latest
+            docker export $IMAGE_NAME > ${IMAGE_NAME#*/}.tar
+            cat ${IMAGE_NAME#*/}.tar | docker import - $IMAGE_NAME:latest
             docker push $IMAGE_NAME:latest
 #  publish-latest:
 #    executor: docker-publisher
