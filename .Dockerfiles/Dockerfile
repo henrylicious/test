@@ -35,5 +35,5 @@ RUN cd /enigma2/ ; git pull
 
 RUN cd /enigma2;  autoreconf -i; ./configure --with-libsdl=no --with-boxtype=nobox --enable-dependency-tracking ac_cv_prog_c_openmp=-fopenmp --with-textlcd --with-gstversion=1.0; make; python -m compileall .
 
-COPY runit.sh /
-ENTRYPOINT bash /runit.sh
+#COPY runit.sh /
+#ENTRYPOINT bash /runit.sh
