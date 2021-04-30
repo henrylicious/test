@@ -1,15 +1,5 @@
 version: 2.1
-executors:
-  docker-publisher:
-    parameters:
-      CC:
-        type: string
-      PYTHON:
-        type: string
-    environment:
-      IMAGE_NAME: dendes/build-${CC}-${PYTHON}
-    docker:
-      - image: circleci/buildpack-deps:stretch
+
 jobs:
   build:
     parameters:
@@ -17,7 +7,8 @@ jobs:
         type: string
       PYTHON:
         type: string
-    executor: docker-publisher
+    docker:
+     - image: alpine
     steps:
       - checkout
       - setup_remote_docker
@@ -81,25 +72,4 @@ workflows:
           filters:
             branches:
               only: master
-#      - publish-latest:
-#          requires:
-#            - build
-#          filters:
-#            branches:
-#              only: python3
-  build-tags:
-    jobs:
-      - build:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-#      - publish-tag:
-#          requires:
-#            - build
-#          filters:
-#            tags:
-#              only: /^v.*/
-#            branches:
-#              ignore: /.*/
+
