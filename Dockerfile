@@ -1,8 +1,7 @@
-#FROM dendes/e2-test:latest
 ARG GCC=8
 ARG PY=27
 
-FROM build-${GCC}-${PY}
+FROM dendes/build-${GCC}-${PY}
 
 SHELL ["/bin/bash", "-c"]
 
