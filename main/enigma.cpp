@@ -60,7 +60,6 @@ int getPrevAsciiCode()
 	return ret;
 }
 
-void keyEvent(const eRCKey &key)
 {
 	static eRCKey last(0, 0, 0);
 	static int num_repeat;
