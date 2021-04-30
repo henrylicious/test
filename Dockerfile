@@ -8,7 +8,7 @@ SHELL ["/bin/bash", "-c"]
 
 ARG GCC
 ENV CC=gcc-$GCC CXX=g++-$GCC
-RUN cd /enigma2
+WORKDIR /enigma2
 RUN git checkout $BRANCH
 RUN git pull
 RUN autoreconf -i
