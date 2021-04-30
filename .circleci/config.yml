@@ -1,15 +1,5 @@
 version: 2.1
-executors:
-  docker-publisher:
-    parameters:
-      CC:
-        type: string
-      PYTHON:
-        type: string
-    environment:
-      IMAGE_NAME: dendes/build-${CC}-${PYTHON}
-    docker:
-      - image: circleci/buildpack-deps:stretch
+
 jobs:
   build:
     parameters:
@@ -17,14 +7,15 @@ jobs:
         type: string
       PYTHON:
         type: string
-    executor: docker-publisher
+    docker:
+     - image: circleci/buildpack-deps:stretch
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: Build Docker image
           command: |
-                  docker build --build-arg GCC=${CC} --build-arg PY=${PYTHON} .
+                  docker build --build-arg GCC=<< parameters.CC >> --build-arg PY=<< parameters.PYTHON >> .
 #      - run:
 #          name: Publish Docker Image to Docker Hub
 #          command: |
@@ -81,25 +72,4 @@ workflows:
           filters:
             branches:
               only: master
-#      - publish-latest:
-#          requires:
-#            - build
-#          filters:
-#            branches:
-#              only: python3
-  build-tags:
-    jobs:
-      - build:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-#      - publish-tag:
-#          requires:
-#            - build
-#          filters:
-#            tags:
-#              only: /^v.*/
-#            branches:
-#              ignore: /.*/
+
