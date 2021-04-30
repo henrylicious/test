@@ -1,12 +1,22 @@
 version: 2.1
 executors:
   docker-publisher:
+    parameters:
+      CC:
+        type: string
+      PYTHON:
+        type: string
     environment:
-      IMAGE_NAME: dendes/e2-test
+      IMAGE_NAME: dendes/build-${CC}-${PYTHON}
     docker:
       - image: circleci/buildpack-deps:stretch
 jobs:
   build:
+    parameters:
+      CC:
+        type: string
+      PYTHON:
+        type: string
     executor: docker-publisher
     steps:
       - checkout
@@ -14,7 +24,7 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-                  docker build .
+                  docker build --build-arg GCC=${CC} --build-arg PY=${PYTHON} .
 #      - run:
 #          name: Publish Docker Image to Docker Hub
 #          command: |
@@ -54,9 +64,23 @@ workflows:
   build-python3:
     jobs:
       - build:
+          matrix:
+            parameters:
+              CC: ["8", "10"]
+              PYTHON: ["27", "38"]
           filters:
             branches:
               only: python3
+  build-master:
+    jobs:
+      - build:
+          matrix:
+            parameters:
+              CC: ["8", "10"]
+              PYTHON: ["27"]
+          filters:
+            branches:
+              only: master
 #      - publish-latest:
 #          requires:
 #            - build
