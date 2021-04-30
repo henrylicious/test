@@ -8,7 +8,7 @@ jobs:
       PYTHON:
         type: string
     docker:
-     - image: alpine
+     - image: circleci/buildpack-deps:stretch
     steps:
       - checkout
       - setup_remote_docker
