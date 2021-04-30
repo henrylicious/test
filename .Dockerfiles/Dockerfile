@@ -9,11 +9,16 @@ RUN ["apt", "install", "-y",  \
 "swig", "libgstreamer1.0-dev", "libgstreamer-plugins-base1.0-dev", \
 "libfreetype6-dev", "libsigc++-2.0-dev", "libxml2-dev", "libfribidi-dev", \
 "libssl-dev", "libavahi-client-dev", "libjpeg-turbo8-dev", \
-"libgif-dev"]
+"libgif-dev", "g++-8", "python-dev", "python-pip", "software-properties-common"]
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test
+RUN ["apt","update"]
+RUN ["apt", "install", "-y",  \
+"python3.8-dev", "python3-pip", "g++-10"]
 
-RUN ["apt", "install", "-y", "python3.8-dev", "python3-pip"]
+ARG GCC=8
+ARG PY=2.7
 
-RUN ln -sf /usr/bin/python3.8 /usr/bin/python
+RUN [[ "$PY" != "2.7" ]] && ln -sf /usr/bin/python3.8 /usr/bin/python; python -m pip install --upgrade pip tox six
 RUN python -m pip install --upgrade pip tox six
 
 RUN curl -L https://people.freedesktop.org/~slomo/gstreamer.tar.gz | tar xz
