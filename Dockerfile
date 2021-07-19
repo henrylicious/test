@@ -1,12 +1,12 @@
 ARG GCC=8
 ARG PY=27
-ARG BRANCH=master
 
 FROM dendes/build-${GCC}-${PY}
+ARG BRANCH=master
 
 SHELL ["/bin/bash", "-c"]
 
-ARG GCC
+ARG GCC=8
 ENV CC=gcc-$GCC CXX=g++-$GCC
 WORKDIR /enigma2
 RUN git checkout $BRANCH
