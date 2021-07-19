@@ -1,5 +1,8 @@
-from HTMLComponent import HTMLComponent
-from GUIComponent import GUIComponent
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from Components.HTMLComponent import HTMLComponent
+from Components.GUIComponent import GUIComponent
 from skin import parseColor, parseFont
 
 from enigma import eListboxServiceContent, eListbox, eServiceCenter, eServiceReference, gFont, eRect, eSize, getDesktop
@@ -68,8 +71,8 @@ class ServiceList(HTMLComponent, GUIComponent):
 
 		self.root = None
 		self.mode = self.MODE_NORMAL
-		self.listHeight = None
-		self.listWidth = None
+		self.listHeight = 0
+		self.listWidth = 0
 		self.ServiceNumberFontName = "Regular"
 		self.ServiceNumberFontSize = 20
 		self.ServiceNameFontName = "Regular"
@@ -176,7 +179,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 			return None
 		from Components.ServiceEventTracker import InfoBarCount
 		if adjust and config.usage.multibouquet.value and InfoBarCount == 1 and ref and ref.type != 8192:
-			print "[servicelist] search for service in userbouquets"
+			print("[servicelist] search for service in userbouquets")
 			if self.serviceList:
 				revert_mode = config.servicelist.lastmode.value
 				revert_root = self.getRoot()
@@ -200,7 +203,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 						self.serviceList.saveChannel(ref)
 						return True
 				self.serviceList.enterUserbouquet(revert_radio_root)
-				print "[servicelist] service not found in any userbouquets"
+				print("[servicelist] service not found in any userbouquets")
 				if revert_mode == "tv":
 					self.serviceList.setModeTv()
 				elif revert_mode == "radio":
@@ -227,7 +230,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 
 	def moveToChar(self, char):
 		# TODO fill with life
-		print "Next char: "
+		print("Next char: ")
 		index = self.l.getNextBeginningWithChar(char)
 		indexup = self.l.getNextBeginningWithChar(char.upper())
 		if indexup != 0:
@@ -235,7 +238,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 				index = indexup
 
 		self.instance.moveSelectionTo(index)
-		print "Moving to character " + str(char)
+		print("Moving to character " + str(char))
 
 	def moveToNextMarker(self):
 		idx = self.l.getNextMarkerPos()
@@ -255,13 +258,13 @@ class ServiceList(HTMLComponent, GUIComponent):
 
 	def setItemsPerPage(self):
 		if self.listHeight > 0:
-			itemHeight = int(self.listHeight / (config.usage.serviceitems_per_page.value / (1 + float(config.usage.servicelist_twolines.value))))
+			itemHeight = int(self.listHeight // (config.usage.serviceitems_per_page.value // (1 + float(config.usage.servicelist_twolines.value))))
 		else:
 			itemHeight = 28
 		self.ItemHeight = itemHeight
 		self.l.setItemHeight(itemHeight)
 		if self.listHeight:
-			self.instance.resize(eSize(self.listWidth, self.listHeight / itemHeight * itemHeight))
+			self.instance.resize(eSize(self.listWidth, self.listHeight // itemHeight * itemHeight))
 
 	def setServiceFontsize(self):
 		self.ServiceNumberFont = gFont(self.ServiceNameFontName, self.ServiceNameFontSize + config.usage.servicenum_fontsize.value)
@@ -290,7 +293,7 @@ class ServiceList(HTMLComponent, GUIComponent):
 		list = serviceHandler.list(self.root)
 		dest = []
 		if list is not None:
-			while 1:
+			while True:
 				s = list.getNext()
 				if s.valid():
 					dest.append(s.toString())

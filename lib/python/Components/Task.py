@@ -2,11 +2,15 @@
 # A Job consists of many "Tasks".
 # A task is the run of an external tool, with proper methods for failure handling
 
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 from Tools.CList import CList
+import six
 
 
 class Job(object):
-	NOT_STARTED, IN_PROGRESS, FINISHED, FAILED = range(4)
+	NOT_STARTED, IN_PROGRESS, FINISHED, FAILED = list(range(4))
 
 	def __init__(self, name):
 		self.tasks = []
@@ -35,7 +39,7 @@ class Job(object):
 		if self.current_task == len(self.tasks):
 			return self.end
 		t = self.tasks[self.current_task]
-		jobprogress = t.weighting * t.progress / float(t.end) + sum([task.weighting for task in self.tasks[:self.current_task]])
+		jobprogress = t.weighting * t.progress // float(t.end) + sum([task.weighting for task in self.tasks[:self.current_task]])
 		return int(jobprogress * self.weightScale)
 
 	progress = property(getProgress)
@@ -61,7 +65,7 @@ class Job(object):
 		self.state_changed()
 		self.runNext()
 		sumTaskWeightings = sum([t.weighting for t in self.tasks]) or 1
-		self.weightScale = self.end / float(sumTaskWeightings)
+		self.weightScale = self.end // float(sumTaskWeightings)
 
 	def runNext(self):
 		if self.current_task == len(self.tasks):
@@ -71,7 +75,7 @@ class Job(object):
 				self.callback(self, None, [])
 				self.callback = None
 			else:
-				print "[Task] still waiting for %d resident task(s) %s to finish" % (len(self.resident_tasks), str(self.resident_tasks))
+				print("[Task] still waiting for %d resident task(s) %s to finish" % (len(self.resident_tasks), str(self.resident_tasks)))
 		else:
 			self.tasks[self.current_task].run(self.taskCallback)
 			self.state_changed()
@@ -81,18 +85,18 @@ class Job(object):
 		if stay_resident:
 			if cb_idx not in self.resident_tasks:
 				self.resident_tasks.append(self.current_task)
-				print "[Task] task going resident:", task
+				print("[Task] task going resident:", task)
 			else:
-				print "[Task] task keeps staying resident:", task
+				print("[Task] task keeps staying resident:", task)
 				return
 		if len(res):
-			print "[Task] >>> Error:", res
+			print("[Task] >>> Error:", res)
 			self.status = self.FAILED
 			self.state_changed()
 			self.callback(self, task, res)
 		if cb_idx != self.current_task:
 			if cb_idx in self.resident_tasks:
-				print "[Task] resident task finished:", task
+				print("[Task] resident task finished:", task)
 				self.resident_tasks.remove(cb_idx)
 		if not res:
 			self.state_changed()
@@ -173,26 +177,26 @@ class Task(object):
 		if self.cwd is not None:
 			self.container.setCWD(self.cwd)
 		if not self.cmd and self.cmdline:
-			print "[Task] execute:", self.container.execute(self.cmdline), self.cmdline
+			print("[Task] execute:", self.container.execute(self.cmdline), self.cmdline)
 		else:
 			assert self.cmd is not None
 			assert len(self.args) >= 1
-			print "[Task] execute:", self.container.execute(self.cmd, *self.args), ' '.join(self.args)
+			print("[Task] execute:", self.container.execute(self.cmd, *self.args), ' '.join(self.args))
 		if self.initial_input:
 			self.writeInput(self.initial_input)
 
 	def run(self, callback):
 		failed_preconditions = self.checkPreconditions(True) + self.checkPreconditions(False)
 		if failed_preconditions:
-			print "[Task] preconditions failed"
+			print("[Task] preconditions failed")
 			callback(self, failed_preconditions)
 			return
 		self.callback = callback
 		try:
 			self.prepare()
 			self._run()
-		except Exception, ex:
-			print "[Task] exception:", ex
+		except Exception as ex:
+			print("[Task] exception:", ex)
 			self.postconditions = [FailedPostcondition(ex)]
 			self.finish()
 
@@ -209,6 +213,7 @@ class Task(object):
 		self.processOutput(data)
 
 	def processOutput(self, data):
+		data = six.ensure_str(data)
 		self.output_line += data
 		while True:
 			i = self.output_line.find('\n')
@@ -218,7 +223,7 @@ class Task(object):
 			self.output_line = self.output_line[i + 1:]
 
 	def processOutputLine(self, line):
-		print "[Task %s]" % self.name, line[:-1]
+		print("[Task %s]" % self.name, line[:-1])
 		pass
 
 	def processFinished(self, returncode):
@@ -272,7 +277,7 @@ class LoggingTask(Task):
 		self.log = []
 
 	def processOutput(self, data):
-		print "[Task] [%s]" % self.name, data,
+		print("[Task] [%s]" % self.name, data, end=' ')
 		self.log.append(data)
 
 
@@ -288,7 +293,7 @@ class PythonTask(Task):
 		self.timer.start(5)
 
 	def work(self):
-		raise NotImplemented, "work"
+		raise NotImplemented("work")
 
 	def abort(self):
 		self.aborted = True
@@ -341,9 +346,9 @@ class ConditionTask(Task):
 		self.triggerCount += 1
 		try:
 			if (self.timeoutCount is not None) and (self.triggerCount > self.timeoutCount):
-				raise Exception, "Timeout elapsed, sorry"
+				raise Exception("Timeout elapsed, sorry")
 			res = self.check()
-		except Exception, e:
+		except Exception as e:
 			self.postconditions.append(FailedPostcondition(e))
 			res = True
 		if res:
@@ -381,19 +386,19 @@ class JobManager:
 				self.active_job.start(self.jobDone)
 
 	def notifyFailed(self, job, task, problems):
-		from Tools import Notifications
+		import Tools.Notifications
 		from Screens.MessageBox import MessageBox
 		if problems[0].RECOVERABLE:
-			print "[Task] recoverable task failure\n", job.name + "\n" + _("Error") + ': %s' % (problems[0].getErrorMessage(task))
+			print("[Task] recoverable task failure\n", job.name + "\n" + _("Error") + ': %s' % (problems[0].getErrorMessage(task)))
 			Notifications.AddNotificationWithCallback(self.errorCB, MessageBox, _("Error: %s\nRetry?") % (problems[0].getErrorMessage(task)))
 			return True
 		else:
-			print "[Task] unrecoverable task failure\n", job.name + "\n" + _("Error") + ': %s' % (problems[0].getErrorMessage(task))
+			print("[Task] unrecoverable task failure\n", job.name + "\n" + _("Error") + ': %s' % (problems[0].getErrorMessage(task)))
 			Notifications.AddNotification(MessageBox, job.name + "\n" + _("Error") + ': %s' % (problems[0].getErrorMessage(task)), type=MessageBox.TYPE_ERROR)
 			return False
 
 	def jobDone(self, job, task, problems):
-		print "[Task] job", job, "completed with", problems, "in", task
+		print("[Task] job", job, "completed with", problems, "in", task)
 		if problems:
 			if not job.onFail(job, task, problems):
 				self.errorCB(False)
@@ -406,17 +411,17 @@ class JobManager:
 	# Set job.onSuccess to this function if you want to pop up the jobview when the job is done/
 	def popupTaskView(self, job):
 		if not self.visible:
-			from Tools import Notifications
+			import Tools.Notifications
 			from Screens.TaskView import JobView
 			self.visible = True
-			Notifications.AddNotification(JobView, job)
+			Tools.Notifications.AddNotification(JobView, job)
 
 	def errorCB(self, answer):
 		if answer:
-			print "[Task] retrying job"
+			print("[Task] retrying job")
 			self.active_job.retry()
 		else:
-			print "[Task] not retrying job."
+			print("[Task] not retrying job.")
 			self.failed_jobs.append(self.active_job)
 			self.active_job = None
 			self.kick()
@@ -497,7 +502,7 @@ class DiskspacePrecondition(Condition):
 			return False
 
 	def getErrorMessage(self, task):
-		return _("Not enough disk space. Please free up some disk space and try again. (%d MB required, %d MB available)") % (self.diskspace_required / 1024 / 1024, self.diskspace_available / 1024 / 1024)
+		return _("Not enough disk space. Please free up some disk space and try again. (%d MB required, %d MB available)") % (self.diskspace_required // 1024 // 1024, self.diskspace_available // 1024 // 1024)
 
 
 class ToolExistsPrecondition(Condition):
@@ -508,13 +513,14 @@ class ToolExistsPrecondition(Condition):
 		import os
 		if task.cmd[0] == '/':
 			self.realpath = task.cmd
-			print "[Task] WARNING: usage of absolute paths for tasks should be avoided!"
+			print("[Task] WARNING: usage of absolute paths for tasks should be avoided!")
 			return os.access(self.realpath, os.X_OK)
 		else:
 			self.realpath = task.cmd
 			path = os.environ.get('PATH', '').split(os.pathsep)
 			path.append(task.cwd + '/')
-			absolutes = filter(lambda file: os.access(file, os.X_OK), map(lambda directory, file=task.cmd: os.path.join(directory, file), path))
+			# FIXME PY3 map,filter
+			absolutes = list([_file for _file in list(map(lambda directory, _file=task.cmd: os.path.join(directory, _file), path)) if os.access(_file, os.X_OK)])
 			if absolutes:
 				self.realpath = absolutes[0]
 				return True

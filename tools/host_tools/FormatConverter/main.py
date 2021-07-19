@@ -1,4 +1,6 @@
 #!/usr/bin/python
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 
 from datasource import genericdatasource
@@ -21,19 +23,19 @@ for source in datasources:
 
 while True:
 	os.system("/usr/bin/clear")
-	list = []
-	for index in range(len(datasources)):
-		list.append(datasources[index].getName() + (" (%d sats)" % len(datasources[index].transponderlist.keys())))
-	index = inputChoices(list, "q", "quit")
+	_list = []
+	for index in list(range(len(datasources))):
+		_list.append(datasources[index].getName() + (" (%d sats)" % len(list(datasources[index].transponderlist.keys()))))
+	index = inputChoices(_list, "q", "quit")
 	if index is None:
 		break
 
 	while True:
-		print datasources[index].getStatus()
-		list = []
+		print(datasources[index].getStatus())
+		_list = []
 		for action in datasources[index].getCapabilities():
-			list.append(action[0])
-		action = inputChoices(list)
+			_list.append(action[0])
+		action = inputChoices(_list)
 		if action is None:
 			break
 

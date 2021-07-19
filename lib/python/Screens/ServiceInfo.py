@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from Components.HTMLComponent import HTMLComponent
 from Components.GUIComponent import GUIComponent
 from Screens.Screen import Screen
@@ -61,8 +63,8 @@ class ServiceInfoList(HTMLComponent, GUIComponent):
 		self.l = eListboxPythonMultiContent()
 		self.list = source
 		self.l.setList(self.list)
-                self.fontName, self.fontSize = skin.parameters.get("ServiceInfoFont", ('Regular', 23))
-                self.l.setFont(0, gFont(self.fontName, self.fontSize))
+		self.fontName, self.fontSize = skin.parameters.get("ServiceInfoFont", ('Regular', 23))
+		self.l.setFont(0, gFont(self.fontName, self.fontSize))
 		self.ItemHeight = 25
 
 	def applySkin(self, desktop, screen):
@@ -160,7 +162,7 @@ class ServiceInfo(Screen):
 				if width > 0 and height > 0:
 					resolution = "%dx%d" % (width, height)
 					resolution += ("i", "p", "-")[self.info.getInfo(iServiceInformation.sProgressive)]
-					resolution += str((self.info.getInfo(iServiceInformation.sFrameRate) + 500) / 1000)
+					resolution += str((self.info.getInfo(iServiceInformation.sFrameRate) + 500) // 1000)
 					aspect = self.getServiceInfoValue(iServiceInformation.sAspect)
 					aspect = aspect in (1, 2, 5, 6, 9, 0xA, 0xD, 0xE) and "4:3" or "16:9"
 					resolution += " - [" + aspect + "]"
@@ -173,15 +175,17 @@ class ServiceInfo(Screen):
 				videomode = f.read()[:-1].replace('\n', '')
 				f.close()
 
-			Labels = ((_("Name"), name, TYPE_TEXT),
+			Labels = [(_("Name"), name, TYPE_TEXT),
 					(_("Provider"), self.getServiceInfoValue(iServiceInformation.sProvider), TYPE_TEXT),
 					(_("Videoformat"), aspect, TYPE_TEXT),
 					(_("Videomode"), videomode, TYPE_TEXT),
 					(_("Videosize"), resolution, TYPE_TEXT),
 					(_("Videocodec"), videocodec, TYPE_TEXT),
 					(_("Namespace"), self.getServiceInfoValue(iServiceInformation.sNamespace), TYPE_VALUE_HEX, 8),
-					(_("Service reference"), ":".join(refstr.split(":")[:10]), TYPE_TEXT),
-					(_("URL"), refstr.split(":")[10].replace("%3a", ":"), TYPE_TEXT))
+					(_("Service reference"), ":".join(refstr.split(":")[:10]), TYPE_TEXT)]
+
+			if "%3a//" in refstr:
+				Labels.append((_("URL"), refstr.split(":")[10].replace("%3a", ":"), TYPE_TEXT))
 
 			self.fillList(Labels)
 		else:
@@ -210,7 +214,7 @@ class ServiceInfo(Screen):
 						 "transmission_mode"		: _("Transmission mode"),
 						 "guard_interval"			: _("Guard interval"),
 						 "hierarchy_information"	: _("Hierarchy information")}
-				Labels = [(conv[i], tp_info[i], i == "orbital_position" and TYPE_VALUE_ORBIT_DEC or TYPE_VALUE_DEC) for i in tp_info.keys() if i in conv]
+				Labels = [(conv[i], tp_info[i], i == "orbital_position" and TYPE_VALUE_ORBIT_DEC or TYPE_VALUE_DEC) for i in list(tp_info.keys()) if i in conv]
 				self.fillList(Labels)
 
 	def pids(self):

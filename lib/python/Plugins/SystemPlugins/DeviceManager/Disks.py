@@ -1,4 +1,7 @@
+from __future__ import print_function
 
+from __future__ import absolute_import
+from __future__ import division
 import os
 import re
 
@@ -155,7 +158,7 @@ class Disks:
 		fdisk = os.popen(cmd, 'r')
 		res = fdisk.read().strip()
 		fdisk.close()
-		if res in self.ptypes.keys():
+		if res in list(self.ptypes.keys()):
 			return self.ptypes[res]
 		return res
 
@@ -226,7 +229,7 @@ class Disks:
 			res = mount.split(" ")
 			if res and len(res) > 1:
 				if res[0][:8] == "/dev/%s" % device:
-					print "[DeviceManager] umount %s" % res[0]
+					print("[DeviceManager] umount %s" % res[0])
 					if os.system("umount -f %s" % res[0]) != 0:
 						mounts.close()
 						return False
@@ -251,9 +254,9 @@ class Disks:
 
 	def fdisk(self, device, size, type, fstype=0):
 		if self.isMounted(device):
-			print "[DeviceManager] device is mounted... umount"
+			print("[DeviceManager] device is mounted... umount")
 			if not self.umount(device):
-				print "[DeviceManager] umount failed!"
+				print("[DeviceManager] umount failed!")
 				return -1
 
 		if fstype == 0 or fstype == 1:
@@ -263,27 +266,27 @@ class Disks:
 		elif fstype == 3:
 			ptype = "b"
 		if type == 0:
-			psize = size / 1048576
+			psize = size // 1048576
 			if psize > 128000:
-				print "[DeviceManager] Detected >128GB disk, using 4k alignment"
+				print("[DeviceManager] Detected >128GB disk, using 4k alignment")
 				flow = "8,,%s\n0,0\n0,0\n0,0\nwrite\n" % ptype
 			else:
 				flow = ",,%s\nwrite\n" % ptype
 		elif type == 1:
-			psize = size / 1048576 / 2
+			psize = size // 1048576 // 2
 			flow = ",%dM,%s\n,,%s\nwrite\n" % (psize, ptype, ptype)
 		elif type == 2:
-			psize = size / 1048576 / 4 * 3
+			psize = size // 1048576 // 4 * 3
 			flow = ",%dM,%s\n,,%s\nwrite\n" % (psize, ptype, ptype)
 		elif type == 3:
-			psize = size / 1048576 / 3
+			psize = size // 1048576 // 3
 			flow = ",%dM,%s\n,%dM,%s\n,,%s\nwrite\n" % (psize,
 				ptype,
 				psize,
 				ptype,
 				ptype)
 		elif type == 4:
-			psize = size / 1048576 / 4
+			psize = size // 1048576 // 4
 			flow = ",%dM,%s\n,%dM,%s\n,%dM,%s\n,,%s\nwrite\n" % (psize,
 				ptype,
 				psize,
@@ -302,12 +305,12 @@ class Disks:
 
 	def chkfs(self, device, partition, fstype=0):
 		fdevice = '%s%d' % (device, partition)
-		print '[DeviceManager] checking device %s' % fdevice
+		print('[DeviceManager] checking device %s' % fdevice)
 		if self.isMountedP(device, partition):
 			oldmp = self.getMountedP(device, partition)
-			print '[DeviceManager] partition is mounted... umount'
+			print('[DeviceManager] partition is mounted... umount')
 			if not self.umountP(device, partition):
-				print '[DeviceManager] umount failed!'
+				print('[DeviceManager] umount failed!')
 				return -1
 		else:
 			oldmp = ''
@@ -341,16 +344,16 @@ class Disks:
 
 		if self.isMountedP(device, partition):
 			oldmp = self.getMountedP(device, partition)
-			print "[DeviceManager] partition is mounted... umount"
+			print("[DeviceManager] partition is mounted... umount")
 			if not self.umountP(device, partition):
-				print "[DeviceManager] umount failed!"
+				print("[DeviceManager] umount failed!")
 				return -2
 		else:
 			oldmp = ""
 
 		if fstype == 0:
 			cmd = "/sbin/mkfs.ext4 "
-			psize = size / 1024
+			psize = size // 1024
 			if psize > 20000:
 				version = open('/proc/version', 'r').read().split(' ', 4)[2].split('.', 2)[:2]
 				if version[0] > 3 and version[1] >= 2:
@@ -358,7 +361,7 @@ class Disks:
 			cmd += '-m0 -O dir_index /dev/' + dev
 		elif fstype == 1:
 			cmd = "/sbin/mkfs.ext3 "
-			psize = size / 1024
+			psize = size // 1024
 			if psize > 250000:
 				cmd += "-T largefile -O sparse_super -N 262144 "
 			elif psize > 16384:

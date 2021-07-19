@@ -1,4 +1,6 @@
-from Screen import Screen
+from __future__ import absolute_import
+from __future__ import division
+from Screens.Screen import Screen
 from Screens.Setup import getConfigMenuItem, Setup
 from Screens.InputBox import PinInput
 from Screens.MessageBox import MessageBox
@@ -17,7 +19,7 @@ from enigma import iPlayableService, eTimer, eSize
 from Tools.ISO639 import LanguageCodes
 from Tools.BoundFunction import boundFunction
 from boxbranding import getBoxType
-FOCUS_CONFIG, FOCUS_STREAMS = range(2)
+FOCUS_CONFIG, FOCUS_STREAMS = list(range(2))
 [PAGE_AUDIO, PAGE_SUBTITLES] = ["audio", "subtitles"]
 
 
@@ -193,7 +195,7 @@ class AudioSelection(Screen, ConfigListScreen):
 					self.settings.channelmode.addNotifier(self.changeMode, initial_call=False)
 					conflist.append(getConfigListEntry(_("Channel"), self.settings.channelmode, None))
 				selectedAudio = self.audioTracks.getCurrentTrack()
-				for x in range(n):
+				for x in list(range(n)):
 					number = str(x + 1)
 					i = audio.getTrackInfo(x)
 					languages = i.getLanguage().split('/')
@@ -209,7 +211,7 @@ class AudioSelection(Screen, ConfigListScreen):
 					for lang in languages:
 						if cnt:
 							language += ' / '
-						if LanguageCodes.has_key(lang):
+						if lang in LanguageCodes:
 							language += _(LanguageCodes[lang][0])
 						else:
 							language += lang
@@ -274,7 +276,7 @@ class AudioSelection(Screen, ConfigListScreen):
 
 					try:
 						if x[4] != "und":
-							if LanguageCodes.has_key(x[4]):
+							if x[4] in LanguageCodes:
 								language = _(LanguageCodes[x[4]][0])
 							else:
 								language = x[4]
@@ -301,7 +303,7 @@ class AudioSelection(Screen, ConfigListScreen):
 					streams.append((x, "", number, description, language, selected))
 					idx += 1
 
-			if self.infobar.selected_subtitle and self.infobar.selected_subtitle != (0, 0, 0, 0) and not ".DVDPlayer'>" in `self.infobar`:
+			if self.infobar.selected_subtitle and self.infobar.selected_subtitle != (0, 0, 0, 0) and not ".DVDPlayer'>" in repr(self.infobar):
 				conflist.append(getConfigListEntry(_("Subtitle Quickmenu"), ConfigNothing(), None))
 
 		if len(conflist) > 0 and conflist[0][0]:
@@ -699,7 +701,7 @@ class QuickSubtitlesConfigMenu(ConfigListScreen, Screen):
 			return ""
 		fps = info.getInfo(iServiceInformation.sFrameRate)
 		if fps > 0:
-			return "%6.3f" % (fps / 1000.)
+			return "%6.3f" % (fps // 1000.)
 		return ""
 
 	def cancel(self):

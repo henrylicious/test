@@ -1,0 +1,75 @@
+version: 2.1
+
+jobs:
+  build:
+    parameters:
+      CC:
+        type: string
+      PYTHON:
+        type: string
+    docker:
+     - image: circleci/buildpack-deps:stretch
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          command: |
+                  docker build --build-arg GCC=<< parameters.CC >> --build-arg PY=<< parameters.PYTHON >> .
+#      - run:
+#          name: Publish Docker Image to Docker Hub
+#          command: |
+#            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+#            echo 1
+#            docker run -t ${IMAGE_NAME#*/} $IMAGE_NAME
+#            echo 2
+#            docker save ${IMAGE_NAME#*/} -o ${IMAGE_NAME#*/}.tar
+#            echo 3
+#            cat ${IMAGE_NAME#*/}.tar | docker load - ${IMAGE_NAME}:latest
+#            docker push ${IMAGE_NAME}:latest
+#  publish-latest:
+#    executor: docker-publisher
+#    steps:
+#      - setup_remote_docker
+#      - run:
+#          name: Publish Docker Image to Docker Hub
+#          command: |
+#            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+#            IMAGE_TAG="0.0.${CIRCLE_BUILD_NUM}"
+#            docker tag ${IMAGE_NAME#*/} $IMAGE_NAME:latest
+#            docker push $IMAGE_NAME:latest
+#            docker push $IMAGE_NAME:$IMAGE_TAG
+#  publish-tag:
+#    executor: docker-publisher
+#    steps:
+#      - setup_remote_docker
+#      - run:
+#          name: Publish Docker Image to Docker Hub
+#          command: |
+#            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+#            IMAGE_TAG=${CIRCLE_TAG/v/''}
+#            docker tag ${IMAGE_NAME#*/} $IMAGE_NAME:latest
+#            docker push $IMAGE_NAME:$IMAGE_TAG
+workflows:
+  version: 2
+  build-python3:
+    jobs:
+      - build:
+          matrix:
+            parameters:
+              CC: ["8", "10"]
+              PYTHON: ["27", "38"]
+          filters:
+            branches:
+              only: python3
+  build-master:
+    jobs:
+      - build:
+          matrix:
+            parameters:
+              CC: ["8", "10"]
+              PYTHON: ["27"]
+          filters:
+            branches:
+              only: master
+

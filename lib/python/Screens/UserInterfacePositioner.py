@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.config import config, configfile, getConfigListEntry
@@ -66,11 +69,11 @@ def InitOsd():
 		if SystemInfo["CanChangeOsdPosition"]:
 			setPositionParameter("height", configElement)
 	config.osd.dst_height.addNotifier(setOSDHeight)
-	print 'Setting OSD position: %s %s %s %s' % (config.osd.dst_left.value, config.osd.dst_width.value, config.osd.dst_top.value, config.osd.dst_height.value)
+	print('Setting OSD position: %s %s %s %s' % (config.osd.dst_left.value, config.osd.dst_width.value, config.osd.dst_top.value, config.osd.dst_height.value))
 
 	def setOSDAlpha(configElement):
 		if SystemInfo["CanChangeOsdAlpha"]:
-			print 'Setting OSD alpha:', str(configElement.value)
+			print('Setting OSD alpha:', str(configElement.value))
 			config.av.osd_alpha.setValue(configElement.value)
 			f = open("/proc/stb/video/alpha", "w")
 			f.write(str(configElement.value))
@@ -80,7 +83,7 @@ def InitOsd():
 	def set3DMode(configElement):
 		if SystemInfo["CanChange3DOsd"]:
 			value = configElement.value
-			print 'Setting 3D mode:', value
+			print('Setting 3D mode:', value)
 			try:
 				if SystemInfo["CanUse3DModeChoices"]:
 					f = open("/proc/stb/fb/3dmode_choices", "r")
@@ -102,7 +105,7 @@ def InitOsd():
 
 	def set3DZnorm(configElement):
 		if SystemInfo["CanChange3DOsd"]:
-			print 'Setting 3D depth:', configElement.value
+			print('Setting 3D depth:', configElement.value)
 			try:
 				f = open("/proc/stb/fb/znorm", "w")
 				f.write('%d' % int(configElement.value))
@@ -343,22 +346,22 @@ class UserInterfacePositioner2(Screen, ConfigListScreen):
 	def setPreviewPosition(self):
 		size_w = getDesktop(0).size().width()
 		size_h = getDesktop(0).size().height()
-		dsk_w = int(float(size_w)) / float(720)
-		dsk_h = int(float(size_h)) / float(576)
+		dsk_w = int(float(size_w)) // float(720)
+		dsk_h = int(float(size_h)) // float(576)
 		dst_left = int(config.osd.dst_left.value)
 		dst_width = int(config.osd.dst_width.value)
 		dst_top = int(config.osd.dst_top.value)
 		dst_height = int(config.osd.dst_height.value)
-		while dst_width + (dst_left / float(dsk_w)) >= 720.5 or dst_width + dst_left > 720:
+		while dst_width + (dst_left // float(dsk_w)) >= 720.5 or dst_width + dst_left > 720:
 			dst_width = int(dst_width) - 1
-		while dst_height + (dst_top / float(dsk_h)) >= 576.5 or dst_height + dst_top > 576:
+		while dst_height + (dst_top // float(dsk_h)) >= 576.5 or dst_height + dst_top > 576:
 			dst_height = int(dst_height) - 1
 
 		config.osd.dst_left.setValue(dst_left)
 		config.osd.dst_width.setValue(dst_width)
 		config.osd.dst_top.setValue(dst_top)
 		config.osd.dst_height.setValue(dst_height)
-		print 'Setting OSD position: %s %s %s %s' % (config.osd.dst_left.value, config.osd.dst_width.value, config.osd.dst_top.value, config.osd.dst_height.value)
+		print('Setting OSD position: %s %s %s %s' % (config.osd.dst_left.value, config.osd.dst_width.value, config.osd.dst_top.value, config.osd.dst_height.value))
 
 	def saveAll(self):
 		for x in self["config"].list:
@@ -481,22 +484,22 @@ class UserInterfacePositioner(Screen, ConfigListScreen):
 	def setPreviewPosition(self):
 		size_w = getDesktop(0).size().width()
 		size_h = getDesktop(0).size().height()
-		dsk_w = int(float(size_w)) / float(720)
-		dsk_h = int(float(size_h)) / float(576)
+		dsk_w = int(float(size_w)) // float(720)
+		dsk_h = int(float(size_h)) // float(576)
 		dst_left = int(config.osd.dst_left.value)
 		dst_width = int(config.osd.dst_width.value)
 		dst_top = int(config.osd.dst_top.value)
 		dst_height = int(config.osd.dst_height.value)
-		while dst_width + (dst_left / float(dsk_w)) >= 720.5 or dst_width + dst_left > 720:
+		while dst_width + (dst_left // float(dsk_w)) >= 720.5 or dst_width + dst_left > 720:
 			dst_width = int(dst_width) - 1
-		while dst_height + (dst_top / float(dsk_h)) >= 576.5 or dst_height + dst_top > 576:
+		while dst_height + (dst_top // float(dsk_h)) >= 576.5 or dst_height + dst_top > 576:
 			dst_height = int(dst_height) - 1
 
 		config.osd.dst_left.setValue(dst_left)
 		config.osd.dst_width.setValue(dst_width)
 		config.osd.dst_top.setValue(dst_top)
 		config.osd.dst_height.setValue(dst_height)
-		print 'Setting OSD position: %s %s %s %s' % (config.osd.dst_left.value, config.osd.dst_width.value, config.osd.dst_top.value, config.osd.dst_height.value)
+		print('Setting OSD position: %s %s %s %s' % (config.osd.dst_left.value, config.osd.dst_width.value, config.osd.dst_top.value, config.osd.dst_height.value))
 
 	def saveAll(self):
 		for x in self["config"].list:

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # taken from mytube plugin
 
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from enigma import eTimer
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
@@ -66,7 +69,7 @@ class TaskListScreen(Screen):
 		idx = self['tasklist'].getIndex()
 		self.tasklist = []
 		for job in job_manager.getPendingJobs():
-			self.tasklist.append((job, job.name, job.getStatustext(), int(100 * job.progress / float(job.end)), str(100 * job.progress / float(job.end)) + "%"))
+			self.tasklist.append((job, job.name, job.getStatustext(), int(100 * job.progress // float(job.end)), str(100 * job.progress // float(job.end)) + "%"))
 		self['tasklist'].setList(self.tasklist)
 		self['tasklist'].updateList(self.tasklist)
 		self['tasklist'].setIndex(idx)
@@ -77,14 +80,14 @@ class TaskListScreen(Screen):
 
 	def keyOK(self):
 		current = self["tasklist"].getCurrent()
-		print current
+		print(current)
 		if current:
 			job = current[0]
 			from Screens.TaskView import JobView
 			self.session.openWithCallback(self.JobViewCB, JobView, job)
 
 	def JobViewCB(self, why):
-		print "WHY---", why
+		print("WHY---", why)
 
 	def keyCancel(self):
 		self.close()

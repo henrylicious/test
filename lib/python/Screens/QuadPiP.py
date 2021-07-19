@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from Screens.Screen import Screen
 from enigma import ePoint, eSize, eServiceCenter, getBestPlayableServiceReference, eServiceReference
 from Components.VideoWindow import VideoWindow
@@ -40,7 +42,7 @@ class QuadPiP(Screen):
 		return (self.instance.size().width(), self.instance.size().height())
 
 	def playService(self, service, playAudio):
-		print "  ---PLAY-->   ", service, playAudio
+		print("  ---PLAY-->   ", service, playAudio)
 		if service and (service.flags & eServiceReference.isGroup):
 			ref = getBestPlayableServiceReference(service, eServiceReference())
 		else:
@@ -58,7 +60,7 @@ class QuadPiP(Screen):
 
 	def setQpipMode(self, pipMode, playAudio):
 		if self.pipservice:
-			print "   ---->   index, mode, audio ---> ", self.decoderIdx, pipMode, playAudio
+			print("   ---->   index, mode, audio ---> ", self.decoderIdx, pipMode, playAudio)
 			self.pipservice.setQpipMode(pipMode, playAudio)
 
 	def getCurrentService(self):

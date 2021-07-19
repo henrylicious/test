@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from . import _
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
@@ -20,7 +21,7 @@ from Components.Converter.ServiceInfo import *
 from ServiceReference import ServiceReference
 import os
 from enigma import eTimer, eDVBCI_UI, eListboxPythonStringContent, eListboxPythonConfigContent, eServiceReference
-from camcontrol import CamControl
+from .camcontrol import CamControl
 
 
 class ConfigAction(ConfigElement):
@@ -135,7 +136,7 @@ class ScSelection(Screen):
 				msg = _("Please wait, restarting softcam and cardserver.")
 			else:
 				msg = _("Please wait, restarting softcam.")
-                elif "c" in what:
+		elif "c" in what:
 			msg = _("Please wait, restarting cardserver.")
 		self.mbox = self.session.open(MessageBox, msg, MessageBox.TYPE_INFO)
 		self.activityTimer = eTimer()
@@ -159,7 +160,7 @@ class ScSelection(Screen):
 		self.activityTimer.stop()
 		del self.activityTimer
 		if "c" in self.what:
-                        self.cardserver.select(self.cardservers.value)
+			self.cardserver.select(self.cardservers.value)
 			self.cardserver.command('start')
 		if "s" in self.what:
 			self.softcam.select(self.softcams.value)
@@ -179,11 +180,11 @@ class ScSelection(Screen):
 	def save(self):
 		what = ''
 		if hasattr(self, 'cardservers') and (self.cardservers.value != self.cardserver.current()):
-                        what = 'sc'
+			what = 'sc'
 		elif self.softcams.value != self.softcam.current():
-                        what = 's'
-                if what:
-                	self.restart(what)
+			what = 's'
+		if what:
+			self.restart(what)
 		else:
 			self.close()
 

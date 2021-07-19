@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+import six
 import Components.Task
 from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
@@ -17,7 +19,7 @@ from boxbranding import getImageVersion, getImageBuild, getMachineBrand, getMach
 
 from os import rename, path, remove
 from gettext import dgettext
-import urllib
+from six.moves import urllib
 
 ocram = ''
 
@@ -71,7 +73,7 @@ class SoftwareUpdateChanges(Screen):
 		global ocram
 		try:
 			sourcefile = 'http://enigma2.world-of-satellite.com/feeds/' + getImageVersion() + '/' + getBoxType() + '/' + self.logtype + '-git.log'
-			sourcefile, headers = urllib.urlretrieve(sourcefile)
+			sourcefile, headers = urllib.request.urlretrieve(sourcefile)
 			rename(sourcefile, '/tmp/' + self.logtype + '-git.log')
 			fd = open('/tmp/' + self.logtype + '-git.log', 'r')
 			releasenotes = fd.read()
@@ -93,7 +95,7 @@ class SoftwareUpdateChanges(Screen):
 				else:
 					releasever = releasever[0].replace(':', "")
 			if self.logtype == 'oe':
-				imagever = getImageBuild()
+				imagever = int(getImageBuild())
 			else:
 				imagever = int(getImageBuild()) + 865
 			while int(releasever) > int(imagever):
@@ -165,6 +167,7 @@ class UpdatePlugin(Screen):
 		self.CheckConsole.ePopen(cmd1, self.checkNetworkStateFinished)
 
 	def checkNetworkStateFinished(self, result, retval, extra_args=None):
+		result = six.ensure_str(result)
 		if 'bad address' in result:
 			self.session.openWithCallback(self.close, MessageBox, _("Your %s %s is not connected to the internet, please check your network settings and try again.") % (getMachineBrand(), getMachineName()), type=MessageBox.TYPE_INFO, timeout=10, close_on_any_key=True)
 		elif ('wget returned 1' or 'wget returned 255' or '404 Not Found') in result:
@@ -207,7 +210,7 @@ class UpdatePlugin(Screen):
 		if event == IpkgComponent.EVENT_DOWNLOAD:
 			self.status.setText(_("Downloading"))
 		elif event == IpkgComponent.EVENT_UPGRADE:
-			if self.sliderPackages.has_key(param):
+			if param in self.sliderPackages:
 				self.slider.setValue(self.sliderPackages[param])
 			self.package.setText(param)
 			self.status.setText(_("Upgrading") + ": %s/%s" % (self.packages, self.total_packages))
@@ -246,7 +249,7 @@ class UpdatePlugin(Screen):
 				self.updating = False
 				self.ipkg.startCmd(IpkgComponent.CMD_UPGRADE_LIST)
 			elif self.ipkg.currentCommand == IpkgComponent.CMD_UPGRADE_LIST:
-				from urllib import urlopen
+				from six.moves.urllib.request import urlopen
 				import socket
 				currentTimeoutDefault = socket.getdefaulttimeout()
 				socket.setdefaulttimeout(3)

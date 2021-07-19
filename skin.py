@@ -1,7 +1,12 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
 from Tools.Profile import profile
+from six.moves import map
 profile("LOAD:ElementTree")
 import xml.etree.cElementTree
 import os
+import six
 
 profile("LOAD:enigma_skin")
 from enigma import eSize, ePoint, eRect, gFont, eWindow, eLabel, ePixmap, eWindowStyleManager, addFont, gRGB, eWindowStyleSkinned, getDesktop
@@ -41,7 +46,7 @@ isVTISkin = False
 
 
 def dump(x, i=0):
-	print " " * i + str(x)
+	print(" " * i + str(x))
 	try:
 		for n in x.childNodes:
 			dump(n, i + 1)
@@ -56,13 +61,13 @@ def getSkinFactor(refresh=False):
 	global skinfactor
 	if refresh or not skinfactor:
 		try:
-			skinfactor = getDesktop(0).size().width() / 1280.0
+			skinfactor = getDesktop(0).size().width() // 1280.0
 			if not skinfactor in [1, 1.5, 3]:
-				print '[SKIN] getSkinFactor unknown result (%s) -> set skinfactor to 1' % skinfactor
+				print('[SKIN] getSkinFactor unknown result (%s) -> set skinfactor to 1' % skinfactor)
 				skinfactor = 1
-		except Exception, err:
+		except Exception as err:
 			skinfactor = 1
-			print '[SKIN] getSkinFactor failed: ', err
+			print('[SKIN] getSkinFactor failed: ', err)
 	return skinfactor
 
 
@@ -88,7 +93,7 @@ dom_skins = []
 def addSkin(name, scope=SCOPE_SKIN):
 	# read the skin
 	if name is None or not len(name):
-		#print "[SKIN ERROR] attempt to add a skin without filename"
+		print("[SKIN ERROR] attempt to add a skin without filename")
 		return False
 	filename = resolveFilename(scope, name)
 	if fileExists(filename):
@@ -96,7 +101,7 @@ def addSkin(name, scope=SCOPE_SKIN):
 		try:
 			dom_skins.append((mpath, xml.etree.cElementTree.parse(filename).getroot()))
 		except:
-			print "[SKIN ERROR] error in %s" % filename
+			print("[SKIN ERROR] error in %s" % filename)
 			return False
 		else:
 			return True
@@ -220,28 +225,28 @@ addSkin('skin_subtitles.xml')
 if config.skin.primary_skin.value != DEFAULT_SKIN:
 	skinpath = resolveFilename(SCOPE_SKIN, primary_skin_path)
 	if os.path.isdir(skinpath):
-		for file in sorted(os.listdir(skinpath)):
-			if file.startswith('skin_user_') and file.endswith('.xml'):
+		for _file in sorted(os.listdir(skinpath)):
+			if _file.startswith('skin_user_') and _file.endswith('.xml'):
 				try:
-					addSkin(primary_skin_path + file, SCOPE_SKIN)
-					print "[SKIN] loading user defined %s skin file: %s" % (file.replace('skin_user_', '')[:-4], primary_skin_path + file)
-				except (SkinError, IOError, OSError, AssertionError), err:
-					print "[SKIN] not loading user defined %s skin file: %s - error: %s" % (file.replace('skin_user_', '')[:-4], primary_skin_path + file, err)
+					addSkin(primary_skin_path + _file, SCOPE_SKIN)
+					print("[SKIN] loading user defined %s skin file: %s" % (_file.replace('skin_user_', '')[:-4], primary_skin_path + _file))
+				except (SkinError, IOError, OSError, AssertionError) as err:
+					print("[SKIN] not loading user defined %s skin file: %s - error: %s" % (_file.replace('skin_user_', '')[:-4], primary_skin_path + _file, err))
 
 '''
 try:
 	if config.skin.primary_skin.value != DEFAULT_SKIN:
 		addSkin(primary_skin_path + 'skin_user_colors.xml', SCOPE_SKIN)
-		print "[SKIN] loading user defined colors for skin", (primary_skin_path + 'skin_user_colors.xml')
+		print("[SKIN] loading user defined colors for skin", (primary_skin_path + 'skin_user_colors.xml'))
 except (SkinError, IOError, AssertionError), err:
-	print "[SKIN] not loading user defined colors for skin"
+	print("[SKIN] not loading user defined colors for skin")
 
 try:
 	if config.skin.primary_skin.value != DEFAULT_SKIN:
 		addSkin(primary_skin_path + 'skin_user_header.xml', SCOPE_SKIN)
-		print "[SKIN] loading user defined header file for skin", (primary_skin_path + 'skin_user_header.xml')
+		print("[SKIN] loading user defined header file for skin", (primary_skin_path + 'skin_user_header.xml'))
 except (SkinError, IOError, AssertionError), err:
-	print "[SKIN] not loading user defined header file for skin"
+	print("[SKIN] not loading user defined header file for skin")
 '''
 
 
@@ -251,22 +256,22 @@ def load_modular_files():
 		for f in modular_files:
 			try:
 				addSkin(primary_skin_path + f, SCOPE_SKIN)
-				print "[SKIN] loading modular skin file : ", (primary_skin_path + f)
-			except (SkinError, IOError, AssertionError), err:
-				print "[SKIN] failed to load modular skin file : ", err
+				print("[SKIN] loading modular skin file : ", (primary_skin_path + f))
+			except (SkinError, IOError, AssertionError) as err:
+				print("[SKIN] failed to load modular skin file : ", err)
 
 
 load_modular_files()
 
 try:
 	if not addSkin(config.skin.primary_skin.value):
-		raise SkinError, "primary skin not found"
-except Exception, err:
-	print "SKIN ERROR:", err
+		raise SkinError("primary skin not found")
+except Exception as err:
+	print("SKIN ERROR:", err)
 	skin = DEFAULT_SKIN
 	if config.skin.primary_skin.value == skin:
 		skin = 'skin.xml'
-	print "defaulting to standard skin...", skin
+	print("defaulting to standard skin...", skin)
 	config.skin.primary_skin.value = skin
 	addSkin(skin)
 	del skin
@@ -276,34 +281,41 @@ profile("LoadSkinDefaultDone")
 
 
 def parseCoordinate(s, e, size=0, font=None):
-	s = s.strip()
-	if s == "center":
-		if not size:
-			val = 0
-		else:
-			val = (e - size) / 2
-	elif s == '*':
+	orig = s = s.strip()
+	if s == "center":  # For speed as this can be common case.
+		val = 0 if not size else (e - size) // 2
+	elif s == "*":
 		return None
 	else:
-		if s[0] is 'e':
-			val = e
-			s = s[1:]
-		elif s[0] is 'c':
-			val = e / 2
-			s = s[1:]
-		else:
-			val = 0
-		if s:
-			if s[-1] is '%':
-				val += e * int(s[:-1]) / 100
-			elif s[-1] is 'w':
-				val += fonts[font][3] * int(s[:-1])
-			elif s[-1] is 'h':
-				val += fonts[font][2] * int(s[:-1])
-			else:
-				val += int(s)
-	if val < 0:
-		val = 0
+		try:
+			val = int(s)  # For speed try a simple number first.
+		except ValueError:
+			if font is None and ("w" in s or "h" in s):
+				print("[Skin] Error: 'w' or 'h' is being used in a field where neither is valid. Input string: '%s'" % orig)
+				return 0
+			if "center" in s:
+				s = s.replace("center", str((e - size) / 2.0))
+			if "e" in s:
+				s = s.replace("e", str(e))
+			if "c" in s:
+				s = s.replace("c", str(e / 2.0))
+			if "w" in s:
+				s = s.replace("w", "*%s" % str(fonts[font][3]))
+			if "h" in s:
+				s = s.replace("h", "*%s" % str(fonts[font][2]))
+			if "%" in s:
+				s = s.replace("%", "*%s" % str(e / 100.0))
+			if "f" in s:
+				s = s.replace("f", str(getSkinFactor()))
+			try:
+				val = int(s)  # For speed try a simple number first.
+			except ValueError:
+				try:
+					val = int(eval(s))
+				except Exception as err:
+					print("[Skin] %s '%s': Coordinate '%s', processed to '%s', cannot be evaluated!" % (type(err).__name__, err, orig, s))
+					val = 0
+	# print("[Skin] DEBUG: parseCoordinate s='%s', e='%s', size=%s, font='%s', val='%s'." % (s, e, size, font, val))
 	return val
 
 
@@ -337,7 +349,7 @@ def parsePosition(s, scale, object=None, desktop=None, size=None):
 		parentsize = getParentSize(object, desktop)
 	xval = parseCoordinate(x, parentsize.width(), size and size.width())
 	yval = parseCoordinate(y, parentsize.height(), size and size.height())
-	return ePoint(xval * scale[0][0] / scale[0][1], yval * scale[1][0] / scale[1][1])
+	return ePoint(xval * scale[0][0] // scale[0][1], yval * scale[1][0] // scale[1][1])
 
 
 def parseSize(s, scale, object=None, desktop=None):
@@ -349,7 +361,7 @@ def parseSize(s, scale, object=None, desktop=None):
 		parentsize = getParentSize(object, desktop)
 	xval = parseCoordinate(x, parentsize.width())
 	yval = parseCoordinate(y, parentsize.height())
-	return eSize(xval * scale[0][0] / scale[0][1], yval * scale[1][0] / scale[1][1])
+	return eSize(xval * scale[0][0] // scale[0][1], yval * scale[1][0] // scale[1][1])
 
 
 def parseFont(s, scale):
@@ -359,7 +371,7 @@ def parseFont(s, scale):
 		size = f[1]
 	except:
 		name, size = s.split(';')
-	return gFont(name, int(size) * scale[0][0] / scale[0][1])
+	return gFont(name, int(size) * scale[0][0] // scale[0][1])
 
 
 def parseColor(s):
@@ -376,7 +388,7 @@ def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, igno
 	size = None
 	pos = None
 	font = None
-	for attrib, value in node.items():
+	for attrib, value in list(node.items()):
 		if attrib not in ignore:
 			if attrib in filenames:
 				pngfile = resolveFilename(SCOPE_ACTIVE_SKIN, value, path_prefix=skin_path_prefix)
@@ -389,19 +401,19 @@ def collectAttributes(skinAttributes, node, context, skin_path_prefix=None, igno
 			# If wfNoBorder is applied after the size has been set, the window will fail to clear the title area.
 			# Similar situation for a scrollbar in a listbox; when the scrollbar setting is applied after
 			# the size, a scrollbar will not be shown until the selection moves for the first time
-			if attrib == 'size':
-				size = value.encode("utf-8")
-			elif attrib == 'position':
-				pos = value.encode("utf-8")
-			elif attrib == 'font':
-				font = value.encode("utf-8")
+			if attrib == "size":
+				size = six.ensure_str(value)
+			elif attrib == "position":
+				pos = six.ensure_str(value)
+			elif attrib == "font":
+				font = six.ensure_str(value)
 				skinAttributes.append((attrib, font))
 			else:
-				skinAttributes.append((attrib, value.encode("utf-8")))
-	if pos is not None:
+				skinAttributes.append((attrib, six.ensure_str(value)))
+	if pos != None:
 		pos, size = context.parse(pos, size, font)
 		skinAttributes.append(('position', pos))
-	if size is not None:
+	if size != None:
 		skinAttributes.append(('size', size))
 
 
@@ -435,12 +447,12 @@ def cachemenu():
 	for (path, skin) in dom_skins:
 		for x in skin.findall("screen"):
 			if x.attrib.get('name') == 'menu_mainmenu':
-				print x.attrib.get('name')
+				print(x.attrib.get('name'))
 				for s in x.findall("ePixmap"):
-					if s.attrib.get('pixmap', '') is not '':
+					if s.attrib.get('pixmap', '') != '':
 						pixmaplist.append(s.attrib.get('pixmap', ''))
 				for s in x.findall('widget'):
-					if s.attrib.get('pixmap', '') is not '':
+					if s.attrib.get('pixmap', '') != '':
 						pixmaplist.append(s.attrib.get('pixmap', ''))
 	desktop = getDesktop(0)
 	for s in pixmaplist:
@@ -453,7 +465,7 @@ try:
 	if config.skin.primary_skin.value == "XionHDF/skin.xml" or config.skin.primary_skin.value == DEFAULT_SKIN:
 		cachemenu()
 except:
-	print "fail cache main menu"
+	print("fail cache main menu")
 
 
 class AttributeParser:
@@ -466,24 +478,24 @@ class AttributeParser:
 		try:
 			getattr(self, attrib)(value)
 		except AttributeError:
-			print "[SKIN] Attribute \"%s\" with value \"%s\" in object of type \"%s\" is not implemented" % (attrib, value, self.guiObject.__class__.__name__)
-		except SkinError, ex:
-			print "\033[91m[SKIN] Error:", ex,
-			print "\033[0m"
+			print("[SKIN] Attribute \"%s\" with value \"%s\" in object of type \"%s\" is not implemented" % (attrib, value, self.guiObject.__class__.__name__))
+		except SkinError as ex:
+			print("\033[91m[SKIN] Error:", ex, end=' ')
+			print("\033[0m")
 		except:
-			print "[Skin] attribute \"%s\" with wrong (or unknown) value \"%s\" in object of type \"%s\"" % (attrib, value, self.guiObject.__class__.__name__)
+			print("[Skin] attribute \"%s\" with wrong (or unknown) value \"%s\" in object of type \"%s\"" % (attrib, value, self.guiObject.__class__.__name__))
 
 	def applyAll(self, attrs):
 		for attrib, value in attrs:
 			try:
 				getattr(self, attrib)(value)
 			except AttributeError:
-				print "[SKIN] Attribute \"%s\" with value \"%s\" in object of type \"%s\" is not implemented" % (attrib, value, self.guiObject.__class__.__name__)
-			except SkinError, ex:
-				print "\033[91m[Skin] Error:", ex,
-				print "\033[0m"
+				print("[SKIN] Attribute \"%s\" with value \"%s\" in object of type \"%s\" is not implemented" % (attrib, value, self.guiObject.__class__.__name__))
+			except SkinError as ex:
+				print("\033[91m[Skin] Error:", ex, end=' ')
+				print("\033[0m")
 			except:
-				print "[Skin] attribute \"%s\" with wrong (or unknown) value \"%s\" in object of type \"%s\"" % (attrib, value, self.guiObject.__class__.__name__)
+				print("[Skin] attribute \"%s\" with wrong (or unknown) value \"%s\" in object of type \"%s\"" % (attrib, value, self.guiObject.__class__.__name__))
 
 	def conditional(self, value):
 		pass
@@ -666,7 +678,7 @@ class AttributeParser:
 					"orRightToLeft": (self.guiObject.orHorizontal, True),
 				}[value])
 		except KeyError:
-			print "oprientation must be either orVertical or orHorizontal!, not %s. Please contact the skin's author!" % value
+			print("oprientation must be either orVertical or orHorizontal!, not %s. Please contact the skin's author!" % value)
 
 	def valign(self, value):
 		try:
@@ -676,7 +688,7 @@ class AttributeParser:
 					"bottom": self.guiObject.alignBottom
 				}[value])
 		except KeyError:
-			print "valign must be either top, center or bottom!, not %s. Please contact the skin's author!" % value
+			print("valign must be either top, center or bottom!, not %s. Please contact the skin's author!" % value)
 
 	def halign(self, value):
 		try:
@@ -687,14 +699,14 @@ class AttributeParser:
 					"block": self.guiObject.alignBlock
 				}[value])
 		except KeyError:
-			print "halign must be either left, center, right or block!, not %s. Please contact the skin's author!" % value
+			print("halign must be either left, center, right or block!, not %s. Please contact the skin's author!" % value)
 
 	def textOffset(self, value):
 		global isVTISkin
 		if value in variables:
 			value = variables[value]
 		x, y = value.split(',')
-		self.guiObject.setTextOffset(ePoint(int(x) * self.scaleTuple[0][0] / self.scaleTuple[0][1], int(y) * self.scaleTuple[1][0] / self.scaleTuple[1][1]))
+		self.guiObject.setTextOffset(ePoint(int(x) * self.scaleTuple[0][0] // self.scaleTuple[0][1], int(y) * self.scaleTuple[1][0] // self.scaleTuple[1][1]))
 		if isVTISkin:
 			self.guiObject.setUseVTIWorkaround()
 
@@ -707,7 +719,7 @@ class AttributeParser:
 				fv = eWindow.__dict__[f]
 				self.guiObject.setFlag(fv)
 			except KeyError:
-				print "illegal flag %s!" % f
+				print("illegal flag %s!" % f)
 
 	def backgroundColor(self, value):
 		self.guiObject.setBackgroundColor(parseColor(value))
@@ -838,7 +850,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 					bpp = int(bpp)
 				else:
 					bpp = 32
-				#print "Resolution:", xres,yres,bpp
+				#print("Resolution:", xres,yres,bpp)
 				from enigma import gMainDC
 				gMainDC.getInstance().setResolution(xres, yres)
 				desktop.resize(eSize(xres, yres))
@@ -853,7 +865,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 			if not fileExists(skinfile):
 				skinfile = resolveFilename(SCOPE_SKIN_IMAGE, filename, path_prefix=path_prefix)
 			if fileExists(skinfile):
-				print "[SKIN] loading include:", skinfile
+				print("[SKIN] loading include:", skinfile)
 				loadSkin(skinfile)
 
 	for c in skin.findall('switchpixmap'):
@@ -914,7 +926,12 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 				elif fileExists(resolveFilename(SCOPE_ACTIVE_LCDSKIN, filename)):
 					resolved_font = resolveFilename(SCOPE_ACTIVE_LCDSKIN, filename)
 			addFont(resolved_font, name, scale, is_replacement, render)
-			#print "Font: ", resolved_font, name, scale, is_replacement
+			#print("Font: ", resolved_font, name, scale, is_replacement)
+
+		fallbackFont = resolveFilename(SCOPE_FONTS, "fallback.font", path_prefix=path_prefix)
+		if fileExists(fallbackFont):
+			addFont(fallbackFont, "Fallback", 100, -1, 0)
+
 		for alias in c.findall("alias"):
 			get = alias.attrib.get
 			try:
@@ -925,8 +942,8 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 				width = int(get("width", size))
 				global fonts
 				fonts[name] = (font, size, height, width)
-			except Exception, ex:
-				print "[SKIN] bad font alias", ex
+			except Exception as ex:
+				print("[SKIN] bad font alias", ex)
 
 	for c in skin.findall("parameters"):
 		for parameter in c.findall("parameter"):
@@ -939,9 +956,9 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 					if isinstance(font, list) and len(font) == 2:
 						parameters[name] = (str(font[0]), int(font[1]))
 				else:
-					parameters[name] = map(int, value.split(","))
-			except Exception, ex:
-				print "[SKIN] bad parameter", ex
+					parameters[name] = list(map(int, value.split(",")))
+			except Exception as ex:
+				print("[SKIN] bad parameter", ex)
 
 	for c in skin.findall("constant-widgets"):
 		for constant_widget in c.findall("constant-widget"):
@@ -1003,7 +1020,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 
 		style.setTitleFont(font)
 		style.setTitleOffset(offset)
-		#print "  ", font, offset
+		#print("  ", font, offset)
 		for borderset in windowstyle.findall("borderset"):
 			bsName = str(borderset.attrib.get("name"))
 			for pixmap in borderset.findall("pixmap"):
@@ -1019,7 +1036,7 @@ def loadSingleSkinData(desktop, skin, path_prefix):
 						style.setPixmap(eWindowStyleSkinned.__dict__[bsName], eWindowStyleSkinned.__dict__[bpName], png)
 					except:
 						pass
-				#print "  borderset:", bpName, filename
+				#print("  borderset:", bpName, filename)
 		for color in windowstyle.findall("color"):
 			get_attr = color.attrib.get
 			colorType = get_attr("name")
@@ -1063,8 +1080,8 @@ def loadSkin(name, scope=SCOPE_SKIN):
 	filename = resolveFilename(scope, name)
 	if fileExists(filename):
 		path = os.path.dirname(filename) + "/"
-		file = open(filename, 'r')
-		for elem in xml.etree.cElementTree.parse(file).getroot():
+		_file = open(filename, 'r', encoding="utf-8")
+		for elem in xml.etree.cElementTree.parse(_file).getroot():
 			if elem.tag == 'screen':
 				name = elem.attrib.get('name', None)
 				if name[:3].lower() == "vti":
@@ -1083,7 +1100,7 @@ def loadSkin(name, scope=SCOPE_SKIN):
 					elem.clear()
 			else:
 				elem.clear()
-		file.close()
+		_file.close()
 
 
 def loadSkinData(desktop):
@@ -1248,7 +1265,7 @@ def readSkin(screen, skin, names, desktop):
 	# try uncompiled embedded skin
 	if myscreen is None and getattr(screen, "skin", None):
 		skin = screen.skin
-		print "[SKIN] Parsing embedded skin", name
+		print("[SKIN] Parsing embedded skin", name)
 		if isinstance(skin, tuple):
 			for s in skin:
 				candidate = xml.etree.cElementTree.fromstring(s)
@@ -1258,13 +1275,13 @@ def readSkin(screen, skin, names, desktop):
 						myscreen = candidate
 						break
 			else:
-				print "[SKIN] Hey, no suitable screen!"
+				print("[SKIN] Hey, no suitable screen!")
 		else:
 			myscreen = xml.etree.cElementTree.fromstring(skin)
 		if myscreen:
 			screen.parsedSkin = myscreen
 	if myscreen is None:
-		print "[SKIN] No skin to read..."
+		print("[SKIN] No skin to read...")
 		myscreen = screen.parsedSkin = xml.etree.cElementTree.fromstring("<screen></screen>")
 
 	screen.skinAttributes = []
@@ -1291,7 +1308,7 @@ def readSkin(screen, skin, names, desktop):
 			try:
 				cwvalue = constant_widgets[wname]
 			except KeyError:
-				print "\033[91m[SKIN] ERROR - given constant-widget: '%s' not found in skin\033[0m" % wname
+				print("\033[91m[SKIN] ERROR - given constant-widget: '%s' not found in skin\033[0m" % wname)
 				return
 		if cwvalue:
 			for x in cwvalue:
@@ -1312,10 +1329,10 @@ def readSkin(screen, skin, names, desktop):
 		wname = get_attr('name')
 		wsource = get_attr('source')
 		if wname is None and wsource is None:
-			print "widget has no name and no source!"
+			print("widget has no name and no source!")
 			return
 		if wname:
-			#print "Widget name=", wname
+			#print("Widget name=", wname)
 			visited_components.add(wname)
 			# get corresponding 'gui' object
 			try:
@@ -1326,7 +1343,7 @@ def readSkin(screen, skin, names, desktop):
 			collectAttributes(attributes, widget, context, skin_path_prefix, ignore=('name',))
 		elif wsource:
 			# get corresponding source
-			#print "Widget source=", wsource
+			#print("Widget source=", wsource)
 			while True: # until we found a non-obsolete source
 				# parse our current "wsource", which might specifiy a "related screen" before the dot,
 				# for example to reference a parent, global or session-global screen.
@@ -1336,18 +1353,18 @@ def readSkin(screen, skin, names, desktop):
 				while len(path) > 1:
 					scr = screen.getRelatedScreen(path[0])
 					if scr is None:
-						#print wsource
-						#print name
+						#print(wsource)
+						#print(name)
 						raise SkinError("specified related screen '" + wsource + "' was not found in screen '" + name + "'!")
 					path = path[1:]
 				# resolve the source.
 				source = scr.get(path[0])
 				if isinstance(source, ObsoleteSource):
 					# however, if we found an "obsolete source", issue warning, and resolve the real source.
-					print "WARNING: SKIN '%s' USES OBSOLETE SOURCE '%s', USE '%s' INSTEAD!" % (name, wsource, source.new_source)
-					print "OBSOLETE SOURCE WILL BE REMOVED %s, PLEASE UPDATE!" % (source.removal_date)
+					print("WARNING: SKIN '%s' USES OBSOLETE SOURCE '%s', USE '%s' INSTEAD!" % (name, wsource, source.new_source))
+					print("OBSOLETE SOURCE WILL BE REMOVED %s, PLEASE UPDATE!" % (source.removal_date))
 					if source.description:
-						print source.description
+						print(source.description)
 					wsource = source.new_source
 				else:
 					# otherwise, use that source.
@@ -1362,12 +1379,12 @@ def readSkin(screen, skin, names, desktop):
 			for converter in widget.findall("convert"):
 				ctype = converter.get('type')
 				assert ctype, "'convert'-tag needs a 'type'-attribute"
-				#print "Converter:", ctype
+				#print("Converter:", ctype)
 				try:
 					parms = converter.text.strip()
 				except:
 					parms = ""
-				#print "Params:", parms
+				#print("Params:", parms)
 				converter_class = my_import('.'.join(("Components", "Converter", ctype))).__dict__.get(ctype)
 				c = None
 				for i in source.downstream_elements:
@@ -1390,7 +1407,7 @@ def readSkin(screen, skin, names, desktop):
 			codeText = widget.text.strip()
 			widgetType = widget.attrib.get('type')
 			code = compile(codeText, "skin applet", "exec")
-		except Exception, ex:
+		except Exception as ex:
 			raise SkinError("applet failed to compile: " + str(ex))
 		if widgetType == "onLayoutFinish":
 			screen.onLayoutFinish.append(code)
@@ -1414,16 +1431,16 @@ def readSkin(screen, skin, names, desktop):
 	def process_screen(widget, context):
 		def process(w):
 			conditional = w.attrib.get('conditional')
-			if conditional and not [i for i in conditional.split(",") if i in screen.keys()]:
+			if conditional and not [i for i in conditional.split(",") if i in list(screen.keys())]:
 				return
 			objecttypes = w.attrib.get('objectTypes', '').split(",")
-			if len(objecttypes) > 1 and (objecttypes[0] not in screen.keys() or not [i for i in objecttypes[1:] if i == screen[objecttypes[0]].__class__.__name__]):
+			if len(objecttypes) > 1 and (objecttypes[0] not in list(screen.keys()) or not [i for i in objecttypes[1:] if i == screen[objecttypes[0]].__class__.__name__]):
 				return
 			p = processors.get(w.tag, process_none)
 			try:
 				p(w, context)
-			except SkinError, e:
-				print "[SKIN] SKIN ERROR in screen '%s' widget '%s':" % (name, w.tag), e
+			except SkinError as e:
+				print("[SKIN] SKIN ERROR in screen '%s' widget '%s':" % (name, w.tag), e)
 
 		cw = widget.findall("constant-widget")
 		if cw:
@@ -1442,10 +1459,10 @@ def readSkin(screen, skin, names, desktop):
 			try:
 				s = dom_screens.get(n, None)
 				if s is None:
-					print "[SKIN] Unable to find screen '%s' referred in screen '%s'" % (n, name)
+					print("[SKIN] Unable to find screen '%s' referred in screen '%s'" % (n, name))
 					return
 			except KeyError:
-				print "[SKIN] Unable to find screen '%s' referred in screen '%s'" % (n, name)
+				print("[SKIN] Unable to find screen '%s' referred in screen '%s'" % (n, name))
 			else:
 				process_screen(s[0], context)
 		layout = widget.attrib.get('layout')
@@ -1455,7 +1472,7 @@ def readSkin(screen, skin, names, desktop):
 			cc = SkinContext
 		try:
 			c = cc(context, widget.attrib.get('position'), widget.attrib.get('size'), widget.attrib.get('font'))
-		except Exception, ex:
+		except Exception as ex:
 			raise SkinError("Failed to create skincontext (%s,%s,%s) in %s: %s" % (widget.attrib.get('position'), widget.attrib.get('size'), widget.attrib.get('font'), context, ex))
 		process_screen(widget, c)
 
@@ -1469,16 +1486,16 @@ def readSkin(screen, skin, names, desktop):
 			"panel": process_panel
 	}
 
+	print("[SKIN] processing screen %s:" % name)
 	try:
-		print "[SKIN] processing screen %s:" % name
 		context.x = 0 # reset offsets, all components are relative to screen
 		context.y = 0 # coordinates.
 		process_screen(myscreen, context)
-	except Exception, e:
-		print "[SKIN] SKIN ERROR in %s:" % name, e
+	except Exception as e:
+		print("[SKIN] SKIN ERROR in %s:" % name, e)
 
 	from Components.GUIComponent import GUIComponent
-	nonvisited_components = [x for x in set(screen.keys()) - visited_components if isinstance(x, GUIComponent)]
+	nonvisited_components = [x for x in set(list(screen.keys())) - visited_components if isinstance(x, GUIComponent)]
 	assert not nonvisited_components, "the following components in %s don't have a skin entry: %s" % (name, ', '.join(nonvisited_components))
 	# This may look pointless, but it unbinds 'screen' from the nested scope. A better
 	# solution is to avoid the nested scope above and use the context object to pass
@@ -1491,5 +1508,5 @@ def parseAvailableSkinColor(color):
 	if color in colorNamesHuman:
 		return colorNamesHuman[color]
 	else:
-		print "color %s ist not available at used skin" % color
+		print("color %s ist not available at used skin" % color)
 		return None

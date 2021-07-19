@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from enigma import eListboxPythonMultiContent, RT_HALIGN_LEFT, RT_VALIGN_TOP
 
 

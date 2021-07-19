@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from Components.config import config, ConfigSubsection, ConfigSelection, ConfigPIN, ConfigText, ConfigYesNo, ConfigSubList, ConfigInteger
 from Components.ServiceList import refreshServiceList
 #from Screens.ChannelSelection import service_types_tv
@@ -10,6 +11,7 @@ from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from Tools.Notifications import AddPopup
 from enigma import eTimer, eServiceCenter, iServiceInformation, eServiceReference, eDVBDB
 import time
+import six
 
 TYPE_SERVICE = "SERVICE"
 TYPE_BOUQUETSERVICE = "BOUQUETSERVICE"
@@ -28,7 +30,7 @@ def InitParentalControl():
 	config.ParentalControl.retries.servicepin.time = ConfigInteger(default=3)
 	config.ParentalControl.servicepin = ConfigSubList()
 	config.ParentalControl.servicepin.append(ConfigPIN(default=0))
-	config.ParentalControl.age = ConfigSelection(default="18", choices=[("0", _("No age block"))] + list((str(x), "%d+" % x) for x in range(3, 19)))
+	config.ParentalControl.age = ConfigSelection(default="18", choices=[("0", _("No age block"))] + list((str(x), "%d+" % x) for x in list(range(3, 19))))
 	config.ParentalControl.hideBlacklist = ConfigYesNo(default=False)
 	config.ParentalControl.config_sections = ConfigSubsection()
 	config.ParentalControl.config_sections.hdftoolbox = ConfigYesNo(default=False)
@@ -100,7 +102,7 @@ class ParentalControl:
 			rating = event and event.getParentalData()
 			age = rating and rating.getRating()
 			age = age and age <= 15 and age + 3 or 0
-		if (age and age >= int(config.ParentalControl.age.value)) or service and self.blacklist.has_key(service):
+		if (age and age >= int(config.ParentalControl.age.value)) or service and service in self.blacklist:
 			#Check if the session pin is cached
 			if self.sessionPinCached:
 				return True
@@ -118,17 +120,17 @@ class ParentalControl:
 			return True
 
 	def protectService(self, service):
-		if not self.blacklist.has_key(service):
+		if service not in self.blacklist:
 			self.serviceMethodWrapper(service, self.addServiceToList, self.blacklist)
 			if config.ParentalControl.hideBlacklist.value and not self.sessionPinCached:
 				eDVBDB.getInstance().addFlag(eServiceReference(service), 2)
 
 	def unProtectService(self, service):
-		if self.blacklist.has_key(service):
+		if service in self.blacklist:
 			self.serviceMethodWrapper(service, self.removeServiceFromList, self.blacklist)
 
 	def getProtectionLevel(self, service):
-		return not self.blacklist.has_key(service) and -1 or 0
+		return service not in self.blacklist and -1 or 0
 
 	def getConfigValues(self):
 		#Read all values from configuration
@@ -191,7 +193,7 @@ class ParentalControl:
 		#Replaces saveWhiteList and saveBlackList:
 		#I don't like to have two functions with identical code...
 		file = open(resolveFilename(SCOPE_CONFIG, sWhichList), 'w')
-		for sService, sType in vList.iteritems():
+		for sService, sType in six.iteritems(vList):
 			#Only Services that are selected directly and Bouqets are saved.
 			#Services that are added by a bouquet are not saved.
 			#This is the reason for the change in self.whitelist and self.blacklist
@@ -217,7 +219,7 @@ class ParentalControl:
 		#Replaces addWhitelistService and addBlacklistService
 		#The lists are not only lists of service references any more.
 		#They are named lists with the service as key and an array of types as value:
-		if vList.has_key(service):
+		if service in vList:
 			if not type in vList[service]:
 				vList[service].append(type)
 		else:
@@ -225,7 +227,7 @@ class ParentalControl:
 
 	def removeServiceFromList(self, service, type, vList):
 		#Replaces deleteWhitelistService and deleteBlacklistService
-		if vList.has_key(service):
+		if service in vList:
 			if type in vList[service]:
 				vList[service].remove(type)
 			if not vList[service]:
@@ -261,7 +263,7 @@ class ParentalControl:
 			if not self.filesOpened:
 				self.open()
 				return getattr(self, name)
-		raise AttributeError, name
+		raise AttributeError(name)
 
 	def hideBlacklist(self):
 		if self.blacklist:

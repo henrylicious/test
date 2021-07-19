@@ -1,4 +1,5 @@
 # for localized messages
+from __future__ import absolute_import
 from . import _
 
 from enigma import *
@@ -18,9 +19,9 @@ from Components.Sources.List import List
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
 
-from MountPoints import MountPoints
-from Disks import Disks
-from ExtraMessageBox import ExtraMessageBox
+from .MountPoints import MountPoints
+from .Disks import Disks
+from .ExtraMessageBox import ExtraMessageBox
 from boxbranding import getMachineBrand, getMachineName
 
 import os
@@ -261,7 +262,7 @@ class HddFastRemove(Screen):
 					try:
 						mp = self.mountpoints.get(partition[0][:3], int(partition[0][3:]))
 						rmp = self.mountpoints.getRealMount(partition[0][:3], int(partition[0][3:]))
-					except Exception, e:
+					except Exception as e:
 						pass
 					if len(mp) > 0:
 						self.disks.append(MountEntry(disk[3], "P.%s (Fixed: %s)" % (partition[0][3:], mp)))

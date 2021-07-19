@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import sys
 import os
 from time import time
@@ -55,13 +57,6 @@ from Navigation import Navigation
 profile("LOAD:skin")
 from skin import readSkin
 
-from twisted.python import log
-config.misc.enabletwistedlog = ConfigYesNo(default=False)
-if config.misc.enabletwistedlog.value == True:
-	log.startLogging(open('/tmp/twisted.log', 'w'))
-else:
-	log.startLogging(sys.stdout)
-
 profile("LOAD:Tools")
 from Tools.Directories import InitFallbackFiles, resolveFilename, SCOPE_PLUGINS, SCOPE_ACTIVE_SKIN, SCOPE_CURRENT_SKIN, SCOPE_CONFIG
 from Components.config import config, configfile, ConfigText, ConfigYesNo, ConfigInteger, ConfigSelection, NoSave, ConfigNumber
@@ -89,8 +84,8 @@ config.misc.DeepStandby = NoSave(ConfigYesNo(default=False)) # detect deepstandb
 #def leaveStandby():
 #	print "!!!!!!!!!!!!!!!!!leave standby"
 
-#def standbyCountChanged(configElement):
-#	print "!!!!!!!!!!!!!!!!!enter standby num", configElement.value
+#def standbyCountChanged(configelement):
+#	print "!!!!!!!!!!!!!!!!!enter standby num", configelement.value
 #	from Screens.Standby import inStandby
 #	inStandby.onClose.append(leaveStandby)
 
@@ -100,11 +95,11 @@ config.misc.DeepStandby = NoSave(ConfigYesNo(default=False)) # detect deepstandb
 
 def useSyncUsingChanged(configelement):
 	if config.misc.SyncTimeUsing.value == "0":
-		print "[Time By]: Transponder"
+		print("[Time By]: Transponder")
 		enigma.eDVBLocalTimeHandler.getInstance().setUseDVBTime(True)
 		enigma.eEPGCache.getInstance().timeUpdated()
 	else:
-		print "[Time By]: NTP"
+		print("[Time By]: NTP")
 		enigma.eDVBLocalTimeHandler.getInstance().setUseDVBTime(False)
 		enigma.eEPGCache.getInstance().timeUpdated()
 
@@ -115,11 +110,11 @@ config.misc.SyncTimeUsing.addNotifier(useSyncUsingChanged)
 def NTPserverChanged(configelement):
 	if config.misc.NTPserver.value == "pool.ntp.org":
 		return
-	print "[NTPDATE] save /etc/default/ntpdate"
+	print("[NTPDATE] save /etc/default/ntpdate")
 	f = open("/etc/default/ntpdate", "w")
 	f.write('NTPSERVERS="' + config.misc.NTPserver.value + '"')
 	f.close()
-	os.chmod("/etc/default/ntpdate", 0755)
+	os.chmod("/etc/default/ntpdate", 0o755)
 	from Components.Console import Console
 	Console = Console()
 	Console.ePopen('/usr/bin/ntpdate-sync')
@@ -129,6 +124,9 @@ config.misc.NTPserver.addNotifier(NTPserverChanged, immediate_feedback=True)
 
 profile("Twisted")
 try:
+	import twisted.python.runtime
+	twisted.python.runtime.platform.supportsThreads = lambda: True
+
 	import e2reactor
 	e2reactor.install()
 
@@ -137,21 +135,25 @@ try:
 	def runReactor():
 		reactor.run(installSignalHandlers=False)
 except ImportError:
-	print "twisted not available"
+	print("twisted not available")
 
 	def runReactor():
 		enigma.runMainloop()
 
 profile("LOAD:Plugin")
 
+from twisted.python import log
+config.misc.enabletwistedlog = ConfigYesNo(default=False)
+if config.misc.enabletwistedlog.value == True:
+	log.startLogging(open('/tmp/twisted.log', 'w'))
+else:
+	log.startLogging(sys.stdout)
+
 # initialize autorun plugins and plugin menu entries
 from Components.PluginComponent import plugins
 
 profile("LOAD:Wizard")
-from Screens.Wizard import wizardManager
 from Screens.StartWizard import *
-from Screens.VideoWizard import *
-
 import Screens.Rc
 from Tools.BoundFunction import boundFunction
 from Plugins.Plugin import PluginDescriptor
@@ -160,21 +162,21 @@ profile("misc")
 had = dict()
 
 
-def dump(dir, p=""):
-	if isinstance(dir, dict):
-		for (entry, val) in dir.items():
+def dump(_dir, p=""):
+	if isinstance(_dir, dict):
+		for (entry, val) in _dir.items():
 			dump(val, p + "(dict)/" + entry)
-	if hasattr(dir, "__dict__"):
-		for name, value in dir.__dict__.items():
-			if not had.has_key(str(value)):
+	if hasattr(_dir, "__dict__"):
+		for name, value in _dir.__dict__.items():
+			if str(value) not in had:
 				had[str(value)] = 1
 				dump(value, p + "/" + str(name))
 			else:
-				print p + "/" + str(name) + ":" + str(dir.__class__) + "(cycle)"
+				print(p + "/" + str(name) + ":" + str(_dir.__class__) + "(cycle)")
 	else:
-		print p + ":" + str(dir)
+		print(p + ":" + str(_dir))
 
-# + ":" + str(dir.__class__)
+# + ":" + str(_dir.__class__)
 
 # display
 
@@ -235,7 +237,7 @@ class Session:
 			try:
 				p(reason=0, session=self)
 			except:
-				print "Plugin raised exception at WHERE_SESSIONSTART"
+				print("Plugin raised exception at WHERE_SESSIONSTART")
 				import traceback
 				traceback.print_exc()
 
@@ -355,7 +357,7 @@ class Session:
 
 	def close(self, screen, *retval):
 		if not self.in_exec:
-			print "close after exec!"
+			print("close after exec!")
 			return
 
 		# be sure that the close is for the right dialog!
@@ -431,7 +433,7 @@ class PowerKey:
 		if action == "shutdown":
 			self.shutdown()
 		elif action == "show_menu":
-			print "Show shutdown Menu"
+			print("Show shutdown Menu")
 			root = mdom.getroot()
 			for x in root.findall("menu"):
 				y = x.find("id")
@@ -513,7 +515,7 @@ class AutoScartControl:
 		config.av.vcrswitch.addNotifier(self.recheckVCRSb)
 		enigma.eAVSwitch.getInstance().vcr_sb_notifier.get().append(self.VCRSbChanged)
 
-	def recheckVCRSb(self, configElement):
+	def recheckVCRSb(self, configelement):
 		self.VCRSbChanged(self.current_vcr_sb)
 
 	def VCRSbChanged(self, value):
@@ -544,7 +546,9 @@ def runScreenTest():
 	config.misc.startCounter.value += 1
 
 	profile("readPluginList")
+	enigma.pauseInit()
 	plugins.readPluginList(resolveFilename(SCOPE_PLUGINS))
+	enigma.resumeInit()
 
 	profile("Init:Session")
 	nav = Navigation(config.misc.nextWakeup.value)
@@ -563,7 +567,7 @@ def runScreenTest():
 
 	def runNextScreen(session, screensToRun, *result):
 		if result:
-			print "[mytest.py] quitMainloop #3"
+			print("[mytest.py] quitMainloop #3")
 			enigma.quitMainloop(*result)
 			return
 
@@ -605,11 +609,11 @@ def runScreenTest():
 		f.write('-E2-')
 		f.close()
 
-	print "lastshutdown=%s		(True = last shutdown was OK)" % config.usage.shutdownOK.value
-	print "NOK shutdown action=%s" % config.usage.shutdownNOK_action.value
-	print "bootup action=%s" % config.usage.boot_action.value
+	print("lastshutdown=%s		(True = last shutdown was OK)" % config.usage.shutdownOK.value)
+	print("NOK shutdown action=%s" % config.usage.shutdownNOK_action.value)
+	print("bootup action=%s" % config.usage.boot_action.value)
 	if not config.usage.shutdownOK.value and not config.usage.shutdownNOK_action.value == 'normal' or not config.usage.boot_action.value == 'normal':
-		print "last shutdown = %s" % config.usage.shutdownOK.value
+		print("last shutdown = %s" % config.usage.shutdownOK.value)
 		import Screens.PowerLost
 		Screens.PowerLost.PowerLost(session)
 
@@ -623,7 +627,7 @@ def runScreenTest():
 
 	runReactor()
 
-	print "[mytest.py] normal shutdown"
+	print("[mytest.py] normal shutdown")
 	config.misc.startCounter.save()
 	config.usage.shutdownOK.setValue(True)
 	config.usage.shutdownOK.save()
@@ -634,7 +638,7 @@ def runScreenTest():
 	nowTime = time()
 #	if not config.misc.SyncTimeUsing.value == "0" or getBrandOEM() == 'gigablue':
 	if not config.misc.SyncTimeUsing.value == "0" or boxtype.startswith('gb') or getBrandOEM().startswith('ini'):
-		print "dvb time sync disabled... so set RTC now to current linux time!", strftime("%Y/%m/%d %H:%M", localtime(nowTime))
+		print("dvb time sync disabled... so set RTC now to current linux time!", strftime("%Y/%m/%d %H:%M", localtime(nowTime)))
 		setRTCtime(nowTime)
 
 	#recordtimer
@@ -681,16 +685,15 @@ def runScreenTest():
 		nextPluginName = nextPluginIdent
 		nextPluginTimeInStandby = 0
 
-	wakeupList = [
+	wakeupList = sorted([
 		x for x in ((nextRecordTime, 0, nextRecordTimeInStandby),
 					(nextZapTime, 1, nextZapTimeInStandby),
 					(nextPowerTime, 2, nextPowerTimeInStandby),
 					(nextPluginTime, 3, nextPluginTimeInStandby))
 		if x[0] != -1
-	]
-	wakeupList.sort()
+	])
 
-	print "=" * 100
+	print("=" * 100)
 	if wakeupList and wakeupList[0][0] > 0:
 		startTime = wakeupList[0]
 		# wakeup time before timer begins
@@ -713,10 +716,10 @@ def runScreenTest():
 			nextPluginName = " (%s)" % nextPluginName
 		else:
 			nextPluginName = ""
-		print "[mytest.py] set next wakeup type to '%s'%s %s" % ({0: "record-timer", 1: "zap-timer", 2: "power-timer", 3: "plugin-timer"}[startTime[1]], nextPluginName, {0: "and starts normal", 1: "and starts in standby"}[setStandby])
+		print("[mytest.py] set next wakeup type to '%s'%s %s" % ({0: "record-timer", 1: "zap-timer", 2: "power-timer", 3: "plugin-timer"}[startTime[1]], nextPluginName, {0: "and starts normal", 1: "and starts in standby"}[setStandby]))
 		if forceNextRecord:
-			print "[mytest.py] set from 'vps-plugin' or just before a 'record-timer' starts, set 'record-timer' wakeup flag"
-		print "[mytest.py] set next wakeup time to", strftime("%a, %Y/%m/%d %H:%M:%S", localtime(wptime))
+			print("[mytest.py] set from 'vps-plugin' or just before a 'record-timer' starts, set 'record-timer' wakeup flag")
+		print("[mytest.py] set next wakeup time to", strftime("%a, %Y/%m/%d %H:%M:%S", localtime(wptime)))
 		#set next wakeup
 		setFPWakeuptime(wptime)
 		#set next standby only after shutdown in deep standby
@@ -726,9 +729,9 @@ def runScreenTest():
 	else:
 		config.misc.nextWakeup.value = "-1,-1,-1,0,0,-1,0"
 		setFPWakeuptime(int(nowTime) - 3600) #minus one hour -> overwrite old wakeup time
-		print "[mytest.py] no set next wakeup time"
+		print("[mytest.py] no set next wakeup time")
 	config.misc.nextWakeup.save()
-	print "=" * 100
+	print("=" * 100)
 
 	profile("stopService")
 	session.nav.stopService()
@@ -777,9 +780,9 @@ profile("Init:DebugLogCheck")
 import Screens.LogManager
 Screens.LogManager.AutoLogManager()
 
-profile("Init:OnlineCheckState")
-import Components.OnlineUpdateCheck
-Components.OnlineUpdateCheck.OnlineUpdateCheck()
+#profile("Init:OnlineCheckState")
+#import Components.OnlineUpdateCheck
+#Components.OnlineUpdateCheck.OnlineUpdateCheck()
 
 profile("Init:NTPSync")
 import Components.NetworkTime
@@ -809,7 +812,7 @@ if boxtype in ('uniboxhd1', 'uniboxhd2', 'uniboxhd3', 'sezam5000hd', 'mbtwin', '
 			f.write('0')
 			f.close()
 	except:
-		print "Error disable enable_clock for ini5000 boxes"
+		print("Error disable enable_clock for ini5000 boxes")
 
 if boxtype in ('dm7080', 'dm820', 'dm900', 'dm920', 'gb7252'):
 	f = open("/proc/stb/hdmi-rx/0/hdmi_rx_monitor", "r")
@@ -860,9 +863,9 @@ try:
 
 	Components.ParentalControl.parentalControl.save()
 except:
-	print 'EXCEPTION IN PYTHON STARTUP CODE:'
-	print '-' * 60
+	print('EXCEPTION IN PYTHON STARTUP CODE:')
+	print('-' * 60)
 	print_exc(file=stdout)
-	print "[mytest.py] quitMainloop #4"
+	print("[mytest.py] quitMainloop #4")
 	enigma.quitMainloop(5)
-	print '-' * 60
+	print('-' * 60)

@@ -1,8 +1,11 @@
+from __future__ import print_function
 #################################################################################
 #       FULL BACKUP UYILITY FOR ENIGMA2, SUPPORTS THE MODELS OE-A 4.x     		#
 #					MAKES A FULLBACKUP READY FOR FLASHING.						#
 #################################################################################
 
+from __future__ import absolute_import
+from __future__ import division
 from enigma import getEnigmaVersionString
 from Screens.Screen import Screen
 from Components.Button import Button
@@ -15,7 +18,11 @@ from Screens.Console import Console
 from Screens.MessageBox import MessageBox
 from time import time, strftime, localtime
 from os import listdir, makedirs, path, statvfs, system, walk
-import commands
+import sys
+if sys.version_info[0] >= 3:
+	import subprocess
+else:
+	import commands
 import datetime
 from boxbranding import getBoxType, getMachineBrand, getMachineName, getImageDistro, getDriverDate, getImageVersion, getImageBuild, getBrandOEM, getMachineBuild, getImageFolder, getMachineUBINIZE, getMachineMKUBIFS, getMachineMtdKernel, getMachineMtdRoot, getMachineKernelFile, getMachineRootFile, getImageFileSystem
 
@@ -28,8 +35,8 @@ if SystemInfo["HasRootSubdir"] or getMachineBuild() in ('multibox', 'gbmv200', '
 
 def Freespace(dev):
 	statdev = statvfs(dev)
-	space = (statdev.f_bavail * statdev.f_frsize) / 1024
-	print "[FULL BACKUP] Free space on %s = %i kilobytes" % (dev, space)
+	space = (statdev.f_bavail * statdev.f_frsize) // 1024
+	print("[FULL BACKUP] Free space on %s = %i kilobytes" % (dev, space))
 	return space
 
 
@@ -93,23 +100,23 @@ class ImageBackup(Screen):
 			self.MTDBOOT = "none"
 			self.EMMCIMG = "usb_update.bin"
 
-		print "[FULL BACKUP] BOX MACHINEBUILD = >%s<" % self.MACHINEBUILD
-		print "[FULL BACKUP] BOX MACHINENAME = >%s<" % self.MACHINENAME
-		print "[FULL BACKUP] BOX MACHINEBRAND = >%s<" % self.MACHINEBRAND
-		print "[FULL BACKUP] BOX MODEL = >%s<" % self.MODEL
-		print "[FULL BACKUP] OEM MODEL = >%s<" % self.OEM
-		print "[FULL BACKUP] IMAGEFOLDER = >%s<" % self.IMAGEFOLDER
-		print "[FULL BACKUP] UBINIZE = >%s<" % self.UBINIZE_ARGS
-		print "[FULL BACKUP] MKUBIFS = >%s<" % self.MKUBIFS_ARGS
-		print "[FULL BACKUP] MTDBOOT = >%s<" % self.MTDBOOT
-		print "[FULL BACKUP] MTDKERNEL = >%s<" % self.MTDKERNEL
-		print "[FULL BACKUP] MTDROOTFS = >%s<" % self.MTDROOTFS
-		print "[FULL BACKUP] ROOTFSBIN = >%s<" % self.ROOTFSBIN
-		print "[FULL BACKUP] KERNELBIN = >%s<" % self.KERNELBIN
-		print "[FULL BACKUP] ROOTFSTYPE = >%s<" % self.ROOTFSTYPE
-		print "[FULL BACKUP] EMMCIMG = >%s<" % self.EMMCIMG
-		print "[FULL BACKUP] IMAGEDISTRO = >%s<" % self.IMAGEDISTRO
-		print "[FULL BACKUP] DISTROVERSION = >%s<" % self.DISTROVERSION
+		print("[FULL BACKUP] BOX MACHINEBUILD = >%s<" % self.MACHINEBUILD)
+		print("[FULL BACKUP] BOX MACHINENAME = >%s<" % self.MACHINENAME)
+		print("[FULL BACKUP] BOX MACHINEBRAND = >%s<" % self.MACHINEBRAND)
+		print("[FULL BACKUP] BOX MODEL = >%s<" % self.MODEL)
+		print("[FULL BACKUP] OEM MODEL = >%s<" % self.OEM)
+		print("[FULL BACKUP] IMAGEFOLDER = >%s<" % self.IMAGEFOLDER)
+		print("[FULL BACKUP] UBINIZE = >%s<" % self.UBINIZE_ARGS)
+		print("[FULL BACKUP] MKUBIFS = >%s<" % self.MKUBIFS_ARGS)
+		print("[FULL BACKUP] MTDBOOT = >%s<" % self.MTDBOOT)
+		print("[FULL BACKUP] MTDKERNEL = >%s<" % self.MTDKERNEL)
+		print("[FULL BACKUP] MTDROOTFS = >%s<" % self.MTDROOTFS)
+		print("[FULL BACKUP] ROOTFSBIN = >%s<" % self.ROOTFSBIN)
+		print("[FULL BACKUP] KERNELBIN = >%s<" % self.KERNELBIN)
+		print("[FULL BACKUP] ROOTFSTYPE = >%s<" % self.ROOTFSTYPE)
+		print("[FULL BACKUP] EMMCIMG = >%s<" % self.EMMCIMG)
+		print("[FULL BACKUP] IMAGEDISTRO = >%s<" % self.IMAGEDISTRO)
+		print("[FULL BACKUP] DISTROVERSION = >%s<" % self.DISTROVERSION)
 
 		self.error_files = ''
 		self.list = self.list_files("/boot")
@@ -218,9 +225,9 @@ class ImageBackup(Screen):
 			cmdline = cmdline.lstrip("/dev/")
 			self.MTDROOTFS = cmdline
 			self.MTDKERNEL = cmdline[:-1] + str(int(cmdline[-1:]) - 1)
-		print "[FULL BACKUP] Multiboot rootfs ", self.MTDROOTFS
-		print "[FULL BACKUP] Multiboot kernel ", self.MTDKERNEL
-		print "[FULL BACKUP] rootfssubdir: ", self.ROOTFSSUBDIR
+		print("[FULL BACKUP] Multiboot rootfs ", self.MTDROOTFS)
+		print("[FULL BACKUP] Multiboot kernel ", self.MTDKERNEL)
+		print("[FULL BACKUP] rootfssubdir: ", self.ROOTFSSUBDIR)
 
 	def read_startup(self, FILE):
 		self.file = FILE
@@ -229,7 +236,7 @@ class ImageBackup(Screen):
 				data = myfile.read().replace('\n', '')
 			myfile.close()
 		except IOError:
-			print "[ERROR] failed to open file %s" % file
+			print("[ERROR] failed to open file %s" % file)
 			data = " "
 		return data
 
@@ -278,7 +285,7 @@ class ImageBackup(Screen):
 							if cmdline in Harddisk.getextdevices("ext4"):
 								files.append(name)
 						except IndexError:
-							print '[ImageBackup] - IndexError in file: %s' % name
+							print('[ImageBackup] - IndexError in file: %s' % name)
 							self.error_files += '/boot/' + name + ', '
 				if getMachineBuild() not in ("gb7252"):
 					files.append("Recovery")
@@ -288,12 +295,12 @@ class ImageBackup(Screen):
 
 	def SearchUSBcanidate(self):
 		for paths, subdirs, files in walk("/media"):
-			for dir in subdirs:
-				if not dir == 'hdd' and not dir == 'net':
-					for file in listdir("/media/" + dir):
-						if file.find("backupstick") > -1:
-							print "USB-DEVICE found on: /media/%s" % dir
-							return "/media/" + dir
+			for _dir in subdirs:
+				if not _dir == 'hdd' and not _dir == 'net':
+					for _file in listdir("/media/" + _dir):
+						if _file.find("backupstick") > -1:
+							print("USB-DEVICE found on: /media/%s" % _dir)
+							return "/media/" + _dir
 			break
 		return "XX"
 
@@ -430,7 +437,7 @@ class ImageBackup(Screen):
 			cmdlist.append("dd if=/dev/mtd4 of=%s/logo.bin" % self.WORKDIR)
 
 		if self.EMMCIMG == "usb_update.bin" and self.list[self.selection] == "Recovery":
-			SEEK_CONT = (Harddisk.getFolderSize(self.backuproot) / 1024) + 100000
+			SEEK_CONT = (Harddisk.getFolderSize(self.backuproot) // 1024) + 100000
 			cmdlist.append('echo "' + _("Create:") + " fastboot dump" + '"')
 			cmdlist.append('cp -f /usr/share/fastboot.bin %s/fastboot.bin' % (self.WORKDIR))
 			cmdlist.append('echo "' + _("Create:") + " bootargs dump" + '"')
@@ -461,7 +468,7 @@ class ImageBackup(Screen):
 
 		cmdlist.append('echo " "')
 		cmdlist.append('echo "' + _("Create:") + ' kerneldump"')
- 		cmdlist.append('echo " "')
+		cmdlist.append('echo " "')
 
 		if SystemInfo["HaveMultiBoot"]:
 			if SystemInfo["HasRootSubdir"]:
@@ -555,7 +562,7 @@ class ImageBackup(Screen):
 			cmdlist.append('echo "' + _("Create: Recovery Fullbackup %s") % (self.EMMCIMG) + '"')
 			cmdlist.append('echo " "')
 			cmdlist.append('%s -zv %s/rootfs.ext4 %s/%s' % (self.FASTBOOT, self.WORKDIR, self.WORKDIR, self.EMMCIMG))
-		print cmdlist
+		print(cmdlist)
 		self.session.open(Console, title=self.TITLE, cmdlist=cmdlist, finishedCallback=self.doFullBackupCB, closeOnSuccess=True)
 
 	def doFullBackupCB(self):
@@ -681,8 +688,8 @@ class ImageBackup(Screen):
 				brand.close()
 			else:
 				self.backupbuild = "-"
-			print "self.backupbuild: %s" % self.backupbuild
-			print "selectionmultiboot: %s" % self.selectionmultiboot
+			print("self.backupbuild: %s" % self.backupbuild)
+			print("selectionmultiboot: %s" % self.selectionmultiboot)
 			cmdlist.append('opkg install p7zip > /dev/null 2>&1')
 			cmdlist.append('7za a -r -bt -bd -bb0 %s/full_backups/%s-%s-%s-%s-backup-%s_backup.zip %s/*' % (self.DIRECTORY, self.IMAGEDISTRO, self.DISTROVERSION, self.HDFIMAGEBUILD, self.MODEL, self.DATE, self.MAINDESTROOT))
 		elif SystemInfo["HasRootSubdir"]:
@@ -697,15 +704,15 @@ class ImageBackup(Screen):
 
 		if self.EMMCIMG == "usb_update.bin" and self.list[self.selection] == "Recovery":
 			if not path.isfile("%s/%s" % (self.MAINDESTROOT, self.EMMCIMG)):
-				print "[Image Backup] %s file not found" % (self.EMMCIMG)
+				print("[Image Backup] %s file not found" % (self.EMMCIMG))
 				file_found = False
 		else:
 			if not path.isfile("%s/%s" % (self.MAINDEST, self.ROOTFSBIN)):
-				print "[Image Backup] %s file not found" % (self.ROOTFSBIN)
+				print("[Image Backup] %s file not found" % (self.ROOTFSBIN))
 				file_found = False
 
 			if not path.isfile("%s/%s" % (self.MAINDEST, self.KERNELBIN)):
-				print "[Image Backup] %s file not found" % (self.KERNELBIN)
+				print("[Image Backup] %s file not found" % (self.KERNELBIN))
 				file_found = False
 
 		if SystemInfo["HaveMultiBoot"] and not self.list[self.selection] == "Recovery":
@@ -778,8 +785,14 @@ class ImageBackup(Screen):
 		AboutText += _("Drivers:\t%s") % driversdate + "\n"
 		AboutText += _("Last update:\t%s") % getEnigmaVersionString() + "\n\n"
 		AboutText += _("[Enigma2 Settings]\n")
-		AboutText += commands.getoutput("cat /etc/enigma2/settings")
+		if sys.version_info[0] >= 3:
+			AboutText += subprocess.getoutput("cat /etc/enigma2/settings")
+		else:
+			AboutText += commands.getoutput("cat /etc/enigma2/settings")
 		AboutText += _("\n[Installed Plugins]\n")
-		AboutText += commands.getoutput("opkg list_installed | grep enigma2-plugin-")
+		if sys.version_info[0] >= 3:
+			AboutText += subprocess.getoutput("opkg list_installed | grep enigma2-plugin-")
+		else:
+			AboutText += commands.getoutput("opkg list_installed | grep enigma2-plugin-")
 
 		return AboutText

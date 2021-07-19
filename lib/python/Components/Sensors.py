@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from Components.FanControl import fancontrol
 
 
@@ -24,9 +25,9 @@ class Sensors:
 	# returns a list of sensorids of type "type"
 	def getSensorsList(self, type=None):
 		if type is None:
-			return range(len(self.sensors_list))
+			return list(range(len(self.sensors_list)))
 		list = []
-		for sensorid in range(len(self.sensors_list)):
+		for sensorid in list(range(len(self.sensors_list))):
 			if self.sensors_list[sensorid][0] == type:
 				list.append(sensorid)
 		return list
@@ -65,7 +66,7 @@ class Sensors:
 					f.close()
 
 					self.sensors_list.append((self.TYPE_TEMPERATURE, name, unit, "/proc/stb/sensors/%s" % dirname))
-		for fanid in range(fancontrol.getFanCount()):
+		for fanid in list(range(fancontrol.getFanCount())):
 			if fancontrol.hasRPMSensor(fanid):
 				self.sensors_list.append((self.TYPE_FAN_RPM, _("Fan %d") % (fanid + 1), "rpm", fanid))
 

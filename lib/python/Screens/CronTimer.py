@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from Components.ActionMap import ActionMap
 from Components.config import getConfigListEntry, config, ConfigSubsection, ConfigText, ConfigSelection, ConfigInteger, ConfigClock, NoSave
 from Components.ConfigList import ConfigListScreen
@@ -12,6 +13,7 @@ from Screens.MessageBox import MessageBox
 from Tools.Directories import fileExists
 from os import system, listdir, rename, path, mkdir
 from time import sleep
+import six
 from boxbranding import getMachineBrand, getMachineName
 
 
@@ -19,7 +21,7 @@ class CronTimers(Screen):
 	def __init__(self, session):
 		Screen.__init__(self, session)
 		if not path.exists('/usr/scripts'):
-			mkdir('/usr/scripts', 0755)
+			mkdir('/usr/scripts', 0o755)
 		Screen.setTitle(self, _("Cron Manager"))
 		self.onChangedEntry = []
 		self['lab1'] = Label(_("Autostart:"))
@@ -52,6 +54,7 @@ class CronTimers(Screen):
 		self.Console.ePopen('/usr/bin/opkg list_installed ' + self.service_name, self.checkNetworkState)
 
 	def checkNetworkState(self, str, retval, extra_args):
+		str = six.ensure_str(str)
 		if not str:
 			self.feedscheck = self.session.open(MessageBox, _('Please wait whilst feeds state is checked.'), MessageBox.TYPE_INFO, enable_input=False)
 			self.feedscheck.setTitle(_('Checking Feeds'))
@@ -62,6 +65,7 @@ class CronTimers(Screen):
 			self.updateList()
 
 	def checkNetworkStateFinished(self, result, retval, extra_args=None):
+		result = six.ensure_str(result)
 		if 'bad address' in result:
 			self.session.openWithCallback(self.InstallPackageFailed, MessageBox, _("Your %s %s is not connected to the internet, please check your network settings and try again.") % (getMachineBrand(), getMachineName()), type=MessageBox.TYPE_INFO, timeout=10, close_on_any_key=True)
 		elif ('wget returned 1' or 'wget returned 255' or '404 Not Found') in result:
@@ -97,6 +101,7 @@ class CronTimers(Screen):
 			self.close()
 
 	def RemovedataAvail(self, str, retval, extra_args):
+		str = six.ensure_str(str)
 		if str:
 			self.session.openWithCallback(self.RemovePackage, MessageBox, _('Ready to remove "%s" ?') % self.service_name)
 		else:
@@ -192,20 +197,20 @@ class CronTimers(Screen):
 				if len(parts) > 5 and not parts[0].startswith("#"):
 					if parts[1] == '*':
 						line2 = 'H: 00:' + parts[0].zfill(2) + '\t'
-						for i in range(5, len(parts)):
+						for i in list(range(5, len(parts))):
 							line2 = line2 + parts[i] + ' '
 						res = (line2, line)
 						self.list.append(res)
 					elif parts[2] == '*' and parts[4] == '*':
 						line2 = 'D: ' + parts[1].zfill(2) + ':' + parts[0].zfill(2) + '\t'
-						for i in range(5, len(parts)):
+						for i in list(range(5, len(parts))):
 							line2 = line2 + parts[i] + ' '
 						res = (line2, line)
 						self.list.append(res)
 					elif parts[3] == '*':
 						if parts[4] == "*":
 							line2 = 'M:  Day ' + parts[2] + '  ' + parts[1].zfill(2) + ':' + parts[0].zfill(2) + '\t'
-							for i in range(5, len(parts)):
+							for i in list(range(5, len(parts))):
 								line2 = line2 + parts[i] + ' '
 						header = 'W:  '
 						day = ""
@@ -226,7 +231,7 @@ class CronTimers(Screen):
 
 						if day:
 							line2 = header + day + parts[1].zfill(2) + ':' + parts[0].zfill(2) + '\t'
-							for i in range(5, len(parts)):
+							for i in list(range(5, len(parts))):
 								line2 = line2 + parts[i] + ' '
 						res = (line2, line)
 						self.list.append(res)
@@ -248,7 +253,7 @@ class CronTimers(Screen):
 			mysel = self['list'].getCurrent()
 			if mysel:
 				myline = mysel[1]
-				file('/etc/cron/crontabs/root.tmp', 'w').writelines([l for l in file('/etc/cron/crontabs/root').readlines() if myline not in l])
+				open('/etc/cron/crontabs/root.tmp', 'w').writelines([l for l in open('/etc/cron/crontabs/root').readlines() if myline not in l])
 				rename('/etc/cron/crontabs/root.tmp', '/etc/cron/crontabs/root')
 				rc = system('crontab /etc/cron/crontabs/root -c /etc/cron/crontabs')
 				self.updateList()

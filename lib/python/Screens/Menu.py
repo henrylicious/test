@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from Screens.Screen import Screen
 from Screens.ParentalControlSetup import ProtectedScreen
 from Components.Sources.List import List
@@ -10,6 +11,7 @@ from Components.SystemInfo import SystemInfo
 
 from Tools.BoundFunction import boundFunction
 from Tools.Directories import resolveFilename, SCOPE_SKIN
+import six
 
 import xml.etree.cElementTree
 
@@ -36,7 +38,7 @@ class MenuUpdater:
 		self.updatedMenuItems[id].remove([text, pos, module, screen, weight])
 
 	def updatedMenuAvailable(self, id):
-		return self.updatedMenuItems.has_key(id)
+		return id in self.updatedMenuItems
 
 	def getUpdatedMenu(self, id):
 		return self.updatedMenuItems[id]
@@ -59,7 +61,7 @@ class Menu(Screen, ProtectedScreen):
 			selection[1]()
 
 	def execText(self, text):
-		exec text
+		exec(text)
 
 	def runScreen(self, arg):
 		# arg[0] is the module (as string)
@@ -68,7 +70,7 @@ class Menu(Screen, ProtectedScreen):
 		#	string (as we want to reference
 		#	stuff which is just imported)
 		if arg[0] != "":
-			exec "from %s import %s" % (arg[0], arg[1].split(",")[0])
+			exec("from %s import %s" % (arg[0], arg[1].split(",")[0]))
 			self.openDialog(*eval(arg[1]))
 
 	def nothing(self): #dummy
@@ -93,7 +95,7 @@ class Menu(Screen, ProtectedScreen):
 					return
 			elif not SystemInfo.get(requires, False):
 				return
-		MenuTitle = _(node.get("text", "??").encode("UTF-8"))
+		MenuTitle = _(six.ensure_str(node.get("text", "??")))
 		entryID = node.get("entryID", "undefined")
 		weight = node.get("weight", 50)
 		x = node.get("flushConfigOnClose")
@@ -123,7 +125,7 @@ class Menu(Screen, ProtectedScreen):
 		configCondition = node.get("configcondition")
 		if configCondition and not eval(configCondition + ".value"):
 			return
-		item_text = node.get("text", "").encode("UTF-8")
+		item_text = six.ensure_str(node.get("text", ""))
 		entryID = node.get("entryID", "undefined")
 		weight = node.get("weight", 50)
 		for x in node:
@@ -269,10 +271,10 @@ class Menu(Screen, ProtectedScreen):
 				"9": self.keyNumberGlobal
 			})
 
-		a = parent.get("title", "").encode("UTF-8") or None
+		a = six.ensure_str(parent.get("title", "")) or None
 		a = a and _(a)
 		if a is None:
-			a = _(parent.get("text", "").encode("UTF-8"))
+			a = _(six.ensure_str(parent.get("text", "")))
 		self["title"] = StaticText(a)
 		Screen.setTitle(self, a)
 		self.menu_title = a

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 # Plugin definition
+from __future__ import absolute_import
 from Plugins.Plugin import PluginDescriptor
 
 from Screens.Menu import Menu, mdom
@@ -18,6 +19,7 @@ from Components.ActionMap import HelpableActionMap, ActionMap
 from Components.SystemInfo import SystemInfo
 
 from xml.etree.cElementTree import parse as cet_parse
+import six
 try:
 	from xml.etree.cElementTree import ParseError
 except ImportError as ie:
@@ -26,9 +28,9 @@ from Tools.XMLTools import stringToXML
 
 try:
 	dict.iteritems
-	iteritems = lambda d: d.iteritems()
+	iteritems = lambda d: six.iteritems(d)
 except AttributeError:
-	iteritems = lambda d: d.items()
+	iteritems = lambda d: list(d.items())
 
 from operator import itemgetter
 from shutil import copyfile, Error
@@ -64,7 +66,7 @@ class MenuWeights:
 			return
 
 		for node in config.findall('entry'):
-			text = node.get('text', '').encode("UTF-8")
+			text = six.ensure_str(node.get('text', ''))
 			weight = node.get("weight", None)
 			hidden = node.get('hidden', False)
 			hidden = hidden and hidden.lower() == "yes"
@@ -231,7 +233,7 @@ class SortableMenu(Menu, HelpableScreen):
 					return
 			elif not SystemInfo.get(requires, False):
 				return
-		MenuTitle = _(node.get("text", "??").encode("UTF-8"))
+		MenuTitle = six.ensure_str(_(node.get("text", "??")))
 		entryID = node.get("entryID", "undefined")
 		weight = node.get("weight", 50)
 		x = node.get("flushConfigOnClose")

@@ -15,8 +15,10 @@
 #
 #######################################################################
 
+from __future__ import absolute_import
+from __future__ import division
 import math
-from Renderer import Renderer
+from Components.Renderer.Renderer import Renderer
 from skin import parseColor
 from enigma import eCanvas, eSize, gRGB, eRect
 from Components.VariableText import VariableText
@@ -47,7 +49,7 @@ class VWatches(Renderer):
 
 	def calculate(self, w, r, m):
 		a = (w * 6)
-		z = (math.pi / 180)
+		z = (math.pi // 180)
 		x = int(round((r * math.sin((a * z)))))
 		y = int(round((r * math.cos((a * z)))))
 		return ((m + x), (m - y))
@@ -55,7 +57,7 @@ class VWatches(Renderer):
 	def hand(self):
 		width = self.instance.size().width()
 		height = self.instance.size().height()
-		r = (min(width, height) / 2)
+		r = (min(width, height) // 2)
 		(endX, endY,) = self.calculate(self.numval, r, r)
 		self.draw_line(r, r, endX, endY)
 
@@ -73,9 +75,9 @@ class VWatches(Renderer):
 			ystep = -1
 		deltax = x1 - x0
 		deltay = abs(y1 - y0)
-		error = -deltax / 2
+		error = -deltax // 2
 		y = y0
-		for x in range(x0, x1 + 1):
+		for x in list(range(x0, x1 + 1)):
 			if steep:
 				self.instance.fillRect(eRect(y, x, 1, 3), self.fColor)
 			else:

@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 import re
 
@@ -23,7 +25,7 @@ class MountPoints():
 		for entry in self.entries:
 			if entry["modified"]:
 				if len(entry["data"]) != 6:
-					print "[DeviceManager] WARNING: fstab entry with not valid data"
+					print("[DeviceManager] WARNING: fstab entry with not valid data")
 					continue
 				conf.write("\t".join(entry["data"]) + "\n")
 			else:
@@ -76,7 +78,7 @@ class MountPoints():
 					self.entries.remove(entry)
 
 	def deleteDisk(self, device):
-		for i in range(1, 4):
+		for i in list(range(1, 4)):
 			res = self.get(device, i)
 			if len(res) > 0:
 				self.delete(res)

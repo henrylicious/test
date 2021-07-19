@@ -1,13 +1,17 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 import re
 import unicodedata
-from Renderer import Renderer
+from Components.Renderer.Renderer import Renderer
 from enigma import ePixmap, ePicLoad
 from Tools.Alternatives import GetWithAlternative
 from Tools.Directories import pathExists, SCOPE_SKIN_IMAGE, SCOPE_ACTIVE_SKIN, resolveFilename
 from Components.Harddisk import harddiskmanager
 from Components.config import config, ConfigBoolean
 from ServiceReference import ServiceReference
+import six
+import sys
 
 searchPaths = []
 lastPiconPath = None
@@ -31,11 +35,11 @@ def onMountpointAdded(mountpoint):
 		if os.path.isdir(path) and path not in searchPaths:
 			for fn in os.listdir(path):
 				if fn.endswith('.png'):
-					print "[Picon] adding path:", path
+					print("[Picon] adding path:", path)
 					searchPaths.append(path)
 					break
-	except Exception, ex:
-		print "[Picon] Failed to investigate %s:" % mountpoint, ex
+	except Exception as ex:
+		print("[Picon] Failed to investigate %s:" % mountpoint, ex)
 
 
 def onMountpointRemoved(mountpoint):
@@ -43,7 +47,7 @@ def onMountpointRemoved(mountpoint):
 	path = os.path.join(mountpoint, 'picon') + '/'
 	try:
 		searchPaths.remove(path)
-		print "[Picon] removed path:", path
+		print("[Picon] removed path:", path)
 	except:
 		pass
 
@@ -88,7 +92,10 @@ def getPiconName(serviceName):
 	pngname = findPicon(sname)
 	if not pngname: # picon by channel name
 		name = ServiceReference(serviceName).getServiceName()
-		name = unicodedata.normalize('NFKD', unicode(name, 'utf_8', errors='ignore')).encode('ASCII', 'ignore')
+		if sys.version_info[0] >= 3:
+			name = six.ensure_str(unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore'))
+		else:
+			name = unicodedata.normalize('NFKD', unicode(name, 'utf_8', errors='ignore')).encode('ASCII', 'ignore')
 		name = re.sub('[^a-z0-9]', '', name.replace('&', 'and').replace('+', 'plus').replace('*', 'star').lower())
 		if len(name) > 0:
 			pngname = findPicon(name)
@@ -102,7 +109,7 @@ def getPiconName(serviceName):
 		if len(fields) > 2:
 			while not pngname:
 				tmp = ''
-				for i in range(256):
+				for i in list(range(256)):
 					tmp = hex(i)[2:].upper().zfill(2)
 					fields[2] = tmp
 					pngname = findPicon('_'.join(fields))

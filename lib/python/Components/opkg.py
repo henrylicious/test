@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 
 
@@ -54,4 +56,4 @@ def enumPlugins(filter_start=''):
 
 if __name__ == '__main__':
 	for p in enumPlugins('enigma'):
-		print p
+		print(p)

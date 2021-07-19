@@ -1,6 +1,9 @@
+from __future__ import print_function
 # the implementation here is a bit crappy.
+from __future__ import absolute_import
+from __future__ import division
 import time
-from Directories import resolveFilename, SCOPE_CONFIG
+from Tools.Directories import resolveFilename, SCOPE_CONFIG
 from boxbranding import getBoxType
 
 boxtype = getBoxType()
@@ -26,12 +29,12 @@ try:
 		total_time = t
 		profile_data[id] = t
 except:
-	print "no profile data available"
+	print("no profile data available")
 
 try:
 	profile_file = open(resolveFilename(SCOPE_CONFIG, "profile"), "w")
 except IOError:
-	print "WARNING: couldn't open profile file!"
+	print("WARNING: couldn't open profile file!")
 
 
 def profile(id):
@@ -42,7 +45,7 @@ def profile(id):
 		if id in profile_data:
 			t = profile_data[id]
 			if total_time:
-				perc = t * (PERCENTAGE_END - PERCENTAGE_START) / total_time + PERCENTAGE_START
+				perc = t * (PERCENTAGE_END - PERCENTAGE_START) // total_time + PERCENTAGE_START
 			else:
 				perc = PERCENTAGE_START
 			try:

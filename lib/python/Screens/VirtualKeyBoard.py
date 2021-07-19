@@ -1,4 +1,7 @@
 # -*- coding: UTF-8 -*-
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from enigma import eListboxPythonMultiContent, gFont, RT_HALIGN_CENTER, RT_VALIGN_CENTER, getPrevAsciiCode
 from Screens.Screen import Screen
 from Components.Language import language
@@ -77,7 +80,7 @@ class VirtualKeyBoard(Screen):
 
 		self["country"] = StaticText("")
 		self["header"] = Label(title)
-		self["text"] = Input(currPos=len(kwargs.get("text", "").decode("utf-8", 'ignore')), allMarked=False, **kwargs)
+		self["text"] = Input(currPos=len(six.ensure_text(kwargs.get("text", ""))), allMarked=False, **kwargs)
 		self["list"] = VirtualKeyBoardList([])
 
 		self["actions"] = NumberActionMap(["OkCancelActions", "WizardActions", "ColorActions", "KeyboardInputActions", "InputBoxActions", "InputAsciiActions"],
@@ -337,7 +340,7 @@ class VirtualKeyBoard(Screen):
 			else:
 				width = key_bg_width
 				res.append(MultiContentEntryPixmapAlphaTest(pos=(x, 0), size=(width, h), png=self.key_bg))
-				text.append(MultiContentEntryText(pos=(x, 0), size=(width, h), font=0, text=key.encode("utf-8"), flags=RT_HALIGN_CENTER | RT_VALIGN_CENTER))
+				text.append(MultiContentEntryText(pos=(x, 0), size=(width, h), font=0, text=six.ensure_str(key), flags=RT_HALIGN_CENTER | RT_VALIGN_CENTER))
 			x += width
 		return res + text
 
@@ -354,14 +357,14 @@ class VirtualKeyBoard(Screen):
 	def markSelectedKey(self):
 		w, h = skin.parameters.get("VirtualKeyboard", (45, 45))
 		if self.previousSelectedKey is not None:
-			self.list[self.previousSelectedKey / 12] = self.list[self.previousSelectedKey / 12][:-1]
+			self.list[self.previousSelectedKey // 12] = self.list[self.previousSelectedKey // 12][:-1]
 		width = self.key_sel.size().width()
 		try:
-			x = self.list[self.selectedKey / 12][self.selectedKey % 12 + 1][1]
+			x = self.list[self.selectedKey // 12][self.selectedKey % 12 + 1][1]
 		except IndexError:
 			self.selectedKey = self.max_key
-			x = self.list[self.selectedKey / 12][self.selectedKey % 12 + 1][1]
-		self.list[self.selectedKey / 12].append(MultiContentEntryPixmapAlphaTest(pos=(x, 0), size=(width, h), png=self.key_sel))
+			x = self.list[self.selectedKey // 12][self.selectedKey % 12 + 1][1]
+		self.list[self.selectedKey // 12].append(MultiContentEntryPixmapAlphaTest(pos=(x, 0), size=(width, h), png=self.key_sel))
 		self.previousSelectedKey = self.selectedKey
 		self["list"].setList(self.list)
 
@@ -378,7 +381,7 @@ class VirtualKeyBoard(Screen):
 
 	def okClicked(self):
 		self.smsChar = None
-		text = (self.shiftMode and self.shiftkeys_list or self.keys_list)[self.selectedKey / 12][self.selectedKey % 12].encode("UTF-8")
+		text = six.ensure_str((self.shiftMode and self.shiftkeys_list or self.keys_list)[self.selectedKey // 12][self.selectedKey % 12])
 
 		if text == "EXIT":
 			self.close(None)
@@ -397,7 +400,7 @@ class VirtualKeyBoard(Screen):
 			self.shiftClicked()
 
 		elif text == "SPACE":
-			self["text"].char(" ".encode("UTF-8"))
+                        self['text'].char(six.ensure_str(" "))
 
 		elif text == "OK":
 			self.close(self["text"].getText())
@@ -413,7 +416,7 @@ class VirtualKeyBoard(Screen):
 
 	def okLongClicked(self):
 		self.smsChar = None
-		text = (self.shiftMode and self.shiftkeys_list or self.keys_list)[self.selectedKey / 12][self.selectedKey % 12].encode("UTF-8")
+		text = six.ensure_str((self.shiftMode and self.shiftkeys_list or self.keys_list)[self.selectedKey // 12][self.selectedKey % 12])
 
 		if text == "BACKSPACE":
 			self["text"].deleteAllChars()
@@ -433,23 +436,23 @@ class VirtualKeyBoard(Screen):
 
 	def left(self):
 		self.smsChar = None
-		self.selectedKey = self.selectedKey / 12 * 12 + (self.selectedKey + 11) % 12
+		self.selectedKey = self.selectedKey // 12 * 12 + (self.selectedKey + 11) % 12
 		if self.selectedKey > self.max_key:
 			self.selectedKey = self.max_key
 		self.markSelectedKey()
 
 	def right(self):
 		self.smsChar = None
-		self.selectedKey = self.selectedKey / 12 * 12 + (self.selectedKey + 1) % 12
+		self.selectedKey = self.selectedKey // 12 * 12 + (self.selectedKey + 1) % 12
 		if self.selectedKey > self.max_key:
-			self.selectedKey = self.selectedKey / 12 * 12
+			self.selectedKey = self.selectedKey // 12 * 12
 		self.markSelectedKey()
 
 	def up(self):
 		self.smsChar = None
 		self.selectedKey -= 12
 		if self.selectedKey < 0:
-			self.selectedKey = self.max_key / 12 * 12 + self.selectedKey % 12
+			self.selectedKey = self.max_key // 12 * 12 + self.selectedKey % 12
 			if self.selectedKey > self.max_key:
 				self.selectedKey -= 12
 		self.markSelectedKey()
@@ -467,12 +470,12 @@ class VirtualKeyBoard(Screen):
 
 	def smsOK(self):
 		if self.smsChar and self.selectAsciiKey(self.smsChar):
-			print "pressing ok now"
+			print("pressing ok now")
 			self.okClicked()
 
 	def keyGotAscii(self):
 		self.smsChar = None
-		if self.selectAsciiKey(str(unichr(getPrevAsciiCode()).encode('utf-8'))):
+		if six.ensure_str(self.selectAsciiKey(str(unichr(getPrevAsciiCode())))):
 			self.okClicked()
 
 	def selectAsciiKey(self, char):

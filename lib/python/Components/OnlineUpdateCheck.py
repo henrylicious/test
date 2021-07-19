@@ -1,9 +1,11 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from time import time
 from boxbranding import getImageVersion
 
 from enigma import eTimer
 
-import Components.Task
+from Components import Task
 from Components.Ipkg import IpkgComponent
 from Components.config import config
 
@@ -60,7 +62,7 @@ class OnlineUpdateCheckPoller:
 				self.total_packages = len(self.ipkg.getFetchedList())
 				print('[OnlineVersionCheck] %s Updates available' % self.total_packages)
 				if self.total_packages:
-					from urllib import urlopen
+					from six.moves.urllib.request import urlopen
 					import socket
 					currentTimeoutDefault = socket.getdefaulttimeout()
 					socket.setdefaulttimeout(3)
@@ -84,10 +86,10 @@ class VersionCheck:
 	def getStableUpdateAvailable(self):
 		if config.softwareupdate.updatefound.value and config.softwareupdate.check.value:
 			if config.softwareupdate.updateisunstable.value == '0':
-# 				print '[OnlineVersionCheck] New Release updates found'
+# 				print('[OnlineVersionCheck] New Release updates found')
 				return True
 			else:
-# 				print '[OnlineVersionCheck] skipping as beta is not wanted'
+# 				print('[OnlineVersionCheck] skipping as beta is not wanted')
 				return False
 		else:
 			return False
@@ -95,10 +97,10 @@ class VersionCheck:
 	def getUnstableUpdateAvailable(self):
 		if config.softwareupdate.updatefound.value and config.softwareupdate.check.value:
 			if config.softwareupdate.updateisunstable.value == '1' and config.softwareupdate.updatebeta.value:
-# 				print '[OnlineVersionCheck] New Experimental updates found'
+# 				print('[OnlineVersionCheck] New Experimental updates found')
 				return True
 			else:
-# 				print '[OnlineVersionCheck] skipping as beta is not wanted'
+# 				print('[OnlineVersionCheck] skipping as beta is not wanted')
 				return False
 		else:
 			return False

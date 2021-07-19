@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from os import path
 
 from enigma import iPlayableService, iServiceInformation, eTimer, eServiceCenter, eServiceReference, eDVBDB
@@ -298,12 +301,12 @@ class VideoSetup(Screen, ConfigListScreen):
 				config.av.autores_unknownres.setValue(self.last_good_autores_unknownres)
 				try:
 					if not self.current_mode in iAVSwitch.readAvailableModes():
-						raise TypeError, "No old video mode saved!"
+						raise TypeError("No old video mode saved!")
 					f = open("/proc/stb/video/videomode", "w")
 					f.write(self.current_mode)
 					f.close()
 				except Exception as e:
-					print "[VideoMode] failed to set old video mode!", e
+					print("[VideoMode] failed to set old video mode!", e)
 					self.hw.setMode(*self.last_good)
 			self.createSetup()
 		else:
@@ -756,9 +759,9 @@ class AutoVideoMode(Screen):
 				video_pol = ("i", "p")[info.getInfo(iServiceInformation.sProgressive)]
 				video_rate = int(info.getInfo(iServiceInformation.sFrameRate))
 
-		print "[VideoMode] detect video height: %s, width: %s, pol: %s, rate: %s (current video mode: %s)" % (video_height, video_width, video_pol, video_rate, current_mode)
+		print("[VideoMode] detect video height: %s, width: %s, pol: %s, rate: %s (current video mode: %s)" % (video_height, video_width, video_pol, video_rate, current_mode))
 		if video_height and video_width and video_pol and video_rate:
-			label_rate = (video_rate + 500) / 1000
+			label_rate = (video_rate + 500) // 1000
 			if video_pol == 'i':
 				label_rate *= 2
 			resolutionlabel["content"].setText(_("Video content: %ix%i%s %iHz") % (video_width, video_height, video_pol, label_rate))
@@ -785,7 +788,7 @@ class AutoVideoMode(Screen):
 					new_rate = 30000
 				else:
 					new_rate = video_rate
-				new_rate = str((new_rate + 500) / 1000)
+				new_rate = str((new_rate + 500) // 1000)
 			else:
 				new_rate = config_rate
 
@@ -801,7 +804,7 @@ class AutoVideoMode(Screen):
 
 			elif config.av.autores.value == 'simple':
 				autorestyp = 'simple'
-				new_rate = (video_rate + 500) / 1000
+				new_rate = (video_rate + 500) // 1000
 				if video_height <= 576 and int(config_res) >= 576: #sd
 					if config.av.autores_rate_sd[config.av.autores_mode_sd[config.av.videoport.value].value].value in ("auto", "multi"):
 						if video_pol == 'i':
@@ -839,7 +842,7 @@ class AutoVideoMode(Screen):
 				new_rate = str(new_rate)
 
 				if new_mode[-1:] == 'p':
-					new_rate = setProgressiveRate((video_rate + 500) / 1000 * (int(video_pol == 'i') + 1), new_rate, new_mode[:-1], config_res, config_rate)
+					new_rate = setProgressiveRate((video_rate + 500) // 1000 * (int(video_pol == 'i') + 1), new_rate, new_mode[:-1], config_res, config_rate)
 
 				if new_mode + new_rate in iAVSwitch.readAvailableModes():
 					write_mode = new_mode + new_rate
@@ -855,7 +858,7 @@ class AutoVideoMode(Screen):
 
 			elif config.av.autores.value == 'native':
 				autorestyp = 'native'
-				new_rate = (video_rate + 500) / 1000
+				new_rate = (video_rate + 500) // 1000
 				new_pol = video_pol
 				new_res = str(video_height)
 				if video_pol == 'i':
@@ -878,7 +881,7 @@ class AutoVideoMode(Screen):
 				new_rate = str(new_rate)
 
 				if new_pol == 'p':
-					new_rate = setProgressiveRate((video_rate + 500) / 1000 * (int(video_pol == 'i') + 1), new_rate, new_res, config_res, config_rate)
+					new_rate = setProgressiveRate((video_rate + 500) // 1000 * (int(video_pol == 'i') + 1), new_rate, new_res, config_res, config_rate)
 
 				if new_res + new_pol + new_rate in iAVSwitch.readAvailableModes():
 					write_mode = new_res + new_pol + new_rate
@@ -901,7 +904,7 @@ class AutoVideoMode(Screen):
 					elif config.av.autores_unknownres.value == 'highest':
 						new_res = config_res
 					if new_pol == 'p':
-						new_rate = setProgressiveRate((video_rate + 500) / 1000 * (int(video_pol == 'i') + 1), new_rate, new_res, config_res, config_rate)
+						new_rate = setProgressiveRate((video_rate + 500) // 1000 * (int(video_pol == 'i') + 1), new_rate, new_res, config_res, config_rate)
 					if new_res + new_pol + new_rate in iAVSwitch.readAvailableModes():
 						write_mode = new_res + new_pol + new_rate
 					elif new_res + new_pol in iAVSwitch.readAvailableModes():
@@ -1014,13 +1017,13 @@ class AutoVideoMode(Screen):
 					new_rate = '' # omit frame rate specifier, e.g. '1080p' instead of '1080p50' if there is no clue
 				if mypath != '':
 					if mypath.endswith('.ts'):
-						print "DEBUG VIDEOMODE/ playing .ts file"
+						print("DEBUG VIDEOMODE/ playing .ts file")
 						new_rate = '50' # for .ts files
 					else:
-						print "DEBUG VIDEOMODE/ playing other (non .ts) file"
+						print("DEBUG VIDEOMODE/ playing other (non .ts) file")
 						# new_rate from above for all other videos
 				else:
-					print "DEBUG VIDEOMODE/ no path or no service reference, presumably live TV"
+					print("DEBUG VIDEOMODE/ no path or no service reference, presumably live TV")
 					new_rate = '50' # for TV / or no service reference, then stay at 1080p50
 
 				new_rate = new_rate.replace('25', '50')
@@ -1054,11 +1057,11 @@ class AutoVideoMode(Screen):
 									f.write(write_mode)
 									f.close()
 									changeResolution = True
-								except Exception, e:
+								except Exception as e:
 									print("[VideoMode] write_mode exception:" + str(e))
 
 						if not changeResolution:
-							print "[VideoMode] setMode - port: %s, mode: %s is not available" % (config_port, write_mode)
+							print("[VideoMode] setMode - port: %s, mode: %s is not available" % (config_port, write_mode))
 							resolutionlabel["restxt"].setText(_("Video mode: %s not available") % write_mode)
 							# we try to go for not available 1080p24/1080p30/1080p60 to change to 1080p from 60hz_choices if available
 							# TODO: can we make it easier, or more important --> smaller ?
@@ -1072,13 +1075,13 @@ class AutoVideoMode(Screen):
 											f.write(x)
 											f.close()
 											changeResolution = True
-										except Exception, e:
+										except Exception as e:
 											print("[VideoMode] write_mode exception:" + str(e))
 								if not changeResolution:
-									print "[VideoMode] setMode - port: %s, mode: 1080p is also not available" % config_port
+									print("[VideoMode] setMode - port: %s, mode: 1080p is also not available" % config_port)
 									resolutionlabel["restxt"].setText(_("Video mode: 1080p also not available"))
 								else:
-									print "[VideoMode] setMode - port: %s, mode: 1080p" % config_port
+									print("[VideoMode] setMode - port: %s, mode: 1080p" % config_port)
 									resolutionlabel["restxt"].setText(_("Video mode: 1080p"))
 							if (write_mode == "2160p24") or (write_mode == "2160p30") or (write_mode == "2160p60"):
 								for x in values:
@@ -1088,25 +1091,25 @@ class AutoVideoMode(Screen):
 											f.write(x)
 											f.close()
 											changeResolution = True
-										except Exception, e:
+										except Exception as e:
 											print("[VideoMode] write_mode exception:" + str(e))
 								if not changeResolution:
-									print "[VideoMode] setMode - port: %s, mode: 2160p is also not available" % config_port
+									print("[VideoMode] setMode - port: %s, mode: 2160p is also not available" % config_port)
 									resolutionlabel["restxt"].setText(_("Video mode: 2160p also not available"))
 								else:
-									print "[VideoMode] setMode - port: %s, mode: 2160p" % config_port
+									print("[VideoMode] setMode - port: %s, mode: 2160p" % config_port)
 									resolutionlabel["restxt"].setText(_("Video mode: 2160p"))
 						else:
 							resolutionlabel["restxt"].setText(_("Video mode: %s") % write_mode)
-							print "[VideoMode] setMode - port: %s, mode: %s (autoresTyp: '%s')" % (config_port, write_mode, autorestyp)
+							print("[VideoMode] setMode - port: %s, mode: %s (autoresTyp: '%s')" % (config_port, write_mode, autorestyp))
 						if config.av.autores_label_timeout.value != '0':
 							resolutionlabel.show()
 						vf.close()
-				except Exception, e:
+				except Exception as e:
 					print("[VideoMode] read videomode_choices exception:" + str(e))
 			elif write_mode and current_mode != write_mode:
 				# the resolution remained stuck at a wrong setting after streaming when self.bufferfull was False (should be fixed now after adding BufferInfoStop)
-				print "[VideoMode] not changing from", current_mode, "to", write_mode, "as self.bufferfull is", self.bufferfull
+				print("[VideoMode] not changing from", current_mode, "to", write_mode, "as self.bufferfull is", self.bufferfull)
 
 		if write_mode and write_mode != current_mode or self.firstrun:
 			iAVSwitch.setAspect(config.av.aspect)

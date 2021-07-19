@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Components.config import ConfigSelection, ConfigSelectionNumber, ConfigSubList, ConfigDateTime, ConfigClock, ConfigYesNo, ConfigInteger, getConfigListEntry, ConfigIP
@@ -96,7 +99,7 @@ class TimerEntry(Screen, ConfigListScreen):
 				count = 0
 				for x in (0, 1, 2, 3, 4, 5, 6):
 					if flags == 1: # weekly
-						print "Set to weekday " + str(x)
+						print("Set to weekday " + str(x))
 						weekday = x
 					if flags & 1 == 1: # set user defined flags
 						day[x] = 1
@@ -131,7 +134,7 @@ class TimerEntry(Screen, ConfigListScreen):
 		self.timerentry_date = ConfigDateTime(default=self.timer.begin, formatstring=_("%d.%B %Y"), increment=86400)
 		self.timerentry_starttime = ConfigClock(default=self.timer.begin)
 		self.timerentry_endtime = ConfigClock(default=self.timer.end)
-		self.timerentry_showendtime = ConfigSelection(default=(((self.timer.end - self.timer.begin) / 60) > 4), choices=[(True, _("yes")), (False, _("no"))])
+		self.timerentry_showendtime = ConfigSelection(default=(((self.timer.end - self.timer.begin) // 60) > 4), choices=[(True, _("yes")), (False, _("no"))])
 
 		self.timerentry_repeatedbegindate = ConfigDateTime(default=self.timer.repeatedbegindate, formatstring=_("%d.%B %Y"), increment=86400)
 
@@ -193,7 +196,7 @@ class TimerEntry(Screen, ConfigListScreen):
 					self.list.append(self.netipEntry)
 					if self.timerrntry_netip.value == "yes":
 						self.list.append(self.ipcountEntry)
-						for x in range(0, self.ipcount.value):
+						for x in list(range(0, self.ipcount.value)):
 							self.list.append(getConfigListEntry(("%d. " + _("IP address")) % (x + 1), self.ipadressEntry[x]))
 
 		else:
@@ -332,7 +335,7 @@ class TimerEntry(Screen, ConfigListScreen):
 				self.timer.end += 86400
 
 		endaction = self.timerentry_showendtime.value
-		if (self.timer.end - self.timer.begin) / 60 < 5 or self.timerentry_showendtime.value is False:
+		if (self.timer.end - self.timer.begin) // 60 < 5 or self.timerentry_showendtime.value is False:
 			self.timerentry_afterevent.value = "nothing"
 			self.timer.end = self.timer.begin
 			if endaction:
@@ -366,7 +369,7 @@ class TimerEntry(Screen, ConfigListScreen):
 		self.timer.trafficlimit = self.timerrntry_trafficlimit.value
 		self.timer.netip = self.timerrntry_netip.value
 		self.timer.ipadress = "%d.%d.%d.%d" % (self.ipadressEntry[0].value[0], self.ipadressEntry[0].value[1], self.ipadressEntry[0].value[2], self.ipadressEntry[0].value[3])
-		for x in range(1, self.ipcount.value):
+		for x in list(range(1, self.ipcount.value)):
 			self.timer.ipadress += ",%d.%d.%d.%d" % (self.ipadressEntry[x].value[0], self.ipadressEntry[x].value[1], self.ipadressEntry[x].value[2], self.ipadressEntry[x].value[3])
 
 		self.saveTimer()

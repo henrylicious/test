@@ -5,9 +5,10 @@
 # print>>log, "Some text"
 # because the log unit looks enough like a file!
 
+from __future__ import absolute_import
 import sys
-from cStringIO import StringIO
 import threading
+from six.moves import cStringIO as StringIO
 
 logfile = None
 # Need to make our operations thread-safe.

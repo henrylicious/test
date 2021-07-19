@@ -1,4 +1,5 @@
-from Renderer import Renderer
+from __future__ import absolute_import
+from Components.Renderer.Renderer import Renderer
 from enigma import eDVBCI_UI, eDVBCIInterfaces, eLabel, iPlayableService
 from Components.VariableText import VariableText
 
@@ -33,7 +34,7 @@ class CiModuleControl(Renderer, VariableText):
 			string = ""
 			if self.NUM_CI and self.NUM_CI > 0:
 				if self.eDVBCIUIInstance:
-					for slot in range(self.NUM_CI):
+					for slot in list(range(self.NUM_CI)):
 						add_num = True
 						if string:
 							string += " "

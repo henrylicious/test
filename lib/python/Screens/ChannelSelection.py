@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from boxbranding import getMachineBuild, getMachineBrand, getMachineName
 import os
 from Tools.Profile import profile
 
-from Screen import Screen
+from Screens.Screen import Screen
 import Screens.InfoBar
 import Components.ParentalControl
 from Components.Button import Button
@@ -17,7 +20,7 @@ from Components.UsageConfig import preferredTimerPath
 from Components.Renderer.Picon import getPiconName
 from Screens.TimerEdit import TimerSanityConflict
 profile("ChannelSelection.py 1")
-from EpgSelection import EPGSelection
+from Screens.EpgSelection import EPGSelection
 from enigma import eActionMap, eServiceReferenceDVB, eServiceReference, eEPGCache, eServiceCenter, eRCInput, eTimer, ePoint, eDVBDB, iPlayableService, iServiceInformation, getPrevAsciiCode, eEnv, loadPNG
 from Components.config import config, configfile, ConfigSubsection, ConfigText, ConfigYesNo
 from Tools.NumericalTextInput import NumericalTextInput
@@ -33,7 +36,7 @@ from Components.Input import Input
 profile("ChannelSelection.py 3")
 from Components.ChoiceList import ChoiceList, ChoiceEntryComponent
 from RecordTimer import RecordTimerEntry, AFTEREVENT
-from TimerEntry import TimerEntry, InstantRecordTimerEntry
+from Screens.TimerEntry import TimerEntry, InstantRecordTimerEntry
 from Screens.InputBox import InputBox, PinInput
 from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Screens.ChoiceBox import ChoiceBox
@@ -51,6 +54,7 @@ from Components.PluginComponent import plugins
 from RecordTimer import TIMERTYPE
 from time import localtime, time
 from os import remove
+import six
 try:
 	from Plugins.SystemPlugins.PiPServiceRelation.plugin import getRelationDict
 	plugin_PiPServiceRelation_installed = True
@@ -182,12 +186,12 @@ class ChannelContextMenu(Screen):
 		self.parentalControl = parentalControl
 		self.parentalControlEnabled = config.ParentalControl.servicepinactive.value
 
-		menu.append(ChoiceEntryComponent(text = (_("Settings..."), boundFunction(self.openSetup, "channelselection"))))
-		if not (current_sel_path or current_sel_flags & (eServiceReference.isDirectory|eServiceReference.isMarker)):
-			append_when_current_valid(current, menu, (_("show transponder info"), self.showServiceInformations), level = 2)
+		menu.append(ChoiceEntryComponent(text=(_("Settings..."), boundFunction(self.openSetup, "channelselection"))))
+		if not (current_sel_path or current_sel_flags & (eServiceReference.isDirectory | eServiceReference.isMarker)):
+			append_when_current_valid(current, menu, (_("show transponder info"), self.showServiceInformations), level=2)
 		if csel.bouquet_mark_edit == OFF and not csel.movemode:
 			if not inBouquetRootList:
-				isPlayable = not (current_sel_flags & (eServiceReference.isMarker|eServiceReference.isDirectory))
+				isPlayable = not (current_sel_flags & (eServiceReference.isMarker | eServiceReference.isDirectory))
 				if isPlayable:
 					if config.servicelist.startupservice.value == self.csel.getCurrentSelection().toString():
 						append_when_current_valid(current, menu, (_("stop using as startup service"), self.unsetStartupService), level=0)
@@ -415,7 +419,7 @@ class ChannelContextMenu(Screen):
 			if self.session.pipshown:
 				del self.session.pip
 				if SystemInfo["LCDMiniTV"] and int(config.lcd.modepip.value) >= 1:
-					print '[LCDMiniTV] disable PIP'
+					print('[LCDMiniTV] disable PIP')
 					f = open("/proc/stb/lcd/mode", "w")
 					f.write(config.lcd.modeminitv.value)
 					f.close()
@@ -430,7 +434,7 @@ class ChannelContextMenu(Screen):
 					self.session.pip.servicePath = self.csel.getCurrentServicePath()
 					self.session.pip.servicePath[1] = currentBouquet
 					if SystemInfo["LCDMiniTV"] and int(config.lcd.modepip.value) >= 1:
-						print '[LCDMiniTV] enable PIP'
+						print('[LCDMiniTV] enable PIP')
 						f = open("/proc/stb/lcd/mode", "w")
 						f.write(config.lcd.modepip.value)
 						f.close()
@@ -448,7 +452,7 @@ class ChannelContextMenu(Screen):
 					self.session.pipshown = False
 					del self.session.pip
 					if SystemInfo["LCDMiniTV"] and int(config.lcd.modepip.value) >= 1:
-						print '[LCDMiniTV] disable PIP'
+						print('[LCDMiniTV] disable PIP')
 						f = open("/proc/stb/lcd/mode", "w")
 						f.write(config.lcd.modeminitv.value)
 						f.close()
@@ -775,6 +779,7 @@ class ChannelSelectionEPG:
 		self.session.open(TimerEntry, timer)
 
 	def doInstantTimer(self, zap, parseEvent, next=False):
+		_next = next
 		serviceref = ServiceReference(self.getCurrentSelection())
 		refstr = ':'.join(serviceref.ref.toString().split(':')[:11])
 		self.epgcache = eEPGCache.getInstance()
@@ -782,7 +787,7 @@ class ChannelSelectionEPG:
 		self.list = [] if self.epgcache is None else self.epgcache.lookupEvent(test)
 		if self.list is None:
 			return
-		if not next:
+		if not _next:
 			eventid = self.list[0][0]
 			eventname = str(self.list[0][1])
 		else:
@@ -803,7 +808,7 @@ class ChannelSelectionEPG:
 			sely = int(sely) - int(self.listHeight)
 		for timer in self.session.nav.RecordTimer.timer_list:
 			if timer.eit == eventid and ':'.join(timer.service_ref.ref.toString().split(':')[:11]) == refstr:
-				if not next:
+				if not _next:
 					cb_func = lambda ret: self.removeTimer(timer)
 					menu = [(_("Yes"), 'CALLFUNC', cb_func), (_("No"), 'CALLFUNC', self.ChoiceBoxCB)]
 					self.ChoiceBoxDialog = self.session.instantiateDialog(MessageBox, text=_('Do you really want to remove the timer for %s?') % eventname, list=menu, skin_name="RemoveTimerQuestion", picon=False)
@@ -824,7 +829,7 @@ class ChannelSelectionEPG:
 			self.session.deleteDialogWithCallback(self.finishedAdd, self.InstantRecordDialog, retval)
 
 	def finishedAdd(self, answer):
-		# print "finished add"
+		# print("finished add")
 		if answer[0]:
 			entry = answer[1]
 			simulTimerList = self.session.nav.RecordTimer.record(entry)
@@ -1023,7 +1028,7 @@ class ChannelSelectionEdit:
 				if mutableAlternatives:
 					mutableAlternatives.setListName(name)
 					if mutableAlternatives.addService(cur_service.ref):
-						print "add", cur_service.ref.toString(), "to new alternatives failed"
+						print("add", cur_service.ref.toString(), "to new alternatives failed")
 					mutableAlternatives.flushChanges()
 					self.servicelist.addService(new_ref.ref, True)
 					self.servicelist.removeCurrent()
@@ -1034,11 +1039,11 @@ class ChannelSelectionEdit:
 					if self.startServiceRef and cur_service.ref == self.startServiceRef:
 						self.startServiceRef = new_ref.ref
 				else:
-					print "get mutable list for new created alternatives failed"
+					print("get mutable list for new created alternatives failed")
 			else:
-				print "add", str, "to", cur_root.getServiceName(), "failed"
+				print("add", str, "to", cur_root.getServiceName(), "failed")
 		else:
-			print "bouquetlist is not editable"
+			print("bouquetlist is not editable")
 
 	def addBouquet(self, bName, services):
 		serviceHandler = eServiceCenter.getInstance()
@@ -1061,10 +1066,10 @@ class ChannelSelectionEdit:
 					if services is not None:
 						for service in services:
 							if mutableBouquet.addService(service):
-								print "add", service.toString(), "to new bouquet failed"
+								print("add", service.toString(), "to new bouquet failed")
 					mutableBouquet.flushChanges()
 				else:
-					print "get mutable list for new created bouquet failed"
+					print("get mutable list for new created bouquet failed")
 				# do some voodoo to check if current_root is equal to bouquet_root
 				cur_root = self.getRoot()
 				str1 = cur_root and cur_root.getPath()
@@ -1074,9 +1079,9 @@ class ChannelSelectionEdit:
 					self.servicelist.addService(new_bouquet_ref)
 					self.servicelist.resetRoot()
 			else:
-				print "add", new_bouquet_ref.toString(), "to bouquets failed"
+				print("add", new_bouquet_ref.toString(), "to bouquets failed")
 		else:
-			print "bouquetlist is not editable"
+			print("bouquetlist is not editable")
 
 	def copyCurrentToBouquetList(self):
 		provider = ServiceReference(self.getCurrentSelection())
@@ -1102,11 +1107,11 @@ class ChannelSelectionEdit:
 					if self.startServiceRef and cur_service.ref == self.startServiceRef:
 						self.startServiceRef = first_in_alternative
 				else:
-					print "couldn't add first alternative service to current root"
+					print("couldn't add first alternative service to current root")
 			else:
-				print "couldn't edit current root!!"
+				print("couldn't edit current root!!")
 		else:
-			print "remove empty alternative list !!"
+			print("remove empty alternative list !!")
 		self.removeBouquet()
 		if not end:
 			self.servicelist.moveUp()
@@ -1125,7 +1130,7 @@ class ChannelSelectionEdit:
 			if filename is not None:
 				remove(filename)
 		except OSError:
-			print "error during remove of", filename
+			print("error during remove of", filename)
 
 	def removeSatelliteService(self):
 		current = self.getCurrentSelection()
@@ -1147,7 +1152,7 @@ class ChannelSelectionEdit:
 				direction = _("W")
 			else:
 				direction = _("E")
-			messageText = _("Are you sure to remove all %d.%d%s%s services?") % (unsigned_orbpos / 10, unsigned_orbpos % 10, "\xc2\xb0", direction)
+			messageText = _("Are you sure to remove all %d.%d%s%s services?") % (unsigned_orbpos // 10, unsigned_orbpos % 10, "\xc2\xb0", direction)
 		self.session.openWithCallback(self.removeSatelliteServicesCallback, MessageBox, messageText)
 
 	def removeSatelliteServicesCallback(self, answer):
@@ -1175,7 +1180,7 @@ class ChannelSelectionEdit:
 				if currentIndex != self.servicelist.getCurrentIndex():
 					self.servicelist.instance.moveSelection(self.servicelist.instance.moveEnd)
 
-#  multiple marked entry stuff ( edit mode, later multiepg selection )
+# multiple marked entry stuff ( edit mode, later multiepg selection )
 	def startMarkedEdit(self, type):
 		self.savedPath = self.servicePath[:]
 		if type == EDIT_ALTERNATIVES:
@@ -1665,11 +1670,11 @@ class ChannelSelectionBase(Screen):
 								if orbpos < 0:
 									orbpos += 3600
 								if "FROM PROVIDER" in service.getPath():
-									service_type = self.showSatDetails and _("Providers") + " (%d)"%(self.getServicesCount(service))
-								elif ("flags == %d" %(FLAG_SERVICE_NEW_FOUND)) in service.getPath():
-									service_type = self.showSatDetails and _("New") + " (%d)"%(self.getServicesCount(service))
+									service_type = self.showSatDetails and _("Providers") + " (%d)" % (self.getServicesCount(service))
+								elif ("flags == %d" % (FLAG_SERVICE_NEW_FOUND)) in service.getPath():
+									service_type = self.showSatDetails and _("New") + " (%d)" % (self.getServicesCount(service))
 								else:
-									service_type = _("Services") + " (%d)"%(self.getServicesCount(service))
+									service_type = _("Services") + " (%d)" % (self.getServicesCount(service))
 								if service_type:
 									if unsigned_orbpos == 0xFFFF: #Cable
 										service_name = _("Cable")
@@ -1689,7 +1694,7 @@ class ChannelSelectionBase(Screen):
 											service_name = ("%d.%d" + h) % (orbpos / 10, orbpos % 10)
 									if not '(type == 1)' in x:
 										if self.showSatDetails:
-											service_type = "HD-%s"%(service_type)
+											service_type = "HD-%s" % (service_type)
 										else:
 											break
 									service.setName("%s - %s" % (service_name, service_type))
@@ -1705,7 +1710,7 @@ class ChannelSelectionBase(Screen):
 									cur_ref.getUnsignedData(3), # ONID
 									self.service_types_ref.getPath())
 								ref.setPath(path)
-								ref.setName(_("Current transponder") + " (%d)"%(self.getServicesCount(ref)))
+								ref.setName(_("Current transponder") + " (%d)" % (self.getServicesCount(ref)))
 								self.servicelist.addService(ref, beforeCurrent=True)
 							for (service_name, service_ref) in addCableAndTerrestrialLater:
 								ref = eServiceReference(service_ref)
@@ -1713,13 +1718,21 @@ class ChannelSelectionBase(Screen):
 								self.servicelist.addService(ref, beforeCurrent=True)
 							uhdref = eServiceReference('1:7:1:0:0:0:0:0:0:0:(type == 31) && (name != .) ORDER BY name')
 							if uhdref and self.showSatDetails and not "(type == 1)" in x:
-								uhdref.setName(("%s - " %(service_name) + ("%s-%s" % ("UHD", _("Services")))) + " (%d)"%(self.getServicesCount(uhdref)))
+								uhdref.setName(("%s - " % (service_name) + ("%s-%s" % ("UHD", _("Services")))) + " (%d)" % (self.getServicesCount(uhdref)))
 								self.servicelist.addService(uhdref, beforeCurrent=True)
 							skyref = eServiceReference('1:7:1:0:0:0:0:0:0:0:(type == 211) && (name != .) ORDER BY name')
 							if skyref and self.showSatDetails and not "(type == 1)" in x:
-								skyref.setName("%s - %s" % ("Sky Deutschland 19.2E", _("Subservices")) + " (%d)"%(self.getServicesCount(skyref)))
+								skyref.setName("%s - %s" % ("Sky Deutschland 19.2E", _("Subservices")) + " (%d)" % (self.getServicesCount(skyref)))
 								self.servicelist.addService(skyref)
 							hdref = eServiceReference('1:7:1:0:0:0:0:0:0:0:(type == 25) && (name != .) ORDER BY name')
+							#if hdref:
+							#	hdref.setName(("%s - " %(service_name) + ("%s-%s" % ("HD", _("Services")))) + " (%d)"%(self.getServicesCount(hdref)))
+							#	self.servicelist.addService(hdref)
+							#for i in list(range(0,310)):
+							#	iref = eServiceReference('1:7:1:0:0:0:0:0:0:0:(type == %s) && (name != .) ORDER BY name' % i)
+							#	if iref and self.getServicesCount(iref) > 0:
+							#		iref.setName(("%s - " %(service_name) + ("%s-%s" % ("%s", _("Services")) % i )) + " (%d)"%(self.getServicesCount(iref)))
+							#		self.servicelist.addService(iref)
 							self.servicelist.l.FillFinished()
 							if prev is not None:
 								self.setCurrentSelection(prev)
@@ -1874,8 +1887,8 @@ class ChannelSelectionBase(Screen):
 			self.removeCurrentService()
 
 	def keyAsciiCode(self):
-		unichar = unichr(getPrevAsciiCode())
-		charstr = unichar.encode('utf-8')
+		unichar = six.unichr(getPrevAsciiCode())
+		charstr = six.ensure_str(unichar)
 		if len(charstr) == 1:
 			self.servicelist.moveToChar(charstr[0])
 
@@ -2015,7 +2028,11 @@ class ChannelSelection(ChannelSelectionBase, ChannelSelectionEdit, ChannelSelect
 				iPlayableService.evEnd: self.__evServiceEnd
 			})
 
-		assert ChannelSelection.instance is None, "class InfoBar is a singleton class and just one instance of this class is allowed!"
+		try:
+			if ChannelSelection.instance:
+				raise AssertionError("class InfoBar is a singleton class and just one instance of this class is allowed!")
+		except:
+			pass
 		ChannelSelection.instance = self
 		self.startServiceRef = None
 		self.history_tv = []
@@ -2322,7 +2339,7 @@ class ChannelSelection(ChannelSelectionBase, ChannelSelectionEdit, ChannelSelect
 
 	def historyClear(self):
 		if self and self.servicelist:
-			for i in range(0, len(self.history) - 1):
+			for i in list(range(0, len(self.history) - 1)):
 				del self.history[0]
 			self.history_pos = len(self.history) - 1
 			return True
@@ -2622,7 +2639,7 @@ class PiPZapSelection(ChannelSelection):
 					self.saveChannel(ref)
 					self.setCurrentSelection(ref)
 					if SystemInfo["LCDMiniTVPiP"] and int(config.lcd.modepip.value) >= 1:
-						print '[LCDMiniTV] enable PIP'
+						print('[LCDMiniTV] enable PIP')
 						f = open("/proc/stb/lcd/mode", "w")
 						f.write(config.lcd.modepip.value)
 						f.close()
@@ -2641,7 +2658,7 @@ class PiPZapSelection(ChannelSelection):
 					self.session.pipshown = False
 					del self.session.pip
 					if SystemInfo["LCDMiniTVPiP"] and int(config.lcd.modepip.value) >= 1:
-							print '[LCDMiniTV] disable PIP'
+							print('[LCDMiniTV] disable PIP')
 							f = open("/proc/stb/lcd/mode", "w")
 							f.write(config.lcd.modeminitv.value)
 							f.close()
@@ -2653,7 +2670,7 @@ class PiPZapSelection(ChannelSelection):
 			self.session.pipshown = False
 			del self.session.pip
 			if SystemInfo["LCDMiniTVPiP"] and int(config.lcd.modepip.value) >= 1:
-					print '[LCDMiniTV] disable PIP'
+					print('[LCDMiniTV] disable PIP')
 					f = open("/proc/stb/lcd/mode", "w")
 					f.write(config.lcd.modeminitv.value)
 					f.close()
@@ -2912,7 +2929,7 @@ class HistoryZapSelector(Screen):
 					begin = event.getBeginTime()
 					if begin is not None:
 						end = begin + event.getDuration()
-						remaining = (end - int(time())) / 60
+						remaining = (end - int(time())) // 60
 						prefix = ""
 						if remaining > 0:
 							prefix = "+"

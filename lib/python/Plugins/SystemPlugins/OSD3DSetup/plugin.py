@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from Screens.Screen import Screen
 from Components.ConfigList import ConfigListScreen
 from Components.config import config, ConfigSubsection, ConfigInteger, ConfigSelection, ConfigSlider, getConfigListEntry, ConfigYesNo
@@ -163,7 +165,7 @@ class OSD3DSetupScreen(Screen, ConfigListScreen):
 		))
 
 		# Only allow editing toggle mode when the 3d switch command is supposed to apear in menu or 3d should be turned on automatically
-		if self.menuext.value is not "none" or self.auto.value:
+		if self.menuext.value != "none" or self.auto.value:
 			list.append(getConfigListEntry(_("Toggle mode"), self.toggle))
 
 		# Only allow editing user prompt when the 3d auto toggle is activated
@@ -241,7 +243,7 @@ class AutoToggle3D(Screen):
 				ServiceName = os.path.basename(Service.getPath())
 				extension = ServiceName.split('.')
 				extension = extension[-1].lower()
-				if not EXTENSIONS.has_key(extension):
+				if extension not in EXTENSIONS:
 					ServiceName = ""
 			#or a channel...
 			else:
@@ -415,8 +417,8 @@ def menutoggle3d(session, **kwargs):
 		eam.keyPressed(TYPE_STANDARD, 139, FLAG_MAKE) #menu
 		#Release the key
 		eam.keyPressed(TYPE_STANDARD, 139, FLAG_BREAK) #menu
-	except Exception, e:
-		print "[OSD3D Setup] toggle3d exception:\n" + str(e)
+	except Exception as e:
+		print("[OSD3D Setup] toggle3d exception:\n" + str(e))
 	return []
 
 #if there is a command in extensions selection...
@@ -433,7 +435,7 @@ def toggleTAB(session, **kwargs):
 
 
 def toggleext(value):
- 	mode = getmode()
+	mode = getmode()
 	znorm = getznorm()
 	if mode is None:
 		mode = value

@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import sys
 from enigma import ePythonOutput
+import six
 
 
 class EnigmaLog:
@@ -8,12 +10,15 @@ class EnigmaLog:
 		self.line = ""
 
 	def write(self, data):
-		if isinstance(data, unicode):
-			data = data.encode(encoding="UTF-8", errors="ignore")
+		if sys.version_info[0] >= 3:
+			if isinstance(data, bytes):
+				data = six.ensure_str(data, errors="ignore")
+		else:
+			if isinstance(data, unicode):
+				data = six.ensure_str(data, errors="ignore")
 		self.line += data
 		if "\n" in data:
-			frame = sys._getframe(1)  # OpenHDF, OpenATV
-			ePythonOutput(frame.f_code.co_filename, frame.f_lineno, frame.f_code.co_name, self.line)  # OpenHDF, OpenATV
+			ePythonOutput(self.line, self.level)
 			self.line = ""
 
 	def flush(self):

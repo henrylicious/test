@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from Components.Converter.Converter import Converter
 from Components.Element import cached
 from ServiceReference import ServiceReference
@@ -8,7 +10,7 @@ from Tools.Directories import fileExists, resolveFilename
 from os import environ, listdir, remove, rename, system
 from Components.ServiceEventTracker import ServiceEventTracker
 import gettext
-from Poll import Poll
+from Components.Converter.Poll import Poll
 
 
 class ExtremeInfo(Poll, Converter, object):
@@ -1170,7 +1172,7 @@ class ExtremeInfo(Poll, Converter, object):
                         item = line.split(':', 1)
                         if len(item) > 1:
                             info[item[0].strip().lower()] = item[1].strip()
-                        elif not info.has_key('caid'):
+                        elif 'caid' not in info:
                             x = line.lower().find('caid')
                             if x != -1:
                                 y = line.find(',')
@@ -1220,7 +1222,7 @@ class ExtremeInfo(Poll, Converter, object):
             list = self.tv_list
         number = '---'
         if name in list:
-            for idx in range(1, len(list)):
+            for idx in list(range(1, len(list))):
                 if name == list[idx - 1]:
                     number = str(idx)
                     break
@@ -1252,8 +1254,8 @@ class ExtremeInfo(Poll, Converter, object):
             frontendData = feinfo and feinfo.getAll(True)
             if frontendData is not None:
                 if frontendData.get('tuner_type') == 'DVB-S' or frontendData.get('tuner_type') == 'DVB-C':
-                    frequency = str(frontendData.get('frequency') / 1000) + ' MHz'
-                    symbolrate = str(int(frontendData.get('symbol_rate', 0) / 1000))
+                    frequency = str(frontendData.get('frequency') // 1000) + ' MHz'
+                    symbolrate = str(int(frontendData.get('symbol_rate', 0) // 1000))
                     if frontendData.get('tuner_type') == 'DVB-S':
                         try:
                             orb = {3590: 'Thor/Intelsat (1.0W)',

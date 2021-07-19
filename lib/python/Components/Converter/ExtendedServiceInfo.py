@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from Components.config import config
 from Components.Converter.Converter import Converter
 from Components.Element import cached
@@ -80,7 +82,7 @@ class ExtendedServiceInfo(Converter, object):
         Converter.changed(self, what)
 
     def getListFromRef(self, ref):
-        list = []
+        _list = []
         serviceHandler = eServiceCenter.getInstance()
         services = serviceHandler.list(ref)
         bouquets = services and services.getContent('SN', True)
@@ -89,9 +91,9 @@ class ExtendedServiceInfo(Converter, object):
             channels = services and services.getContent('SN', True)
             for channel in channels:
                 if not channel[0].startswith('1:64:'):
-                    list.append(channel[1].replace('\xc2\x86', '').replace('\xc2\x87', ''))
+                    _list.append(channel[1].replace('\xc2\x86', '').replace('\xc2\x87', ''))
 
-        return list
+        return _list
 
     def getLists(self):
         self.tv_list = self.getListFromRef(eServiceReference('1:7:1:0:0:0:0:0:0:0:(type == 1) || (type == 17) || (type == 195) || (type == 25) FROM BOUQUET "bouquets.tv" ORDER BY bouquet'))
@@ -114,15 +116,15 @@ class ExtendedServiceInfo(Converter, object):
                     self.satNames[position] = name
 
     def getServiceNumber(self, name, ref):
-        list = []
+        _list = []
         if ref.startswith('1:0:2'):
-            list = self.radio_list
+            _list = self.radio_list
         elif ref.startswith('1:0:1'):
-            list = self.tv_list
+            _list = self.tv_list
         number = ''
-        if name in list:
-            for idx in range(1, len(list)):
-                if name == list[idx - 1]:
+        if name in _list:
+            for idx in list(range(1, len(_list))):
+                if name == _list[idx - 1]:
                     number = str(idx)
                     break
 
@@ -134,13 +136,13 @@ class ExtendedServiceInfo(Converter, object):
         if transponderData is not None:
             if isinstance(transponderData, float):
                 return ''
-            if transponderData.has_key('tuner_type'):
+            if 'tuner_type' in transponderData:
                 if transponderData['tuner_type'] == 'DVB-S' or transponderData['tuner_type'] == 'DVB-S2':
                     orbital = transponderData['orbital_position']
                     orbital = int(orbital)
                     if orbital > 1800:
-                        orbital = str(float(3600 - orbital) / 10.0) + 'W'
+                        orbital = str(float(3600 - orbital) // 10.0) + 'W'
                     else:
-                        orbital = str(float(orbital) / 10.0) + 'E'
+                        orbital = str(float(orbital) // 10.0) + 'E'
                     return orbital
         return ''

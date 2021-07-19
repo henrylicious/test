@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from enigma import eServiceReference, eServiceReferenceDVB
 
 # type 1 = digital television service
@@ -16,7 +17,7 @@ from enigma import eServiceReference, eServiceReferenceDVB
 
 
 def makeServiceQueryStr(serviceTypes):
-	return ' || '.join(map(lambda x: '(type == %d)' % x, serviceTypes))
+	return ' || '.join(['(type == %d)' % x for x in serviceTypes])
 
 
 def serviceRefAppendPath(sref, path):

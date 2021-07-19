@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from Screens.InfoBar import InfoBar
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
@@ -56,7 +58,7 @@ class MultiBootStartup(ConfigListScreen, Screen):
 		self["config"].setText(_("Select Image: %s") % self.list[self.selection])
 
 	def save(self):
-		print "[MultiBootStartuo] select new startup: ", self.list[self.selection]
+		print("[MultiBootStartuo] select new startup: ", self.list[self.selection])
 		system("cp -f /boot/%s /boot/STARTUP" % self.list[self.selection])
 		self.close()
 

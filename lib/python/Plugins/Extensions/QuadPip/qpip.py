@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from Screens.Screen import Screen
 from Components.ConfigList import ConfigListScreen
 from Components.config import config, ConfigSubsection, ConfigSelection, getConfigListEntry
@@ -67,14 +70,14 @@ class QuadPipChannelEntry:
 		return self.idx
 
 	def setChannel(self, idx, chName, sref):
-		if self.channel.has_key(idx):
+		if idx in self.channel:
 			self.channel[idx] = (chName, sref)
 			return True
 
 		return False
 
 	def deleteChannel(self, idx):
-		if self.channel.has_key(idx):
+		if idx in self.channel:
 			self.channel[idx] = None
 			return True
 
@@ -311,7 +314,7 @@ class CreateQuadPipChannelEntry(ChannelSelectionBase):
 
 	def updateDescChannels(self):
 		self.descChannels = []
-		for idx in range(1, 5):
+		for idx in list(range(1, 5)):
 			sIdx = str(idx)
 			_isEmpty = False
 			chName = self.newChannel.getChannelName(sIdx)
@@ -365,7 +368,7 @@ class CreateQuadPipChannelEntry(ChannelSelectionBase):
 				#self.addChannel(serviceName, sref)
 				_title = _('Choice where to put "%s"') % serviceName
 				_list = []
-				for idx in range(1, 5):
+				for idx in list(range(1, 5)):
 					sIdx = str(idx)
 					_isEmpty = False
 					chName = self.newChannel.getChannelName(sIdx)
@@ -394,7 +397,7 @@ class CreateQuadPipChannelEntry(ChannelSelectionBase):
 				self.updateDescChannelList()
 
 	def getNewChannel(self):
-		for idx in range(1, 5):
+		for idx in list(range(1, 5)):
 			sIdx = str(idx)
 			ch = self.newChannel.getChannel(sIdx)
 			if ch is not None:
@@ -444,29 +447,29 @@ class QuadPiPChannelSelection(Screen, HelpableScreen):
 		dw = self.session.desktop.size().width()
 		dh = self.session.desktop.size().height()
 		pw, ph = {1080: ("center", "center"), 720: ("center", "center"), 576: ("center", "20%")}.get(dh, ("center", "center"))
-		(sw, sh) = {1080: (dw / 3, dh / 2), 720: (int(dw / 2), int(dh / 1.5)), 576: (int(dw / 1.3), int(dh / 1.5))}.get(dh, (28, 24))
+		(sw, sh) = {1080: (dw // 3, dh // 2), 720: (int(dw // 2), int(dh // 1.5)), 576: (int(dw // 1.3), int(dh // 1.5))}.get(dh, (28, 24))
 		button_margin = 5
 		button_h = 40
 		list_y = 40 + button_margin * 3
 		self.fontSize = {1080: (28, 24), 720: (24, 20), 576: (20, 18)}.get(dh, (28, 24))
 		self.skin = QuadPiPChannelSelection.skin % (pw, ph,
 														sw, sh + list_y,
-														sw / 8 - 70, button_margin,
-														sw / 8 - 70 + sw / 4, button_margin,
-														sw / 8 - 70 + sw / 4 * 2, button_margin,
-														sw / 8 - 70 + sw / 4 * 3, button_margin,
-														sw / 8 - 70, button_margin,
-														sw / 8 - 70 + sw / 4, button_margin,
-														sw / 8 - 70 + sw / 4 * 2, button_margin,
-														sw / 8 - 70 + sw / 4 * 3, button_margin,
+														sw // 8 - 70, button_margin,
+														sw // 8 - 70 + sw // 4, button_margin,
+														sw // 8 - 70 + sw // 4 * 2, button_margin,
+														sw // 8 - 70 + sw // 4 * 3, button_margin,
+														sw // 8 - 70, button_margin,
+														sw // 8 - 70 + sw // 4, button_margin,
+														sw // 8 - 70 + sw // 4 * 2, button_margin,
+														sw // 8 - 70 + sw // 4 * 3, button_margin,
 														0, list_y, sw, sh,
-														sw / 16, 1, sw - sw / 16 * 2, sh / 13,
-														sw / 11, 1 + sh / 13, sw - sw / 16 * 2 - sw / 8, sh / 18,
-														sw / 11, 1 + sh / 13 + sh / 18, sw - sw / 16 * 2 - sw / 8, sh / 18,
-														sw / 11, 1 + sh / 13 + sh / 18 * 2, sw - sw / 16 * 2 - sw / 8, sh / 18,
-														sw / 11, 1 + sh / 13 + sh / 18 * 3, sw - sw / 16 * 2 - sw / 8, sh / 18,
+														sw // 16, 1, sw - sw // 16 * 2, sh // 13,
+														sw // 11, 1 + sh // 13, sw - sw // 16 * 2 - sw // 8, sh // 18,
+														sw // 11, 1 + sh // 13 + sh // 18, sw - sw // 16 * 2 - sw // 8, sh // 18,
+														sw // 11, 1 + sh // 13 + sh // 18 * 2, sw - sw // 16 * 2 - sw // 8, sh // 18,
+														sw // 11, 1 + sh // 13 + sh // 18 * 3, sw - sw // 16 * 2 - sw // 8, sh // 18,
 														self.fontSize[0], self.fontSize[1],
-														sh / 3)
+														sh // 3)
 		self["key_red"] = Label(_("Select"))
 		self["key_green"] = Label(_("Add"))
 		self["key_yellow"] = Label(_("Remove"))
@@ -789,16 +792,16 @@ class QuadPipScreen(Screen, FocusShowHide, HelpableScreen):
 		self.movePositionMap["down"] = [-1, 3, 4, 1, 2]
 
 		self.labelPositionMap = {}
-		self.labelPositionMap["ch1"] = (w / 8, h / 4 - h / 36, w / 4, h / 18)
-		self.labelPositionMap["ch2"] = (w / 8 + w / 2, h / 4 - h / 36, w / 4, h / 18)
-		self.labelPositionMap["ch3"] = (w / 8, h / 4 - h / 36 + h / 2, w / 4, h / 18)
-		self.labelPositionMap["ch4"] = (w / 8 + w / 2, h / 4 - h / 36 + h / 2, w / 4, h / 18)
+		self.labelPositionMap["ch1"] = (w // 8, h // 4 - h // 36, w // 4, h // 18)
+		self.labelPositionMap["ch2"] = (w // 8 + w // 2, h // 4 - h // 36, w // 4, h // 18)
+		self.labelPositionMap["ch3"] = (w // 8, h // 4 - h // 36 + h // 2, w // 4, h // 18)
+		self.labelPositionMap["ch4"] = (w // 8 + w // 2, h // 4 - h // 36 + h // 2, w // 4, h // 18)
 
 		self.decoderIdxMap = [None, 0, 1, 2, 3]
 
 		self.fontSize = {1080: 40, 720: 28, 576: 18}.get(h, 40)
-		self.text1Pos = (w - w / 3, h - h / 18 - h / 18, w / 3, h / 18)
-		self.text2Pos = (w - w / 3, h - h / 18, w / 3, h / 18)
+		self.text1Pos = (w - w // 3, h - h // 18 - h // 18, w // 3, h // 18)
+		self.text2Pos = (w - w // 3, h - h // 18, w // 3, h // 18)
 
 	def moveFrame(self):
 		self.showFocus()
@@ -922,7 +925,7 @@ class QuadPipScreen(Screen, FocusShowHide, HelpableScreen):
 		return channel
 
 	def playChannel(self, channel):
-		print "[playChannel] channel : ", channel
+		print("[playChannel] channel : ", channel)
 
 		if self.curChannel and self.curChannel == channel.channel:
 			return
@@ -933,7 +936,7 @@ class QuadPipScreen(Screen, FocusShowHide, HelpableScreen):
 		self.curChannel = channel.channel.copy()
 
 		self.session.qPips = []
-		for idx in range(1, 5):
+		for idx in list(range(1, 5)):
 			chInfo = channel.getChannel(str(idx))
 			if chInfo is None:
 				continue
@@ -963,7 +966,7 @@ class QuadPipScreen(Screen, FocusShowHide, HelpableScreen):
 			if qPipInstance.playService(eServiceReference(sref), isPlayAudio):
 				self.session.qPips.append(qPipInstance)
 			else:
-				print "play failed, ", sref
+				print("play failed, ", sref)
 				del qPipInstance
 
 		self.updateChannelName(channel)
@@ -979,7 +982,7 @@ class QuadPipScreen(Screen, FocusShowHide, HelpableScreen):
 			self.curPlayAudio = -1
 
 	def updateChannelName(self, channel):
-		for idx in range(1, 5):
+		for idx in list(range(1, 5)):
 			self["ch%d" % idx].setText((channel and channel.getChannelName(str(idx))) or "No channel")
 
 	def disableFCC(self):

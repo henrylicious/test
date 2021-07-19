@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import absolute_import
 import errno
 import inspect
 import os
@@ -6,6 +8,7 @@ import os
 from enigma import eEnv, getDesktop
 from re import compile
 from stat import S_IMODE
+import six
 
 pathExists = os.path.exists
 isMount = os.path.ismount # needed for old plugins
@@ -80,13 +83,13 @@ def resolveFilename(scope, base="", path_prefix=None):
 		if path_prefix:
 			base = os.path.join(path_prefix, base[2:])
 		else:
-			print "[Directories] Warning: resolveFilename called with base starting with '~/' but 'path_prefix' is None!"
+			print("[Directories] Warning: resolveFilename called with base starting with '~/' but 'path_prefix' is None!")
 	# Don't further resolve absolute paths.
 	if base.startswith("/"):
 		return os.path.normpath(base)
 	# If an invalid scope is specified log an error and return None.
 	if scope not in defaultPaths:
-		print "[Directories] Error: Invalid scope=%d provided to resolveFilename!" % scope
+		print("[Directories] Error: Invalid scope=%d provided to resolveFilename!" % scope)
 		return None
 	# Ensure that the defaultPaths directories that should exist do exist.
 	path, flag = defaultPaths.get(scope)
@@ -94,7 +97,7 @@ def resolveFilename(scope, base="", path_prefix=None):
 		try:
 			os.makedirs(path)
 		except (IOError, OSError) as err:
-			print "[Directories] Error %d: Couldn't create directory '%s' (%s)" % (err.errno, path, err.strerror)
+			print("[Directories] Error %d: Couldn't create directory '%s' (%s)" % (err.errno, path, err.strerror))
 			return None
 	# Remove any suffix data and restore it at the end.
 	suffix = None
@@ -104,7 +107,7 @@ def resolveFilename(scope, base="", path_prefix=None):
 		suffix = data[1]
 	path = base
 	# If base is "" then set path to the scope.  Otherwise use the scope to resolve the base filename.
-	if base is "":
+	if base == "":
 		path, flags = defaultPaths.get(scope)
 		# If the scope is SCOPE_CURRENT_SKIN or SCOPE_ACTIVE_SKIN append the current skin to the scope path.
 		if scope in (SCOPE_CURRENT_SKIN, SCOPE_ACTIVE_SKIN):
@@ -219,7 +222,7 @@ def comparePath(leftPath, rightPath):
 		rightPath = rightPath[:-1]
 	left = leftPath.split(os.sep)
 	right = rightPath.split(os.sep)
-	for segment in range(len(left)):
+	for segment in list(range(len(left))):
 		if left[segment] != right[segment]:
 			return False
 	return True
@@ -239,7 +242,7 @@ def bestRecordingLocation(candidates):
 					biggest = size
 					path = candidate[1]
 		except (IOError, OSError) as err:
-			print "[Directories] Error %d: Couldn't get free space for '%s' (%s)" % (err.errno, candidate[1], err.strerror)
+			print("[Directories] Error %d: Couldn't get free space for '%s' (%s)" % (err.errno, candidate[1], err.strerror))
 	return path
 
 
@@ -316,8 +319,11 @@ def fileHas(f, content, mode="r"):
 
 def getRecordingFilename(basename, dirname=None):
 	# Filter out non-allowed characters.
-	non_allowed_characters = "/.\\:*?<>|\"%"
-	basename = basename.replace("\xc2\x86", "").replace("\xc2\x87", "")
+	non_allowed_characters = "/.\\:*?<>|\""
+	if six.PY2:
+		basename = basename.replace("\xc2\x86", "").replace("\xc2\x87", "")
+	else:
+		basename = basename.replace("\x86", "").replace("\x87", "")
 	filename = ""
 	for c in basename:
 		if c in non_allowed_characters or ord(c) < 32:
@@ -327,7 +333,10 @@ def getRecordingFilename(basename, dirname=None):
 	# but must not truncate in the middle of a multi-byte utf8 character!
 	# So convert the truncation to unicode and back, ignoring errors, the
 	# result will be valid utf8 and so xml parsing will be OK.
-	filename = unicode(filename[:247], "utf8", "ignore").encode("utf8", "ignore")
+	if six.PY2:
+		filename = six.ensure_str(six.text_type(filename[:247], "utf8", "ignore"), "utf8", "ignore")
+	else:
+		filename = filename[:247]
 	if dirname is not None:
 		if not dirname.startswith("/"):
 			dirname = os.path.join(defaultRecordingLocation(), dirname)
@@ -358,13 +367,13 @@ def InitFallbackFiles():
 
 
 def crawlDirectory(directory, pattern):
-	list = []
+	_list = []
 	if directory:
 		expression = compile(pattern)
 		for root, dirs, files in os.walk(directory):
-			for file in files:
-				if expression.match(file) is not None:
-					list.append((root, file))
+			for _file in files:
+				if expression.match(_file) is not None:
+					_list.append((root, _file))
 	return list
 
 
@@ -383,7 +392,7 @@ def copyfile(src, dst):
 				break
 			f2.write(buf)
 	except (IOError, OSError) as err:
-		print "[Directories] Error %d: Copying file '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror)
+		print("[Directories] Error %d: Copying file '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror))
 		status = -1
 	if f1 is not None:
 		f1.close()
@@ -394,13 +403,13 @@ def copyfile(src, dst):
 		try:
 			os.chmod(dst, S_IMODE(st.st_mode))
 		except (IOError, OSError) as err:
-			print "[Directories] Error %d: Setting modes from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror)
+			print("[Directories] Error %d: Setting modes from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror))
 		try:
 			os.utime(dst, (st.st_atime, st.st_mtime))
 		except (IOError, OSError) as err:
-			print "[Directories] Error %d: Setting times from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror)
+			print("[Directories] Error %d: Setting times from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror))
 	except (IOError, OSError) as err:
-		print "[Directories] Error %d: Obtaining stats from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror)
+		print("[Directories] Error %d: Obtaining stats from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror))
 	return status
 
 
@@ -424,19 +433,19 @@ def copytree(src, dst, symlinks=False):
 			else:
 				copyfile(srcname, dstname)
 		except (IOError, OSError) as err:
-			print "[Directories] Error %d: Copying tree '%s' to '%s'! (%s)" % (err.errno, srcname, dstname, err.strerror)
+			print("[Directories] Error %d: Copying tree '%s' to '%s'! (%s)" % (err.errno, srcname, dstname, err.strerror))
 	try:
 		st = os.stat(src)
 		try:
 			os.chmod(dst, S_IMODE(st.st_mode))
 		except (IOError, OSError) as err:
-			print "[Directories] Error %d: Setting modes from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror)
+			print("[Directories] Error %d: Setting modes from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror))
 		try:
 			os.utime(dst, (st.st_atime, st.st_mtime))
 		except (IOError, OSError) as err:
-			print "[Directories] Error %d: Setting times from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror)
+			print("[Directories] Error %d: Setting times from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror))
 	except (IOError, OSError) as err:
-		print "[Directories] Error %d: Obtaining stats from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror)
+		print("[Directories] Error %d: Obtaining stats from '%s' to '%s'! (%s)" % (err.errno, src, dst, err.strerror))
 
 # Renames files or if source and destination are on different devices moves them in background
 # input list of (source, destination)
@@ -452,29 +461,29 @@ def moveFiles(fileList):
 			movedList.append(item)
 	except (IOError, OSError) as err:
 		if err.errno == errno.EXDEV:  # Invalid cross-device link
-			print "[Directories] Warning: Cannot rename across devices, trying slower move."
+			print("[Directories] Warning: Cannot rename across devices, trying slower move.")
 			from Tools.CopyFiles import moveFiles as extMoveFiles
 			extMoveFiles(fileList, item[0])
-			print "[Directories] Moving files in background."
+			print("[Directories] Moving files in background.")
 		else:
-			print "[Directories] Error %d: Moving file '%s' to '%s'! (%s)" % (err.errno, item[0], item[1], err.strerror)
+			print("[Directories] Error %d: Moving file '%s' to '%s'! (%s)" % (err.errno, item[0], item[1], err.strerror))
 			errorFlag = True
 	if errorFlag:
-		print "[Directories] Reversing renamed files due to error."
+		print("[Directories] Reversing renamed files due to error.")
 		for item in movedList:
 			try:
 				os.rename(item[1], item[0])
 			except (IOError, OSError) as err:
-				print "[Directories] Error %d: Renaming '%s' to '%s'! (%s)" % (err.errno, item[1], item[0], err.strerror)
-				print "[Directories] Failed to undo move:", item
+				print("[Directories] Error %d: Renaming '%s' to '%s'! (%s)" % (err.errno, item[1], item[0], err.strerror))
+				print("[Directories] Failed to undo move:", item)
 
 
 def getSize(path, pattern=".*"):
 	path_size = 0
 	if os.path.isdir(path):
 		files = crawlDirectory(path, pattern)
-		for file in files:
-			filepath = os.path.join(file[0], file[1])
+		for _file in files:
+			filepath = os.path.join(f_ile[0], f_ile[1])
 			path_size += os.path.getsize(filepath)
 	elif os.path.isfile(path):
 		path_size = os.path.getsize(path)
@@ -487,16 +496,16 @@ def lsof():
 		if pid.isdigit():
 			try:
 				prog = os.readlink(os.path.join("/proc", pid, "exe"))
-				dir = os.path.join("/proc", pid, "fd")
-				for file in [os.path.join(dir, file) for file in os.listdir(dir)]:
-					lsof.append((pid, prog, os.readlink(file)))
+				_dir = os.path.join("/proc", pid, "fd")
+				for _file in [os.path.join(_dir, _file) for _file in os.listdir(_dir)]:
+					lsof.append((pid, prog, os.readlink(_file)))
 			except OSError:
 				pass
 	return lsof
 
 
-def getExtension(file):
-	filename, extension = os.path.splitext(file)
+def getExtension(_file):
+	filename, extension = os.path.splitext(_file)
 	return extension
 
 
@@ -510,7 +519,7 @@ def mediafilesInUse(session):
 			filename = None
 		else:
 			filename = os.path.basename(filename)
-	return set([file for file in files if not(filename and file == filename and files.count(filename) < 2)])
+	return set([_file for _file in files if not(filename and _file == filename and files.count(filename) < 2)])
 
 # Prepare filenames for use in external shell processing. Filenames may
 # contain spaces or other special characters.  This method adjusts the

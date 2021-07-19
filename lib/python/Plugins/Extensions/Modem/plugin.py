@@ -1,3 +1,7 @@
+from __future__ import print_function
+from __future__ import absolute_import
+
+
 def getDefaultGateway():
 	f = open("/proc/net/route", "r")
 	if f:
@@ -81,7 +85,7 @@ gateway = None
 
 def pppdClosed(ret):
 	global gateway
-	print "modem disconnected", ret
+	print("modem disconnected", ret)
 	if gateway:
 		#FIXMEEE... hardcoded for little endian!!
 		system("route add default gw %d.%d.%d.%d" % (gateway & 0xFF, (gateway >> 8) & 0xFF, (gateway >> 16) & 0xFF, (gateway >> 24) & 0xFF))
@@ -104,7 +108,7 @@ class ModemSetup(Screen):
 		</screen>"""
 
 	def nothing(self):
-		print "nothing!"
+		print("nothing!")
 
 	def __init__(self, session, args=None):
 		global connected
@@ -202,7 +206,7 @@ class ModemSetup(Screen):
 			setSecretString(self.username.getText() + ' * ' + self.password.getText())
 			ret = conn.execute("pppd", "pppd", "-d", "-detach")
 			if ret:
-				print "execute pppd failed!"
+				print("execute pppd failed!")
 				self.pppdClosed(ret)
 				pppdClosed(ret)
 			self.green_function = NONE

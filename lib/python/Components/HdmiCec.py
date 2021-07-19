@@ -1,15 +1,18 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import struct
 import os
 import datetime
 from fcntl import ioctl
 from enigma import eTimer, eHdmiCEC, eActionMap
-from config import config, ConfigSelection, ConfigYesNo, ConfigSubsection, ConfigText, NoSave
+from Components.config import config, ConfigSelection, ConfigYesNo, ConfigSubsection, ConfigText, NoSave
 from Components.Console import Console
 from Tools.Directories import fileExists, pathExists
 from time import time
 import Screens.Standby
 
-from sys import maxint
+from sys import maxsize
 
 config.hdmicec = ConfigSubsection()
 config.hdmicec.enabled = ConfigYesNo(default=False) # query from this value in hdmi_cec.cpp
@@ -47,7 +50,7 @@ for i in (10, 50, 100, 150, 250, 500, 750, 1000):
 	choicelist.append(("%d" % i, _("%d ms") % i))
 config.hdmicec.minimum_send_interval = ConfigSelection(default="250", choices=[("0", _("Disabled"))] + choicelist)
 choicelist = []
-for i in range(1, 6):
+for i in list(range(1, 6)):
 	choicelist.append(("%d" % i, _("%d times") % i))
 config.hdmicec.messages_repeat = ConfigSelection(default="0", choices=[("0", _("Disabled"))] + choicelist)
 config.hdmicec.messages_repeat_standby = ConfigYesNo(default=False)
@@ -57,10 +60,10 @@ for i in (500, 1000, 2000, 3000, 4000, 5000):
 config.hdmicec.messages_repeat_slowdown = ConfigSelection(default="1000", choices=[("0", _("None"))] + choicelist)
 choicelist = []
 for i in (5, 10, 30, 60, 120, 300, 600, 900, 1800, 3600):
-	if i / 60 < 1:
+	if i // 60 < 1:
 		choicelist.append(("%d" % i, _("%d sec") % i))
 	else:
-		choicelist.append(("%d" % i, _("%d min") % (i / 60)))
+		choicelist.append(("%d" % i, _("%d min") % (i // 60)))
 config.hdmicec.handle_tv_delaytime = ConfigSelection(default="0", choices=[("0", _("None"))] + choicelist)
 config.hdmicec.deepstandby_waitfortimesync = ConfigYesNo(default=True)
 config.hdmicec.tv_wakeup_zaptimer = ConfigYesNo(default=True)
@@ -476,7 +479,7 @@ class HdmiCec:
 
 			self.volumeForwardingEnabled = False
 			self.volumeForwardingDestination = 0
-			eActionMap.getInstance().bindAction('', -maxint - 1, self.keyEvent)
+			eActionMap.getInstance().bindAction('', -maxsize - 1, self.keyEvent)
 			config.hdmicec.volume_forwarding.addNotifier(self.configVolumeForwarding, initial_call=False)
 			config.hdmicec.enabled.addNotifier(self.configVolumeForwarding)
 
@@ -639,18 +642,18 @@ class HdmiCec:
 				address = 0x0f # use broadcast address
 				cmd = 0x82
 				physicaladdress = eHdmiCEC.getInstance().getPhysicalAddress()
-				data = str(struct.pack('BB', int(physicaladdress / 256), int(physicaladdress % 256)))
+				data = str(struct.pack('BB', int(physicaladdress // 256), int(physicaladdress % 256)))
 			elif message == "routinginfo":
 				address = 0x0f # use broadcast address
 				cmd = 0x81
 				physicaladdress = eHdmiCEC.getInstance().getPhysicalAddress()
-				data = str(struct.pack('BB', int(physicaladdress / 256), int(physicaladdress % 256)))
+				data = str(struct.pack('BB', int(physicaladdress // 256), int(physicaladdress % 256)))
 			elif message == "standby":
 				cmd = 0x36
 			elif message == "sourceinactive":
 				physicaladdress = eHdmiCEC.getInstance().getPhysicalAddress()
 				cmd = 0x9d
-				data = str(struct.pack('BB', int(physicaladdress / 256), int(physicaladdress % 256)))
+				data = str(struct.pack('BB', int(physicaladdress // 256), int(physicaladdress % 256)))
 			elif message == "menuactive":
 				cmd = 0x8e
 				data = str(struct.pack('B', 0x00))
@@ -662,7 +665,7 @@ class HdmiCec:
 			elif message == "setsystemaudiomode":
 				cmd = 0x70
 				physicaladdress = eHdmiCEC.getInstance().getPhysicalAddress()
-				data = str(struct.pack('BB', int(physicaladdress / 256), int(physicaladdress % 256)))
+				data = str(struct.pack('BB', int(physicaladdress // 256), int(physicaladdress % 256)))
 			elif message == "activatesystemaudiomode":
 				cmd = 0x72
 				data = str(struct.pack('B', 0x01))
@@ -684,7 +687,7 @@ class HdmiCec:
 				cmd = 0x84
 				physicaladdress = eHdmiCEC.getInstance().getPhysicalAddress()
 				devicetype = eHdmiCEC.getInstance().getDeviceType()
-				data = str(struct.pack('BBB', int(physicaladdress / 256), int(physicaladdress % 256), devicetype))
+				data = str(struct.pack('BBB', int(physicaladdress // 256), int(physicaladdress % 256), devicetype))
 			elif message == "vendorid":
 				cmd = 0x87
 				data = '\x00\x00\x00'
@@ -1060,7 +1063,7 @@ class HdmiCec:
 		txt = "<%s:> " % type
 		tmp = "%02X " % address
 		tmp += "%02X " % cmd
-		for i in range(length):
+		for i in list(range(length)):
 			tmp += "%02X " % ord(data[i])
 		if cmdmsg:
 			self.CECcmdline(tmp)
@@ -1105,7 +1108,7 @@ class HdmiCec:
 						s = 1
 						txt += CECdat.get(cmd, "").get(ord(data[0]), "<unknown>")
 					txt += "<"
-					for i in range(s, length):
+					for i in list(range(s, length)):
 						txt += "%s" % data[i]
 					txt += ">"
 				else:
@@ -1118,23 +1121,23 @@ class HdmiCec:
 				else:
 					txt += "<wrong data length>"
 			elif length:
-				txt += CECdat.get(cmd, "").get(ord(data[0]), "<unknown>") if CECdat.has_key(cmd) else ""
+				txt += CECdat.get(cmd, "").get(ord(data[0]), "<unknown>") if cmd in CECdat else ""
 			else:
 				txt += CECdat.get(cmd, "")
 		self.CECwritedebug(txt)
 
 	def CECwritedebug(self, debugtext, debugprint=False):
 		if debugprint and not config.hdmicec.debug.value:
-			print debugtext
+			print(debugtext)
 			return
 		log_path = config.crash.debug_path.value
 		if pathExists(log_path):
 			stat = os.statvfs(log_path)
-			disk_free = stat.f_bavail * stat.f_bsize / 1024
+			disk_free = stat.f_bavail * stat.f_bsize // 1024
 			if self.disk_full:
 				self.start_log = True
 			if not self.disk_full and disk_free < 500:
-				print "[HdmiCec] write debug file failed - disk full!"
+				print("[HdmiCec] write debug file failed - disk full!")
 				self.disk_full = True
 				return
 			elif not self.disk_full and disk_free < 1000:
@@ -1155,7 +1158,7 @@ class HdmiCec:
 				debugtext += "%s  +++  stop logging  +++  disk full!\n" % timestamp
 			self.CECwritefile(debugfile, "a", debugtext)
 		else:
-			print "[HdmiCec] write debug file failed - log path (%s) not found!" % log_path
+			print("[HdmiCec] write debug file failed - log path (%s) not found!" % log_path)
 
 	def CECcmdstart(self, configElement):
 		if config.hdmicec.commandline.value:
@@ -1195,7 +1198,7 @@ class HdmiCec:
 				internaltxt = "  Available internal commands: "
 				space = len(internaltxt) * " "
 				addspace = False
-				for key in sorted(CECintcmd.keys()):
+				for key in sorted(list(CECintcmd.keys())):
 					internaltxt += "%s'%s' or '%s'\n" % (space if addspace else "", key, CECintcmd[key])
 					addspace = True
 				txt = "Help for the hdmi-cec command line function\n"
@@ -1225,9 +1228,9 @@ class HdmiCec:
 						raise Exception("Wrong address detected - '%s'" % ceccmd[0])
 					address = int(ceccmd[0] or "0", 16)
 					if len(ceccmd) > 1:
-						if ceccmd[1] in CECintcmd.keys():
+						if ceccmd[1] in list(CECintcmd.keys()):
 							self.sendMessage(address, CECintcmd[ceccmd[1]])
-						elif ceccmd[1] in CECintcmd.values():
+						elif ceccmd[1] in list(CECintcmd.values()):
 							self.sendMessage(address, ceccmd[1])
 						else:
 							for x in ceccmd[1:]:
@@ -1242,7 +1245,7 @@ class HdmiCec:
 								self.CECdebug('Tx', address, cmd, data, len(data))
 							eHdmiCEC.getInstance().sendMessage(address, cmd, data, len(data))
 						self.cmdWaitTimer.startLongTimer(waittime)
-				except Exception, e:
+				except Exception as e:
 					self.CECwritedebug("[HdmiCec] CECcmdline - error: %s" % e, True)
 					txt = "%s\n" % e
 					self.CECwritefile(errfile, "w", txt)
@@ -1252,7 +1255,7 @@ class HdmiCec:
 		try:
 			with open(FILE) as f:
 				return f.read()
-		except Exception, e:
+		except Exception as e:
 			self.CECwritedebug("[HdmiCec] read file '%s' failed - error: %s" % (FILE, e), True)
 		return ""
 
@@ -1260,16 +1263,16 @@ class HdmiCec:
 		try:
 			with open(FILE, MODE) as f:
 				f.write(INPUT)
-		except Exception, e:
+		except Exception as e:
 			txt = "[HdmiCec] write file '%s' failed - error: %s" % (FILE, e)
-			print txt if "Enigma2-hdmicec-" in FILE else self.CECwritedebug(txt, True)
+			print(txt if "Enigma2-hdmicec-" in FILE else self.CECwritedebug(txt, True))
 
 	def CECremovefiles(self, FILES):
 		for f in FILES:
 			if fileExists(f):
 				try:
 					os.remove(f)
-				except Exception, e:
+				except Exception as e:
 					self.CECwritedebug("[HdmiCec] remove file '%s' failed - error: %s" % (f, e), True)
 
 

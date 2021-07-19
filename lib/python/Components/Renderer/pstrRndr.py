@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # by digiteng...12-2019
 
-from Renderer import Renderer
+from __future__ import print_function
+from __future__ import absolute_import
+from Components.Renderer.Renderer import Renderer
 from enigma import ePixmap, loadJPG
 from Components.UsageConfig import *
 import os
@@ -12,7 +14,7 @@ posterpath = config.usage.posterpath.value
 
 if not posterpath:
 	posterpath = "/media/hdd/"
-print "posterpath:", posterpath
+print("posterpath:", posterpath)
 
 
 class pstrRndr(Renderer):

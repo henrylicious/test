@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from Components.ActionMap import ActionMap, HelpableActionMap
 from Components.Button import Button
 from Components.ChoiceList import ChoiceList, ChoiceEntryComponent
@@ -177,7 +179,7 @@ def getHotkeys():
 config.misc.hotkey = ConfigSubsection()
 config.misc.hotkey.additional_keys = ConfigYesNo(default=True)
 for x in getHotkeys():
-	exec "config.misc.hotkey." + x[1] + " = ConfigText(default='" + x[2] + "')"
+	exec("config.misc.hotkey." + x[1] + " = ConfigText(default='" + x[2] + "')")
 
 
 def getHotkeyFunctions():
@@ -187,8 +189,8 @@ def getHotkeyFunctions():
 	pluginlist = plugins.getPlugins(PluginDescriptor.WHERE_EVENTINFO)
 	pluginlist.sort(key=lambda p: p.name)
 	for plugin in pluginlist:
-		if plugin.name not in twinPlugins and plugin.path and 'selectedevent' not in plugin.__call__.func_code.co_varnames:
-			if twinPaths.has_key(plugin.path[pathLen:]):
+		if plugin.name not in twinPlugins and plugin.path and 'selectedevent' not in plugin.__call__.__code__.co_varnames:
+			if plugin.path[pathLen:] in twinPaths:
 				twinPaths[plugin.path[pathLen:]] += 1
 			else:
 				twinPaths[plugin.path[pathLen:]] = 1
@@ -198,7 +200,7 @@ def getHotkeyFunctions():
 	pluginlist.sort(key=lambda p: p.name)
 	for plugin in pluginlist:
 		if plugin.name not in twinPlugins and plugin.path:
-			if twinPaths.has_key(plugin.path[pathLen:]):
+			if plugin.path[pathLen:] in twinPaths:
 				twinPaths[plugin.path[pathLen:]] += 1
 			else:
 				twinPaths[plugin.path[pathLen:]] = 1
@@ -554,7 +556,7 @@ class HotkeySetupSelect(Screen):
 
 class hotkeyActionMap(ActionMap):
 	def action(self, contexts, action):
-		if (action in tuple(x[1] for x in getHotkeys()) and self.actions.has_key(action)):
+		if (action in tuple(x[1] for x in getHotkeys()) and action in self.actions):
 			res = self.actions[action](action)
 			if res is not None:
 				return res
@@ -565,7 +567,7 @@ class hotkeyActionMap(ActionMap):
 
 class helpableHotkeyActionMap(HelpableActionMap):
 	def action(self, contexts, action):
-		if (action in tuple(x[1] for x in getHotkeys()) and self.actions.has_key(action)):
+		if (action in tuple(x[1] for x in getHotkeys()) and action in self.actions):
 			res = self.actions[action](action)
 			if res is not None:
 				return res
@@ -632,8 +634,8 @@ class InfoBarHotkey():
 				pluginlist = plugins.getPlugins(PluginDescriptor.WHERE_EVENTINFO)
 				pluginlist.sort(key=lambda p: p.name)
 				for plugin in pluginlist:
-					if plugin.name not in twinPlugins and plugin.path and 'selectedevent' not in plugin.__call__.func_code.co_varnames:
-						if twinPaths.has_key(plugin.path[pathLen:]):
+					if plugin.name not in twinPlugins and plugin.path and 'selectedevent' not in plugin.__call__.__code__.co_varnames:
+						if plugin.path[pathLen:] in twinPaths:
 							twinPaths[plugin.path[pathLen:]] += 1
 						else:
 							twinPaths[plugin.path[pathLen:]] = 1
@@ -645,7 +647,7 @@ class InfoBarHotkey():
 				pluginlist.sort(key=lambda p: p.name)
 				for plugin in pluginlist:
 					if plugin.name not in twinPlugins and plugin.path:
-						if twinPaths.has_key(plugin.path[pathLen:]):
+						if plugin.path[pathLen:] in twinPaths:
 							twinPaths[plugin.path[pathLen:]] += 1
 						else:
 							twinPaths[plugin.path[pathLen:]] = 1
@@ -660,18 +662,18 @@ class InfoBarHotkey():
 						return
 			elif selected[0] == "Infobar":
 				if hasattr(self, selected[1]):
-					exec "self." + ".".join(selected[1:]) + "()"
+					exec("self." + ".".join(selected[1:]) + "()")
 				else:
 					return 0
 			elif selected[0] == "Module":
 				try:
-					exec "from %s import %s" % (selected[1], selected[2])
-					exec "self.session.open(%s)" % ",".join(selected[2:])
+					exec("from %s import %s" % (selected[1], selected[2]))
+					exec("self.session.open(%s)" % ",".join(selected[2:]))
 				except:
-					print "[Hotkey] error during executing module %s, screen %s" % (selected[1], selected[2])
+					print("[Hotkey] error during executing module %s, screen %s" % (selected[1], selected[2]))
 			elif selected[0] == "Setup":
 				from Screens.Setup import Setup
-				exec "self.session.open(Setup, \"%s\")" % selected[1]
+				exec("self.session.open(Setup, \"%s\")" % selected[1])
 			elif selected[0].startswith("Zap"):
 				if selected[0] == "ZapPanic":
 					self.servicelist.history = []
@@ -689,12 +691,14 @@ class InfoBarHotkey():
 					from Plugins.Extensions.PPanel.ppanel import PPanel
 					self.session.open(PPanel, name=selected[1] + ' PPanel', node=None, filename=ppanelFileName, deletenode=None)
 			elif selected[0] == "Shellscript":
-				command = '/usr/scripts/' + selected[1] + ".sh"
-				if os.path.isfile(command) and os.path.isdir(ppath + "/Plugins/Extensions/PPanel"):
-					from Plugins.Extensions.PPanel.ppanel import Execute
-					self.session.open(Execute, selected[1] + " shellscript", None, command)
-				else:
-					os.system(command)
+				command = '/usr/script/' + selected[1] + ".sh"
+				if os.path.isfile(command):
+					if ".hidden." in command:
+						from enigma import eConsoleAppContainer
+						eConsoleAppContainer().execute(command)
+					else:
+						from Screens.Console import Console
+						self.session.open(Console, selected[1] + " shellscript", command, closeOnSuccess=selected[1].startswith('!'), showStartStopText=False)
 			elif selected[0] == "EMC":
 				try:
 					from Plugins.Extensions.EnhancedMovieCenter.plugin import showMoviesNew
@@ -707,5 +711,5 @@ class InfoBarHotkey():
 					from Plugins.Extensions.Kodi.plugin import KodiMainScreen
 					self.session.open(KodiMainScreen)
 			elif selected[0] == "DeviceManager":
-				from Plugins.SystemPlugins.DeviceManager.HddSetup import *
+				from Plugins.SystemPlugins.DeviceManager.HddSetup import HddSetup
 				self.session.open(HddSetup)

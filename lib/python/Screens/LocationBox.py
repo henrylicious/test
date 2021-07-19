@@ -3,6 +3,8 @@
 #
 
 # GUI (Screens)
+from __future__ import absolute_import
+from __future__ import division
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Screens.InputBox import InputBox
@@ -348,7 +350,7 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 				# Try to read fs stats
 				try:
 					s = os.statvfs(currentFolder)
-					if (s.f_bavail * s.f_bsize) / 1000000 > self.minFree:
+					if (s.f_bavail * s.f_bsize) // 1000000 > self.minFree:
 						# Automatically confirm if we have enough free disk Space available
 						return self.selectConfirmed(True)
 				except OSError:
@@ -395,7 +397,7 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 			free = ""
 			try:
 				stat = os.statvfs(currFolder)
-				free = ("(%0.1f GB " + _("free") + ")") % (float(stat.f_bavail) * stat.f_bsize / 1024 / 1024 / 1024)
+				free = ("(%0.1f GB " + _("free") + ")") % (float(stat.f_bavail) * stat.f_bsize // 1024 // 1024 // 1024)
 			except:
 				pass
 			self["targetfreespace"].setText(free)
@@ -480,8 +482,8 @@ class LocationBox(Screen, NumericalTextInput, HelpableScreen):
 			lookfor = self["filelist"].getCurrentDirectory() + self.quickselect
 
 			# Select file starting with generated text
-			for file in files:
-				if file[0][0] and file[0][0].lower().startswith(lookfor):
+			for _file in files:
+				if _file[0][0] and _file[0][0].lower().startswith(lookfor):
 					self["filelist"].instance.moveSelectionTo(idx)
 					break
 				idx += 1

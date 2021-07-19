@@ -1,8 +1,12 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from enigma import eConsoleAppContainer
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.ScrollLabel import ScrollLabel
 from Components.Sources.StaticText import StaticText
+import six
 
 
 class Console(Screen):
@@ -43,7 +47,7 @@ class Console(Screen):
 	def startRun(self):
 		self["text"].setText(_("Start Execution:") + "\n\n")
 		self["summary_description"].setText(_("Execution:"))
-		print "Console: executing in run", self.run, " the command:", self.cmdlist[self.run]
+		print("Console: executing in run", self.run, " the command:", self.cmdlist[self.run])
 		if self.container.execute(self.cmdlist[self.run]): #start of container application failed...
 			self.runFinished(-1) # so we must call runFinished manual
 
@@ -74,7 +78,7 @@ class Console(Screen):
 			while count > 0:
 				count -= 1
 				f = open('/proc/stb/video/alpha', 'w')
-				f.write('%i' % (255 * count / 40))
+				f.write('%i' % (255 * count // 40))
 				f.close()
 
 		else:
@@ -83,11 +87,11 @@ class Console(Screen):
 			while count < 40:
 				count += 1
 				f = open('/proc/stb/video/alpha', 'w')
-				f.write('%i' % (255 * count / 40))
+				f.write('%i' % (255 * count // 40))
 				f.close()
 
 	def yellow(self):
-		print 'Yellow Pressed'
+		print('Yellow Pressed')
 		if self.Shown == True:
 			self.hideScreen()
 			self.Shown = False
@@ -102,7 +106,5 @@ class Console(Screen):
 			self.container.dataAvail.remove(self.dataAvail)
 
 	def dataAvail(self, str):
-		lastpage = self["text"].isAtLastPage()
-		self["text"].setText(self["text"].getText() + str)
-		if lastpage:
-			self["text"].lastPage()
+		str = six.ensure_str(str)
+		self["text"].appendText(str)

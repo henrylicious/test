@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from Tools.Profile import profile
 from Tools.BoundFunction import boundFunction
 
@@ -172,23 +174,23 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 			from Plugins.Extensions.MediaPlayer.plugin import MediaPlayer
 			self.session.open(MediaPlayer)
 			no_plugin = False
-		except Exception, e:
+		except Exception as e:
 			self.session.open(MessageBox, _("The MediaPlayer plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
 
 	def showEMC(self):
 		try:
-			from Plugins.Extensions.EnhancedMovieCenter.plugin import *
+			import Plugins.Extensions.EnhancedMovieCenter.plugin
 			from Components.PluginComponent import plugins
-			showMoviesNew()
-		except Exception, e:
+			EnhancedMovieCenter.showMoviesNew()
+		except Exception as e:
 			self.session.open(MessageBox, _("The Enhanced Movie Center plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
 
 	def showETPORTAL(self):
 		try:
-			from Plugins.Extensions.EtPortal.plugin import *
+			from Plugins.Extensions.EtPortal.plugin import EtPortalScreen
 			from Components.PluginComponent import plugins
 			self.session.open(EtPortalScreen)
-		except Exception, e:
+		except Exception as e:
 			self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
 
 	def showMEDIAPORTAL(self):
@@ -206,22 +208,22 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 				from Plugins.Extensions.MediaPortal.plugin import MPList
 				self.session.open(MPList)
 			no_plugin = False
-		except Exception, e:
+		except Exception as e:
 			self.session.open(MessageBox, _("The MediaPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
 
 	def showWWW(self):
 		try:
-			from Plugins.Extensions.EtPortal.plugin import *
+			from Plugins.Extensions.EtPortal.plugin import EtPortalScreen
 			from Components.PluginComponent import plugins
 			self.session.open(EtPortalScreen)
-		except Exception, e:
+		except Exception as e:
 			self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
 
 	def BackZap(self):
 		if config.OpenWebif.enabled.value:
 			try:
 				os.system("wget -q -O /tmp/.message.txt 'http://127.0.0.1/web/remotecontrol?command=11' &  > /dev/null 2>&1")
-			except Exception, e:
+			except Exception as e:
 				self.session.open(MessageBox, _("The OpenWebinterface plugin is not installed or activated!\nPlease install or activate it."), type=MessageBox.TYPE_INFO, timeout=10)
 		else:
 			self.session.open(MessageBox, _("The OpenWebinterface plugin is not installed or activated!\nPlease install or activate it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -241,10 +243,10 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 	def showBoxPortal(self):
 		if getMachineBrand() == 'GI' or boxtype.startswith('azbox') or boxtype.startswith('ini') or boxtype.startswith('venton'):
 			try:
-				from Plugins.Extensions.EtPortal.plugin import *
+				from Plugins.Extensions.EtPortal.plugin import EtPortalScreen
 				from Components.PluginComponent import plugins
 				self.session.open(EtPortalScreen)
-			except Exception, e:
+			except Exception as e:
 				self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
 		else:
 			self.showMovies()
@@ -324,10 +326,10 @@ def setAudioTrack(service):
 			return
 		idx = 0
 		trackList = []
-		for i in xrange(nTracks):
+		for i in list(range(nTracks)):
 			audioInfo = tracks.getTrackInfo(i)
 			lang = audioInfo.getLanguage()
-			if langC.has_key(lang):
+			if lang in langC:
 				lang = langC[lang][0]
 			desc = audioInfo.getDescription()
 			track = idx, lang, desc
@@ -363,7 +365,7 @@ def setAudioTrack(service):
 			if matchedAc3:
 				return
 			tracks.selectTrack(0)    # fallback to track 1(0)
-	except Exception, e:
+	except Exception as e:
 		print("[MoviePlayer] audioTrack exception:\n" + str(e))
 
 
@@ -577,8 +579,8 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, InfoBarLongKeyDetection, InfoBar
 						else:
 							self.movielistAgain()
 						return
-					except Exception, e:
-						print "[InfoBar] Failed to move to .Trash folder:", e
+					except Exception as e:
+						print("[InfoBar] Failed to move to .Trash folder:", e)
 						msg = _("Cannot move to trash can") + "\n" + str(e) + "\n"
 				info = serviceHandler.info(ref)
 				name = info and info.getName(ref) or _("this recording")
@@ -766,7 +768,7 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, InfoBarLongKeyDetection, InfoBar
 				pass
 
 	def getPlaylistServiceInfo(self, service):
-		from MovieSelection import playlist
+		from Screens.MovieSelection import playlist
 		for i, item in enumerate(playlist):
 			if item == service:
 				if config.usage.on_movie_eof.value == "repeatcurrent":

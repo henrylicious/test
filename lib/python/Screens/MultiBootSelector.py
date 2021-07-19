@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from os import mkdir, path
 from shutil import copyfile
 from boxbranding import getMachineBuild, getMachineMtdRoot
@@ -98,28 +100,28 @@ class MultiBootSelector(Screen):
 		self.getImageList = GetImagelist(self.getImagelistCallback)
 
 	def getImagelistCallback(self, imagedict):
-		list = []
+		_list = []
 		mode = GetCurrentImageMode() or 0
 		currentimageslot = GetCurrentImage()
-		print "[MultiBootSelector] reboot1 slot:", currentimageslot
+		print("[MultiBootSelector] reboot1 slot:", currentimageslot)
 		current = "  %s" % _("(current image)")
 		slotSingle = _("Slot %s: %s%s")
 		slotMulti = _("Slot %s: %s - Mode %d%s")
 		if imagedict:
 			indextot = 0
-			for index, x in enumerate(sorted(imagedict.keys())):
+			for index, x in enumerate(sorted(list(imagedict.keys()))):
 				if imagedict[x]["imagename"] != _("Empty slot"):
 					if SystemInfo["canMode12"]:
-						list.insert(index, ChoiceEntryComponent("", (slotMulti % (x, imagedict[x]["imagename"], 1, current if x == currentimageslot and mode != 12 else ""), (x, 1))))
-						list.append(ChoiceEntryComponent("", (slotMulti % (x, imagedict[x]["imagename"], 12, current if x == currentimageslot and mode == 12 else ""), (x, 12))))
+						_list.insert(index, ChoiceEntryComponent("", (slotMulti % (x, imagedict[x]["imagename"], 1, current if x == currentimageslot and mode != 12 else ""), (x, 1))))
+						_list.append(ChoiceEntryComponent("", (slotMulti % (x, imagedict[x]["imagename"], 12, current if x == currentimageslot and mode == 12 else ""), (x, 12))))
 						indextot = index + 1
 					else:
-						list.append(ChoiceEntryComponent("", (slotSingle % (x, imagedict[x]["imagename"], current if x == currentimageslot else ""), (x, 1))))
+						_list.append(ChoiceEntryComponent("", (slotSingle % (x, imagedict[x]["imagename"], current if x == currentimageslot else ""), (x, 1))))
 			if SystemInfo["canMode12"]:
-				list.insert(indextot, " ")
+				_list.insert(indextot, " ")
 		else:
-			list.append(ChoiceEntryComponent("", ((_("No images found")), "Waiter")))
-		self["config"].setList(list)
+			_list.append(ChoiceEntryComponent("", ((_("No images found")), "Waiter")))
+		self["config"].setList(_list)
 
 	def reboot(self):
 		self.currentSelected = self["config"].l.getCurrentSelection()
@@ -127,9 +129,9 @@ class MultiBootSelector(Screen):
 			slot = self.currentSelected[0][1][0]
 			boxmode = self.currentSelected[0][1][1]
 			message = _("Do you want to reboot now the image in startup %s?") % slot
-			print "[MultiBootSelector] reboot2 reboot slot = %s, " % slot
-			print "[MultiBootSelector] reboot2 reboot boxmode = %s, " % boxmode
-			print "[MultiBootSelector] reboot3 slotinfo = %s" % SystemInfo["canMultiBoot"]
+			print("[MultiBootSelector] reboot2 reboot slot = %s, " % slot)
+			print("[MultiBootSelector] reboot2 reboot boxmode = %s, " % boxmode)
+			print("[MultiBootSelector] reboot3 slotinfo = %s" % SystemInfo["canMultiBoot"])
 			if SystemInfo["canMode12"]:
 				if "BOXMODE" in SystemInfo["canMultiBoot"][slot]['startupfile']:
 					startupfile = path.join(self.mountDir, "%s_%s" % (SystemInfo["canMultiBoot"][slot]['startupfile'].rsplit('_', 1)[0], boxmode))

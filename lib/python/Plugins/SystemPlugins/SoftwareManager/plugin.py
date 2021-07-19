@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import absolute_import
 from Plugins.Plugin import PluginDescriptor
 from Screens.Console import Console
 from Screens.ChoiceBox import ChoiceBox
@@ -30,22 +32,23 @@ from Tools.Directories import SCOPE_ACTIVE_SKIN, SCOPE_CURRENT_PLUGIN, SCOPE_MET
 from Tools.LoadPixmap import LoadPixmap
 from Tools.NumericalTextInput import NumericalTextInput
 from enigma import eEnv, ePicLoad, eRCInput, eTimer, getDesktop, getEnigmaVersionString, getPrevAsciiCode
-from cPickle import dump, load
+from six.moves.cPickle import dump, load
 from os import F_OK, R_OK, W_OK, access, listdir, makedirs, mkdir, path as os_path, remove, stat
 from time import time
 from stat import ST_MTIME
 from datetime import date, timedelta
 from twisted.web import client
 
-from ImageBackup import ImageBackup
-from Flash_online import FlashOnline
-from ImageWizard import ImageWizard
-from Multibootmgr import MultiBootWizard
-from BackupRestore import BackupSelection, RestoreMenu, BackupScreen, RestoreScreen, getBackupPath, getOldBackupPath, getBackupFilename
-from SoftwareTools import iSoftwareTools
+from .ImageBackup import ImageBackup
+from .Flash_online import FlashOnline
+from .ImageWizard import ImageWizard
+from .Multibootmgr import MultiBootWizard
+from .BackupRestore import BackupSelection, RestoreMenu, BackupScreen, RestoreScreen, getBackupPath, getOldBackupPath, getBackupFilename
+from .SoftwareTools import iSoftwareTools
 import os
 import shutil
 from boxbranding import getBoxType, getMachineBrand, getMachineName, getBrandOEM, getImageDistro
+import six
 
 boxtype = getBoxType()
 brandoem = getBrandOEM()
@@ -122,7 +125,7 @@ def write_cache(cache_file, cache_data):
 		try:
 			mkdir(os_path.dirname(cache_file))
 		except OSError:
-			    print os_path.dirname(cache_file), 'is a file'
+			print(os_path.dirname(cache_file), 'is a file')
 	fd = open(cache_file, 'w')
 	dump(cache_data, fd, -1)
 	fd.close()
@@ -209,7 +212,7 @@ class UpdatePluginMenu(Screen):
 		self.text = ""
 		self.backupdirs = ' '.join(config.plugins.configurationbackup.backupdirs.value)
 		if self.menu == 0:
-			print "building menu entries"
+			print("building menu entries")
 			self.list.append(("software-update", _("Software update"), _("\nOnline update of your %s %s software.") % (getMachineBrand(), getMachineName()) + "\n" + self.oktext, None))
 			#self.list.append(("software-restore", _("Software restore"), _("\nRestore your %s %s with a new firmware.") % (getMachineBrand(), getMachineName()) + "\n" + self.oktext, None))
 			self.list.append(("install-extensions", _("Manage extensions"), _("\nManage extensions or plugins for your %s %s") % (getMachineBrand(), getMachineName()) + "\n" + self.oktext, None))
@@ -222,14 +225,14 @@ class UpdatePluginMenu(Screen):
 			self.list.append(("system-restore", _("Restore system settings"), _("\nRestore your %s %s settings.") % (getMachineBrand(), getMachineName()) + "\n" + self.oktext, None))
 			self.list.append(("ipkg-install", _("Install local extension"), _("\nScan for local extensions and install them.") + "\n" + self.oktext, None))
 			for p in plugins.getPlugins(PluginDescriptor.WHERE_SOFTWAREMANAGER):
-				if p.__call__.has_key("SoftwareSupported"):
+				if "SoftwareSupported" in p.__call__:
 					callFnc = p.__call__["SoftwareSupported"](None)
 					if callFnc is not None:
-						if p.__call__.has_key("menuEntryName"):
+						if "menuEntryName" in p.__call__:
 							menuEntryName = p.__call__["menuEntryName"](None)
 						else:
 							menuEntryName = _('Extended Software')
-						if p.__call__.has_key("menuEntryDescription"):
+						if "menuEntryDescription" in p.__call__:
 							menuEntryDescription = p.__call__["menuEntryDescription"](None)
 						else:
 							menuEntryDescription = _('Extended Software Plugin')
@@ -246,14 +249,14 @@ class UpdatePluginMenu(Screen):
 				self.list.append(("ipkg-manager", _("Packet management"), _("\nView, install and remove available or installed packages.") + "\n" + self.oktext, None))
 			self.list.append(("ipkg-source", _("Select upgrade source"), _("\nEdit the upgrade source address.") + "\n" + self.oktext, None))
 			for p in plugins.getPlugins(PluginDescriptor.WHERE_SOFTWAREMANAGER):
-				if p.__call__.has_key("AdvancedSoftwareSupported"):
+				if "AdvancedSoftwareSupported" in p.__call__:
 					callFnc = p.__call__["AdvancedSoftwareSupported"](None)
 					if callFnc is not None:
-						if p.__call__.has_key("menuEntryName"):
+						if "menuEntryName" in p.__call__:
 							menuEntryName = p.__call__["menuEntryName"](None)
 						else:
 							menuEntryName = _('Advanced software')
-						if p.__call__.has_key("menuEntryDescription"):
+						if "menuEntryDescription" in p.__call__:
 							menuEntryDescription = p.__call__["menuEntryDescription"](None)
 						else:
 							menuEntryDescription = _('Advanced software plugin')
@@ -293,7 +296,7 @@ class UpdatePluginMenu(Screen):
 	def checkFeedStatus(self):
 	##check hdfreaks feed status
 		try:
-			from urllib import urlopen
+			from six.moves.urllib.request import urlopen
 			hdfonlinestatus = urlopen("https://status.hdfreaks.cc/index.php")
 			hdfstatus = hdfonlinestatus.read()
 			hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_red.png"
@@ -301,23 +304,23 @@ class UpdatePluginMenu(Screen):
 				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_red.png"
 				self["Arrow1"].setPosition("300", "427")
 				self["Arrow2"].setPosition("270", "432")
-				print "[status] red"
+				print("[status] red")
 			elif 'gelb.png' in hdfstatus:
 				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_yellow.png"
 				self["Arrow1"].setPosition("300", "460")
 				self["Arrow2"].setPosition("270", "465")
-				print "[status] yellow"
+				print("[status] yellow")
 			elif 'gruen.png' in hdfstatus:
 				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_green.png"
 				self["Arrow1"].setPosition("300", "500")
 				self["Arrow2"].setPosition("270", "505")
-				print "[status] green"
+				print("[status] green")
 			hdfonlinestatus.close()
 		except:
 			hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_red.png"
 			self["Arrow1"].setPosition("300", "427")
 			self["Arrow2"].setPosition("270", "432")
-			print "[status] red"
+			print("[status] red")
 			#pass
 		##check end
 		self["hdfStatusPic"].instance.setPixmapFromFile(hdfbutton)
@@ -350,7 +353,7 @@ class UpdatePluginMenu(Screen):
 
 	def getUpdateInfos(self):
 		if iSoftwareTools.NetworkConnectionAvailable is True:
-			if iSoftwareTools.available_updates is not 0:
+			if iSoftwareTools.available_updates != 0:
 				self.text = _("There are at least %s updates available.") % (str(iSoftwareTools.available_updates))
 			else:
 				self.text = "" #_("There are no updates available.")
@@ -455,12 +458,12 @@ class UpdatePluginMenu(Screen):
 			try:
 				if not os.path.exists('/media/hdd/images'):
 					os.makedirs('/media/hdd/images')
-				print "AfterFlashAction: create /media/hdd/images/hdfrestore"
-				print "AfterFlashAction: filename:", self.fullbackupfilename
+				print("AfterFlashAction: create /media/hdd/images/hdfrestore")
+				print("AfterFlashAction: filename:", self.fullbackupfilename)
 				backupsourcefile = self.fullbackupfilename
 				backupdestfile = '/media/hdd/images/hdfrestore'
 				if not os.path.exists(backupsourcefile):
-					print "AfterFlashAction: No settings found."
+					print("AfterFlashAction: No settings found.")
 					self.session.open(MessageBox, _("Please create a backup of your settings before."), MessageBox.TYPE_INFO, timeout=20)
 				else:
 					shutil.copyfile(backupsourcefile, backupdestfile)
@@ -468,14 +471,14 @@ class UpdatePluginMenu(Screen):
 					message = _("Enigma must be restarted to auto restore your saved settings now!")
 					self.session.openWithCallback(self.initEnigmaGUI, MessageBox, message, MessageBox.TYPE_INFO, timeout=10)
 			except:
-				print "AfterFlashAction: failed to create /media/hdd/images/hdfrestore"
+				print("AfterFlashAction: failed to create /media/hdd/images/hdfrestore")
 		else:
 			try:
 				if os.path.exists('/media/hdd/images/hdfrestore'):
 					os.unlink('/media/hdd/images/hdfrestore')
-					print "AfterFlashAction: delete /media/hdd/images/hdfrestore"
+					print("AfterFlashAction: delete /media/hdd/images/hdfrestore")
 			except:
-				print "AfterFlashAction: failed to delete /media/hdd/images/hdfrestore"
+				print("AfterFlashAction: failed to delete /media/hdd/images/hdfrestore")
 		self.close()
 
 	def initEnigmaGUI(self, answer):
@@ -502,7 +505,7 @@ class UpdatePluginMenu(Screen):
 			self.createBackupfolders()
 
 	def createBackupfolders(self):
-		print "Creating backup folder if not already there..."
+		print("Creating backup folder if not already there...")
 		self.backuppath = getBackupPath()
 		try:
 			if (os_path.exists(self.backuppath) == False):
@@ -513,7 +516,7 @@ class UpdatePluginMenu(Screen):
 	def backupDone(self, retval=None):
 		if retval is True:
 			if config.plugins.softwaremanager.autosaveSettingsfilesEntry.value:
-				print "Backup completed."
+				print("Backup completed.")
 			else:
 				self.session.open(MessageBox, _("Backup completed."), MessageBox.TYPE_INFO, timeout=10)
 		else:
@@ -673,7 +676,7 @@ class SoftwareManagerSetup(Screen, ConfigListScreen):
 
 	def confirm(self, confirmed):
 		if not confirmed:
-			print "not confirmed"
+			print("not confirmed")
 			return
 		else:
 			self.keySave()
@@ -911,7 +914,7 @@ class PluginManager(Screen, PackageInfoHandler):
 	def getUpdateInfosCB(self, retval=None):
 		if retval is not None:
 			if retval is True:
-				if iSoftwareTools.available_updates is not 0:
+				if iSoftwareTools.available_updates != 0:
 					self["status"].setText(_("There are at least ") + str(iSoftwareTools.available_updates) + ' ' + _("updates available."))
 				else:
 					self["status"].setText(_("There are no updates available."))
@@ -955,9 +958,9 @@ class PluginManager(Screen, PackageInfoHandler):
 						self["key_green"].setText("")
 				self["key_yellow"].setText(_("View details"))
 				self["key_blue"].setText("")
-				if len(self.selectedFiles) == 0 and iSoftwareTools.available_updates is not 0:
+				if len(self.selectedFiles) == 0 and iSoftwareTools.available_updates != 0:
 					self["status"].setText(_("There are at least ") + str(iSoftwareTools.available_updates) + ' ' + _("updates available."))
-				elif len(self.selectedFiles) is not 0:
+				elif len(self.selectedFiles) != 0:
 					self["status"].setText(str(len(self.selectedFiles)) + ' ' + _("packages selected."))
 				else:
 					self["status"].setText(_("There are currently no outstanding actions."))
@@ -966,10 +969,10 @@ class PluginManager(Screen, PackageInfoHandler):
 				self["key_green"].setText("")
 				self["key_yellow"].setText("")
 				self["key_blue"].setText("")
-				if len(self.selectedFiles) == 0 and iSoftwareTools.available_updates is not 0:
+				if len(self.selectedFiles) == 0 and iSoftwareTools.available_updates != 0:
 					self["status"].setText(_("There are at least ") + str(iSoftwareTools.available_updates) + ' ' + _("updates available."))
 					self["key_yellow"].setText(_("Update"))
-				elif len(self.selectedFiles) is not 0:
+				elif len(self.selectedFiles) != 0:
 					self["status"].setText(str(len(self.selectedFiles)) + ' ' + _("packages selected."))
 					self["key_yellow"].setText(_("Process"))
 				else:
@@ -989,7 +992,7 @@ class PluginManager(Screen, PackageInfoHandler):
 				selectedTag = current[2]
 				self.buildPacketList(selectedTag)
 			elif self.currList == "packages":
-				if current[7] is not '':
+				if current[7] != '':
 					idx = self["list"].getIndex()
 					detailsFile = self.list[idx][1]
 					if self.list[idx][7] == True:
@@ -1031,7 +1034,7 @@ class PluginManager(Screen, PackageInfoHandler):
 		current = self["list"].getCurrent()
 		if current:
 			if self.currList == "packages":
-				if current[7] is not '':
+				if current[7] != '':
 					detailsfile = iSoftwareTools.directory[0] + "/" + current[1]
 					if (os_path.exists(detailsfile) == True):
 						self.saved_currentSelectedPackage = self.currentSelectedPackage
@@ -1075,11 +1078,11 @@ class PluginManager(Screen, PackageInfoHandler):
 			self.packetlist = []
 			for package in iSoftwareTools.packagesIndexlist[:]:
 				prerequisites = package[0]["prerequisites"]
-				if prerequisites.has_key("tag"):
+				if "tag" in prerequisites:
 					for foundtag in prerequisites["tag"]:
 						if categorytag == foundtag:
 							attributes = package[0]["attributes"]
-							if attributes.has_key("packagetype"):
+							if "packagetype" in attributes:
 								if attributes["packagetype"] == "internal":
 									continue
 								self.packetlist.append([attributes["name"], attributes["details"], attributes["shortdescription"], attributes["packagename"]])
@@ -1095,7 +1098,7 @@ class PluginManager(Screen, PackageInfoHandler):
 					description = "No description available."
 				packagename = x[3].strip()
 				selectState = self.getSelectionState(details)
-				if iSoftwareTools.installed_packetlist.has_key(packagename):
+				if packagename in iSoftwareTools.installed_packetlist:
 					if selectState == True:
 						status = "remove"
 					else:
@@ -1120,7 +1123,7 @@ class PluginManager(Screen, PackageInfoHandler):
 		self.categoryList = []
 		for package in iSoftwareTools.packagesIndexlist[:]:
 			prerequisites = package[0]["prerequisites"]
-			if prerequisites.has_key("tag"):
+			if "tag" in prerequisites:
 				for foundtag in prerequisites["tag"]:
 					attributes = package[0]["attributes"]
 					if foundtag not in self.categories:
@@ -1172,11 +1175,11 @@ class PluginManager(Screen, PackageInfoHandler):
 				if (os_path.exists(detailsfile) == True):
 					iSoftwareTools.fillPackageDetails(plugin[0])
 					self.package = iSoftwareTools.packageDetails[0]
-					if self.package[0].has_key("attributes"):
+					if "attributes" in self.package[0]:
 						self.attributes = self.package[0]["attributes"]
-						if self.attributes.has_key("needsRestart"):
+						if "needsRestart" in self.attributes:
 							self.restartRequired = True
-					if self.attributes.has_key("package"):
+					if "package" in self.attributes:
 						self.packagefiles = self.attributes["package"]
 					if plugin[1] == 'installed':
 						if self.packagefiles:
@@ -1461,7 +1464,7 @@ class PluginDetails(Screen, PackageInfoHandler):
 		self["divpic"].hide()
 
 		self.package = self.packageDetails[0]
-		if self.package[0].has_key("attributes"):
+		if "attributes" in self.package[0]:
 			self.attributes = self.package[0]["attributes"]
 		self.restartRequired = False
 		self.cmdList = []
@@ -1487,20 +1490,20 @@ class PluginDetails(Screen, PackageInfoHandler):
 		pass
 
 	def setInfos(self):
-		if self.attributes.has_key("screenshot"):
+		if "screenshot" in self.attributes:
 			self.loadThumbnail(self.attributes)
 
-		if self.attributes.has_key("name"):
+		if "name" in self.attributes:
 			self.pluginname = self.attributes["name"]
 		else:
 			self.pluginname = _("unknown")
 
-		if self.attributes.has_key("author"):
+		if "author" in self.attributes:
 			self.author = self.attributes["author"]
 		else:
 			self.author = _("unknown")
 
-		if self.attributes.has_key("description"):
+		if "description" in self.attributes:
 			self.description = _(self.attributes["description"].replace("\\n", "\n"))
 		else:
 			self.description = _("No description available.")
@@ -1517,7 +1520,7 @@ class PluginDetails(Screen, PackageInfoHandler):
 
 	def loadThumbnail(self, entry):
 		thumbnailUrl = None
-		if entry.has_key("screenshot"):
+		if "screenshot" in entry:
 			thumbnailUrl = entry["screenshot"]
 			if self.language == "de":
 				if thumbnailUrl[-7:] == "_en.jpg":
@@ -1525,9 +1528,9 @@ class PluginDetails(Screen, PackageInfoHandler):
 
 		if thumbnailUrl is not None:
 			self.thumbnail = "/tmp/" + thumbnailUrl.split('/')[-1]
-			print "[PluginDetails] downloading screenshot " + thumbnailUrl + " to " + self.thumbnail
+			print("[PluginDetails] downloading screenshot " + thumbnailUrl + " to " + self.thumbnail)
 			if iSoftwareTools.NetworkConnectionAvailable:
-				client.downloadPage(thumbnailUrl, self.thumbnail).addCallback(self.setThumbnail).addErrback(self.fetchFailed)
+				client.downloadPage(six.ensure_binary(thumbnailUrl), self.thumbnail).addCallback(self.setThumbnail).addErrback(self.fetchFailed)
 			else:
 				self.setThumbnail(noScreenshot=True)
 		else:
@@ -1559,9 +1562,9 @@ class PluginDetails(Screen, PackageInfoHandler):
 			self.setThumbnail(noScreenshot=True)
 
 	def go(self):
-		if self.attributes.has_key("package"):
+		if "package" in self.attributes:
 			self.packagefiles = self.attributes["package"]
-		if self.attributes.has_key("needsRestart"):
+		if "needsRestart" in self.attributes:
 			self.restartRequired = True
 		self.cmdList = []
 		if self.pluginstate in ('installed', 'remove'):
@@ -1606,7 +1609,7 @@ class PluginDetails(Screen, PackageInfoHandler):
 
 	def fetchFailed(self, string):
 		self.setThumbnail(noScreenshot=True)
-		print "[PluginDetails] fetch failed " + string.getErrorMessage()
+		print("[PluginDetails] fetch failed " + string.getErrorMessage())
 
 
 class UpdatePlugin(Screen):
@@ -1691,12 +1694,12 @@ class UpdatePlugin(Screen):
 			self.activityTimer.start(100, False)
 			self.ipkg.startCmd(IpkgComponent.CMD_UPDATE)
 		else:
-			print"[SOFTWAREMANAGER] Your image is to old (%s), you need to flash new !!" % getEnigmaVersionString()
+			print("[SOFTWAREMANAGER] Your image is to old (%s), you need to flash new !!" % getEnigmaVersionString())
 			self.session.openWithCallback(self.checkDateCallback, MessageBox, message, default=False)
 			return
 
 	def checkDateCallback(self, ret):
-		print ret
+		print(ret)
 		if ret:
 			self.activityTimer.start(100, False)
 			self.ipkg.startCmd(IpkgComponent.CMD_UPGRADE_LIST)
@@ -1705,7 +1708,7 @@ class UpdatePlugin(Screen):
 			return
 
 	def checkTraficLight(self):
-		from urllib import urlopen
+		from six.moves.urllib.request import urlopen
 		import socket
 		currentTimeoutDefault = socket.getdefaulttimeout()
 		socket.setdefaulttimeout(3)
@@ -1719,6 +1722,7 @@ class UpdatePlugin(Screen):
 			urlopenSTATUS = "https://status.hdfreaks.cc/index.php"
 			d = urlopen(urlopenSTATUS)
 			tmpStatus = d.read()
+			tmpStatus = six.ensure_str(tmpStatus)
 			if config.softwareupdate.updatebeta.value and 'gelb.png' in tmpStatus:
 				message = _("Caution update not tested yet !!") + "\n" + _("Update at your own risk") + "\n\n" + _("For more information see https://www.hdfreaks.cc") + "\n\n"# + _("Last Status Date") + ": "  + statusDate + "\n\n"
 				picon = MessageBox.TYPE_ERROR
@@ -1756,20 +1760,20 @@ class UpdatePlugin(Screen):
 		self.TraficResult = result
 		if result:
 			self.TraficCheck = True
-			print "create /etc/last-upgrades-git.log with opkg list-upgradable"
+			print("create /etc/last-upgrades-git.log with opkg list-upgradable")
 			os.system("opkg list-upgradable > /etc/last-upgrades-git.log")
 			if not os.system("grep 'skins-xionhdf' /etc/last-upgrades-git.log"):
-				print "Xion skin update = Yes"
+				print("Xion skin update = Yes")
 				open('/etc/enigma2/xionrestore', 'w').close()
 			else:
-				print "Xion skin update = No"
+				print("Xion skin update = No")
 				if os.path.exists('/etc/enigma2/xionrestore'):
 					os.unlink('/etc/enigma2/xionrestore')
 			if os.system("grep 'dvb-module\|kernel-module\|platform-util' /etc/last-upgrades-git.log"):
-				print "Upgrade asap = Yes"
+				print("Upgrade asap = Yes")
 				self.ipkg.startCmd(IpkgComponent.CMD_UPGRADE_LIST)
 			else:
-				print "Upgrade asap = No"
+				print("Upgrade asap = No")
 				message = _("There is a Kernel- and/or Driver-Update available for your %s %s!") % (getMachineBrand(), getMachineName()) + "\n" + _("Please backup your settings and do a fresh online-flash of latest image.") + "\n" + _("It is possible that your Box have a problem with booting up after update.") + "\n" + "\n" + _("If you really want to try the update without backup, press Yes.")
 				picon = MessageBox.TYPE_ERROR
 				self.session.openWithCallback(self.runUpgrade2, MessageBox, message, default=False, picon=picon)
@@ -1801,7 +1805,7 @@ class UpdatePlugin(Screen):
 		elif event == IpkgComponent.EVENT_DOWNLOAD:
 			self.status.setText(_("Downloading"))
 		elif event == IpkgComponent.EVENT_UPGRADE:
-			if self.sliderPackages.has_key(param):
+			if param in self.sliderPackages:
 				self.slider.setValue(self.sliderPackages[param])
 			self.package.setText(param)
 			self.status.setText(_("Upgrading") + ": %s/%s" % (self.packages, self.total_packages))
@@ -1868,7 +1872,7 @@ class UpdatePlugin(Screen):
 				if self.updating:
 					error = _("Your %s %s isn't connected to the internet properly. Please check it and try again.") % (getMachineBrand(), getMachineName())
 				self.status.setText(_("Error") + " - " + error)
-		#print event, "-", param
+		#print(event, "-", param)
 
 	def startActualUpgrade(self, answer):
 		if not answer or not answer[1]:
@@ -1957,10 +1961,10 @@ class IPKGMenu(Screen):
 		if (os_path.exists(self.path) == False):
 			self.entry = False
 			return
-		for file in listdir(self.path):
-			if file.endswith(".conf"):
-				if file not in ('arch.conf', 'opkg.conf'):
-					flist.append((file))
+		for _file in listdir(self.path):
+			if _file.endswith(".conf"):
+				if _file not in ('arch.conf', 'opkg.conf'):
+					flist.append((_file))
 					self.entry = True
 		self["filelist"].l.setList(flist)
 
@@ -1994,7 +1998,7 @@ class IPKGSource(Screen):
 		text = ""
 		if self.configfile:
 			try:
-				fp = file(configfile, 'r')
+				fp = open(configfile, 'r')
 				sources = fp.readlines()
 				if sources:
 					text = sources[0]
@@ -2050,7 +2054,7 @@ class IPKGSource(Screen):
 	def go(self):
 		text = self["text"].getText()
 		if text:
-			fp = file(self.configfile, 'w')
+			fp = open(self.configfile, 'w')
 			fp.write(text)
 			fp.write("\n")
 			fp.close()
@@ -2156,12 +2160,12 @@ class PacketManager(Screen, NumericalTextInput):
 	def keyNumberGlobal(self, val):
 		key = self.getKey(val)
 		if key is not None:
-			keyvalue = key.encode("utf-8")
+			keyvalue = six.ensure_str(key)
 			if len(keyvalue) == 1:
 				self.setNextIdx(keyvalue[0])
 
 	def keyGotAscii(self):
-		keyvalue = unichr(getPrevAsciiCode()).encode("utf-8")
+		keyvalue = six.ensure_str(six.unichr(getPrevAsciiCode()))
 		if len(keyvalue) == 1:
 			self.setNextIdx(keyvalue[0])
 
@@ -2182,7 +2186,7 @@ class PacketManager(Screen, NumericalTextInput):
 		self.ipkg.stop()
 		if self.Console is not None:
 			if len(self.Console.appContainers):
-				for name in self.Console.appContainers.keys():
+				for name in list(self.Console.appContainers.keys()):
 					self.Console.kill(name)
 		rcinput = eRCInput.getInstance()
 		rcinput.setKeyboardMode(rcinput.kmNone)
@@ -2297,11 +2301,13 @@ class PacketManager(Screen, NumericalTextInput):
 					self.Console = Console()
 				cmd = self.ipkg.ipkg + " list"
 				self.Console.ePopen(cmd, self.IpkgList_Finished)
-		#print event, "-", param
+		#print(event, "-", param)
 
 	def IpkgList_Finished(self, result, retval, extra_args=None):
 		result = result.replace('\n ', ' - ')
 		if result:
+			result = six.ensure_str(result)
+			result = result.replace('\n ', ' - ')
 			self.packetlist = []
 			last_name = ""
 			for x in result.splitlines():
@@ -2323,6 +2329,7 @@ class PacketManager(Screen, NumericalTextInput):
 
 	def IpkgListInstalled_Finished(self, result, retval, extra_args=None):
 		if result:
+			result = six.ensure_str(result)
 			self.installed_packetlist = {}
 			for x in result.splitlines():
 				tokens = x.split(' - ')
@@ -2338,6 +2345,7 @@ class PacketManager(Screen, NumericalTextInput):
 
 	def OpkgListUpgradeable_Finished(self, result, retval, extra_args=None):
 		if result:
+			result = six.ensure_str(result)
 			self.upgradeable_packages = {}
 			for x in result.splitlines():
 				tokens = x.split(' - ')
@@ -2366,7 +2374,7 @@ class PacketManager(Screen, NumericalTextInput):
 		self.list = []
 		self.cachelist = []
 		if self.cache_ttl > 0 and self.vc != 0:
-			print 'Loading packagelist cache from ', self.cache_file
+			print('Loading packagelist cache from ', self.cache_file)
 			try:
 				self.cachelist = load_cache(self.cache_file)
 				if len(self.cachelist) > 0:
@@ -2377,11 +2385,11 @@ class PacketManager(Screen, NumericalTextInput):
 				self.inv_cache = 1
 
 		if self.cache_ttl == 0 or self.inv_cache == 1 or self.vc == 0:
-			print 'rebuilding fresh package list'
+			print('rebuilding fresh package list')
 			for x in self.packetlist:
 				status = ""
-				if self.installed_packetlist.has_key(x[0]):
-					if self.upgradeable_packages.has_key(x[0]):
+				if x[0] in self.installed_packetlist:
+					if x[0] in self.upgradeable_packages:
 						status = "upgradeable"
 					else:
 						status = "installed"
@@ -2417,7 +2425,7 @@ class IpkgInstaller(Screen):
 
 		self.list = SelectionList()
 		self["list"] = self.list
-		for listindex in range(len(list)):
+		for listindex in list(range(len(list))):
 			self.list.addSelection(list[listindex], list[listindex], listindex, False)
 
 		self["key_red"] = StaticText(_("Close"))
@@ -2527,12 +2535,12 @@ class ShowUpdatePackages(Screen, NumericalTextInput):
 	def keyNumberGlobal(self, val):
 		key = self.getKey(val)
 		if key is not None:
-			keyvalue = key.encode("utf-8")
+			keyvalue = six.ensure_str(key)
 			if len(keyvalue) == 1:
 				self.setNextIdx(keyvalue[0])
 
 	def keyGotAscii(self):
-		keyvalue = unichr(getPrevAsciiCode()).encode("utf-8")
+		keyvalue = six.ensure_str(six.unichr(getPrevAsciiCode()))
 		if len(keyvalue) == 1:
 			self.setNextIdx(keyvalue[0])
 

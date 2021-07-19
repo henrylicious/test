@@ -19,6 +19,7 @@ from twisted.internet import main, posixbase, error
 #from twisted.internet.pollreactor import PollReactor, poller
 
 from enigma import getApplication
+import six
 
 # globals
 reads = {}
@@ -83,7 +84,7 @@ class PollReactor(posixbase.PosixReactorBase):
 		except:
 			# the hard way: necessary because fileno() may disappear at any
 			# moment, thanks to python's underlying sockets impl
-			for fd, fdes in selectables.items():
+			for fd, fdes in list(selectables.items()):
 				if selectable is fdes:
 					break
 			else:
@@ -126,8 +127,8 @@ class PollReactor(posixbase.PosixReactorBase):
 		"""Remove all selectables, and return a list of them."""
 		if self.waker is not None:
 			self.removeReader(self.waker)
-		result = selectables.values()
-		fds = selectables.keys()
+		result = list(selectables.values())
+		fds = list(selectables.keys())
 		reads.clear()
 		writes.clear()
 		selectables.clear()
@@ -157,7 +158,7 @@ class PollReactor(posixbase.PosixReactorBase):
 				if self.running:
 					self.stop()
 				l = []
-		except select.error, e:
+		except select.error as e:
 			if e[0] == errno.EINTR:
 				return
 			else:
@@ -195,8 +196,8 @@ class PollReactor(posixbase.PosixReactorBase):
 				if not selectable.fileno() == fd:
 					why = error.ConnectionFdescWentAway('Filedescriptor went away')
 					inRead = False
-			except AttributeError, ae:
-				if "'NoneType' object has no attribute 'writeHeaders'" not in ae.message:
+			except AttributeError as ae:
+				if "'NoneType' object has no attribute 'writeHeaders'" not in six.text_type(ae):
 					log.deferr()
 					why = sys.exc_info()[1]
 				else:

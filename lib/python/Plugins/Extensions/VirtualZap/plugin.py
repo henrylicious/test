@@ -20,6 +20,8 @@
 #  modify it (if you keep the license), but it may not be commercially
 #  distributed other than under the conditions noted above.
 #
+from __future__ import absolute_import
+from __future__ import division
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap, NumberActionMap
@@ -141,7 +143,7 @@ def newHide(self):
 
 
 def Plugins(**kwargs):
- 	plist = [PluginDescriptor(name="Virtual Zap Setup", description=_("Virtual Zap Setup"), where=[PluginDescriptor.WHERE_PLUGINMENU], icon="plugin.png", fnc=setup)]
+	plist = [PluginDescriptor(name="Virtual Zap Setup", description=_("Virtual Zap Setup"), where=[PluginDescriptor.WHERE_PLUGINMENU], icon="plugin.png", fnc=setup)]
 	if config.plugins.virtualzap.mode.value == "0":
 		plist.append(PluginDescriptor(name="Virtual Zap", description=_("Virtual (PiP) Zap"), where=[PluginDescriptor.WHERE_EXTENSIONSMENU], icon="plugin.png", fnc=main))
 	elif config.plugins.virtualzap.mode.value == "1" or config.plugins.virtualzap.mode.value == "2":
@@ -429,9 +431,9 @@ class VirtualZap(Screen):
 					t = localtime(event[0][1])
 					duration = event[0][2]
 					if modus == 0:
-						timedisplay = "+%d min" % (((event[0][1] + duration) - time()) / 60)
+						timedisplay = "+%d min" % (((event[0][1] + duration) - time()) // 60)
 					elif modus == 1:
-						timedisplay = "%d min" % (duration / 60)
+						timedisplay = "%d min" % (duration // 60)
 					return "%02d:%02d %s" % (t[3], t[4], event[0][4]), timedisplay
 				else:
 					return "", ""

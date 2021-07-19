@@ -652,6 +652,19 @@ void eTextPara::setFont(Font *fnt, Font *replacement, Font *fallback)
 			return;
 		}
 	}
+	if (fallback_font)
+	{
+		if ((FTC_Manager_LookupFace(fontRenderClass::instance->cacheManager,
+					    fallback_font->scaler.face_id,
+					    &fallback_face) < 0) ||
+		    (FTC_Manager_LookupSize(fontRenderClass::instance->cacheManager,
+					    &fallback_font->scaler,
+					    &fallback_font->size) < 0))
+		{
+			eDebug("[eTextPara] FTC_Manager_Lookup_Size failed!");
+			return;
+		}
+	}
 	previous=0;
 	use_kerning=FT_HAS_KERNING(current_face);
 }

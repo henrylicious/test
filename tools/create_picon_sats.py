@@ -7,6 +7,8 @@
 #
 # by pieterg, 2008
 
+from __future__ import absolute_import
+from __future__ import division
 import os
 import sys
 
@@ -20,7 +22,7 @@ while len(f) > 2:
 	name = name.replace('\xc2\x87', '').replace('\xc2\x86', '')
 
 	fields = f[2].split(',')
-	if len(fields) and fields[0][0] is 'p':
+	if len(fields) and fields[0][0] == 'p':
 		provider = fields[0].split(':')[1]
 	else:
 		provider = 'unknown'
@@ -31,7 +33,7 @@ while len(f) > 2:
 		ref[4] = 1
 		servicetype = 'tv'
 
-	sat = str(ref[1] / 16 / 16 / 16 / 16)
+	sat = str(ref[1] // 16 // 16 // 16 // 16)
 
 #	SID:NS:TSID:ONID:STYPE:UNUSED(channelnumber in enigma1)
 #	X   X  X    X    D     D
@@ -50,11 +52,11 @@ while len(f) > 2:
 	filename = filename.replace('\n', '')
 	provider = provider.replace('\n', '')
 
-	for i in range(len(filename)):
+	for i in list(range(len(filename))):
 		if ord(filename[i]) > 127:
 			filename = filename[0:i] + '_' + filename[i + 1:]
 
-	for i in range(len(provider)):
+	for i in list(range(len(provider))):
 		if ord(provider[i]) > 127:
 			provider = provider[0:i] + '_' + provider[i + 1:]
 

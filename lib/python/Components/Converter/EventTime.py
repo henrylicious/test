@@ -1,5 +1,7 @@
-from Converter import Converter
-from Poll import Poll
+from __future__ import absolute_import
+from __future__ import division
+from Components.Converter.Converter import Converter
+from Components.Converter.Poll import Poll
 from time import time
 from Components.Element import cached, ElementError
 from Components.config import config
@@ -168,7 +170,7 @@ class EventTime(Poll, Converter, object):
 		if duration > 0 and progress >= 0:
 			if progress > duration:
 				progress = duration
-			return progress * 1000 / duration
+			return progress * 1000 // duration
 		else:
 			return None
 

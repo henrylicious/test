@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
 # CCcam Info by AliAbdul
+from __future__ import absolute_import
+from __future__ import print_function
 from base64 import encodestring
 from os import listdir, remove, rename, system, popen, path
 
@@ -23,8 +25,9 @@ from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Tools.Directories import fileExists, SCOPE_ACTIVE_SKIN, resolveFilename
 from twisted.internet import reactor
 from twisted.web.client import HTTPClientFactory
-from urlparse import urlparse, urlunparse
+from six.moves.urllib.parse import urlparse, urlunparse
 import skin
+import six
 
 #TOGGLE_SHOW = InfoBar.toggleShow
 
@@ -35,12 +38,7 @@ CFG = "/etc/CCcam.cfg"
 #############################################################
 
 ###global
-f = 1
-screenwidth = getDesktop(0).size().width()
-if screenwidth and screenwidth == 1920:
-	f = 1.5
-elif screenwidth and screenwidth > 1920:
-	f = 3
+sf = skin.getSkinFactor()
 ###global
 
 
@@ -92,11 +90,11 @@ def getPage(url, contextFactory=None, *args, **kwargs):
 		authHeader = "Basic " + basicAuth.strip()
 		AuthHeaders = {"Authorization": authHeader}
 
-		if kwargs.has_key("headers"):
+		if "headers" in kwargs:
 			kwargs["headers"].update(AuthHeaders)
 		else:
 			kwargs["headers"] = AuthHeaders
-
+	url = six.ensure_binary(url)
 	factory = HTTPClientFactory(url, *args, **kwargs)
 	reactor.connectTCP(host, port, factory)
 
@@ -109,7 +107,7 @@ class HelpableNumberActionMap(NumberActionMap):
 	def __init__(self, parent, context, actions, prio):
 		alist = []
 		adict = {}
-		for (action, funchelp) in actions.iteritems():
+		for (action, funchelp) in six.iteritems(actions):
 			alist.append((action, funchelp[1]))
 			adict[action] = funchelp[0]
 		NumberActionMap.__init__(self, [context], adict, prio)
@@ -155,11 +153,11 @@ def translateBlock(block):
 
 
 def getConfigValue(l):
-	list = l.split(":")
+	_list = l.split(":")
 	ret = ""
 
-	if len(list) > 1:
-		ret = (list[1]).replace("\n", "").replace("\r", "")
+	if len(_list) > 1:
+		ret = (_list[1]).replace("\n", "").replace("\r", "")
 		if ret.__contains__("#"):
 			idx = ret.index("#")
 			ret = ret[:idx]
@@ -342,12 +340,12 @@ def CCcamConfigListEntry(file):
 
 	if content == org:
 		png = lock_on
-		x, y, w, h = skin.parameters.get("SelectionListLock", (5 * f, 0, 25 * f, 25 * f))
+		x, y, w, h = skin.parameters.get("SelectionListLock", (5 * sf, 0, 25 * sf, 25 * sf))
 	else:
 		png = lock_off
-		x, y, w, h = skin.parameters.get("SelectionListLockOff", (5 * f, 0, 25 * f, 25 * f))
+		x, y, w, h = skin.parameters.get("SelectionListLockOff", (5 * sf, 0, 25 * sf, 25 * sf))
 	res.append(MultiContentEntryPixmapAlphaBlend(pos=(x, y), size=(w, h), png=png))
-	x, y, w, h = skin.parameters.get("SelectionListDescr", (45 * f, 2 * f, 550 * f, 25 * f))
+	x, y, w, h = skin.parameters.get("SelectionListDescr", (45 * sf, 2 * sf, 550 * sf, 25 * sf))
 	res.append(MultiContentEntryText(pos=(x, y), size=(w, h), font=0, text=name))
 
 	return res
@@ -358,12 +356,12 @@ def CCcamMenuConfigListEntry(name, blacklisted):
 
 	if blacklisted:
 		png = lock_off
-		x, y, w, h = skin.parameters.get("SelectionListLockOff", (5 * f, 0, 25 * f, 25 * f))
+		x, y, w, h = skin.parameters.get("SelectionListLockOff", (5 * sf, 0, 25 * sf, 25 * sf))
 	else:
 		png = lock_on
-		x, y, w, h = skin.parameters.get("SelectionListLock", (5 * f, 0, 25 * f, 25 * f))
+		x, y, w, h = skin.parameters.get("SelectionListLock", (5 * sf, 0, 25 * sf, 25 * sf))
 	res.append(MultiContentEntryPixmapAlphaBlend(pos=(x, y), size=(w, h), png=png))
-	x, y, w, h = skin.parameters.get("SelectionListDescr", (45 * f, 2 * f, 550 * f, 25 * f))
+	x, y, w, h = skin.parameters.get("SelectionListDescr", (45 * sf, 2 * sf, 550 * sf, 25 * sf))
 	res.append(MultiContentEntryText(pos=(x, y), size=(w, h), font=0, text=name))
 
 	return res
@@ -568,7 +566,7 @@ class CCcamInfoMain(Screen):
 			self["menu"].pageDown()
 
 	def getWebpageError(self, error=""):
-		print str(error)
+		print(str(error))
 		self.session.openWithCallback(self.workingFinished, MessageBox, _("Error reading webpage!"), MessageBox.TYPE_ERROR)
 
 	def showFile(self, file):
@@ -702,7 +700,7 @@ class CCcamInfoMain(Screen):
 							while string.endswith(" "):
 								string = string[:-1]
 
-							idx = string.index(" ")
+							idx = " ".index()
 							uphops = string[:idx]
 							string = string[idx + 1:]
 
@@ -766,6 +764,7 @@ class CCcamInfoMain(Screen):
 
 	def showFreeMemory(self, result, retval, extra_args):
 		if retval == 0:
+			result = six.ensure_str(result)
 			if result.__contains__("Total:"):
 				idx = result.index("Total:")
 				result = result[idx + 6:]
@@ -911,7 +910,7 @@ class CCcamShareViewMenu(Screen, HelpableScreen):
 								while string.endswith(" "):
 									string = string[:-1]
 
-								idx = string.index(" ")
+								idx = " ".index()
 								maxdown = string[idx + 1:]
 
 								while maxdown.startswith(" "):
@@ -1459,7 +1458,7 @@ class CCcamInfoShareInfo(Screen):
 							while string.endswith(" "):
 								string = string[:-1]
 
-							idx = string.index(" ")
+							idx = " ".index()
 							uphops = string[:idx]
 							string = string[idx + 1:]
 
@@ -1568,18 +1567,18 @@ class CCcamInfoConfigSwitcher(Screen):
 		self.onLayoutFinish.append(self.showConfigs)
 
 	def showConfigs(self):
-		list = []
+		_list = []
 
 		try:
 			files = listdir("/var/etc")
 		except:
 			files = []
 
-		for file in files:
-			if file.startswith("CCcam_") and file.endswith(".cfg"):
-				list.append(CCcamConfigListEntry("/var/etc/" + file))
+		for _file in files:
+			if _file.startswith("CCcam_") and _file.endswith(".cfg"):
+				_list.append(CCcamConfigListEntry("/var/etc/" + _file))
 
-		self["list"].setList(list)
+		self["list"].setList(_list)
 
 	def delete(self):
 		fileName = self["list"].getCurrent()
@@ -1706,14 +1705,14 @@ class CCcamInfoMenuConfig(Screen):
 		self.showConfigs()
 
 	def showConfigs(self):
-		list = []
+		_list = []
 		for x in menu_list:
 			if x != _("Menu config"):
 				if x in self.blacklisted:
-					list.append(CCcamMenuConfigListEntry(x, True))
+					_list.append(CCcamMenuConfigListEntry(x, True))
 				else:
-					list.append(CCcamMenuConfigListEntry(x, False))
-		self["list"].setList(list)
+					_list.append(CCcamMenuConfigListEntry(x, False))
+		self["list"].setList(_list)
 
 	def save(self):
 		content = ""

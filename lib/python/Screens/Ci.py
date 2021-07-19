@@ -1,4 +1,6 @@
-from Screen import Screen
+from __future__ import print_function
+from __future__ import absolute_import
+from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Components.ConfigList import ConfigListScreen
 from Components.ActionMap import ActionMap
@@ -49,7 +51,7 @@ def setRelevantPidsRouting(configElement):
 def InitCiConfig():
 	config.ci = ConfigSubList()
 	config.cimisc = ConfigSubsection()
-	for slot in range(MAX_NUM_CI):
+	for slot in list(range(MAX_NUM_CI)):
 		config.ci.append(ConfigSubsection())
 		config.ci[slot].canDescrambleMultipleServices = ConfigSelection(choices=[("auto", _("Auto")), ("no", _("No")), ("yes", _("Yes"))], default="auto")
 		config.ci[slot].use_static_pin = ConfigYesNo(default=True)
@@ -176,7 +178,7 @@ class MMIDialog(Screen):
 	def __init__(self, session, slotid, action, handler=eDVBCI_UI.getInstance(), wait_text="wait for ci...", screen_data=None):
 		Screen.__init__(self, session)
 
-		print "MMIDialog with action" + str(action)
+		print("MMIDialog with action" + str(action))
 
 		self.mmiclosed = False
 		self.tag = None
@@ -224,9 +226,9 @@ class MMIDialog(Screen):
 		elif action == 3:		#mmi already there (called from infobar)
 			self.showScreen()
 
-	def addEntry(self, list, entry):
+	def addEntry(self, _list, entry):
 		if entry[0] == "TEXT":		#handle every item (text / pin only?)
-			list.append((entry[1], ConfigNothing(), entry[2]))
+			_list.append((entry[1], ConfigNothing(), entry[2]))
 		if entry[0] == "PIN":
 			pinlength = entry[1]
 			if entry[3] == 1:
@@ -236,7 +238,7 @@ class MMIDialog(Screen):
 				# unmasked pins:
 				x = ConfigPIN(0, len=pinlength)
 			self["subtitle"].setText(entry[2])
-			list.append(getConfigListEntry("", x))
+			_list.append(getConfigListEntry("", x))
 			self["bottom"].setText(_("please press OK when ready"))
 
 	def okbuttonClick(self):
@@ -244,9 +246,9 @@ class MMIDialog(Screen):
 		if not self.tag:
 			return
 		if self.tag == "WAIT":
-			print "do nothing - wait"
+			print("do nothing - wait")
 		elif self.tag == "MENU":
-			print "answer MENU"
+			print("answer MENU")
 			cur = self["entries"].getCurrent()
 			if cur:
 				self.handler.answerMenu(self.slotid, cur[2])
@@ -254,7 +256,7 @@ class MMIDialog(Screen):
 				self.handler.answerMenu(self.slotid, 0)
 			self.showWait()
 		elif self.tag == "LIST":
-			print "answer LIST"
+			print("answer LIST")
 			self.handler.answerMenu(self.slotid, 0)
 			self.showWait()
 		elif self.tag == "ENQ":
@@ -289,15 +291,15 @@ class MMIDialog(Screen):
 			self.handler.stopMMI(self.slotid)
 			self.closeMmi()
 		elif self.tag in ("MENU", "LIST"):
-			print "cancel list"
+			print("cancel list")
 			self.handler.answerMenu(self.slotid, 0)
 			self.showWait()
 		elif self.tag == "ENQ":
-			print "cancel enq"
+			print("cancel enq")
 			self.handler.cancelEnq(self.slotid)
 			self.showWait()
 		else:
-			print "give cancel action to ci"
+			print("give cancel action to ci")
 
 	def keyConfigEntry(self, key):
 		self.timer.stop()
@@ -326,22 +328,22 @@ class MMIDialog(Screen):
 			self.is_pin_list += 1
 		self.keyConfigEntry(KEY_RIGHT)
 
-	def updateList(self, list):
+	def updateList(self, _list):
 		List = self["entries"]
 		try:
 			List.instance.moveSelectionTo(0)
 		except:
 			pass
-		List.l.setList(list)
+		List.l.setList(_list)
 
 	def showWait(self):
 		self.tag = "WAIT"
 		self["title"].setText("")
 		self["subtitle"].setText("")
 		self["bottom"].setText("")
-		list = []
-		list.append((self.wait_text, ConfigNothing()))
-		self.updateList(list)
+		_list = []
+		_list.append((self.wait_text, ConfigNothing()))
+		self.updateList(_list)
 
 	def showScreen(self):
 		if self.screen_data is not None:
@@ -350,7 +352,7 @@ class MMIDialog(Screen):
 		else:
 			screen = self.handler.getMMIScreen(self.slotid)
 
-		list = []
+		_list = []
 
 		self.timer.stop()
 		if len(screen) > 0 and screen[0][0] == "CLOSE":
@@ -376,7 +378,7 @@ class MMIDialog(Screen):
 						break
 					else:
 						self.is_pin_list = 0
-						self.addEntry(list, entry)
+						self.addEntry(_list, entry)
 				else:
 					if entry[0] == "TITLE":
 						self["title"].setText(entry[1])
@@ -385,8 +387,8 @@ class MMIDialog(Screen):
 					elif entry[0] == "BOTTOM":
 						self["bottom"].setText(entry[1])
 					elif entry[0] == "TEXT":
-						self.addEntry(list, entry)
-			self.updateList(list)
+						self.addEntry(_list, entry)
+			self.updateList(_list)
 
 	def ciStateChanged(self):
 		do_close = False
@@ -521,7 +523,7 @@ class CiSelection(Screen):
 		self.onLayoutFinish.append(self.initialUpdate)
 
 	def initialUpdate(self):
-		for slot in range(MAX_NUM_CI):
+		for slot in list(range(MAX_NUM_CI)):
 			state = eDVBCI_UI.getInstance().getState(slot)
 			if state != -1:
 				self.slots.append(slot)
@@ -628,7 +630,7 @@ class CiSelection(Screen):
 		pass
 
 	def cancel(self):
-		for slot in range(MAX_NUM_CI):
+		for slot in list(range(MAX_NUM_CI)):
 			state = eDVBCI_UI.getInstance().getState(slot)
 			if state != -1:
 				CiHandler.unregisterCIMessageHandler(slot)

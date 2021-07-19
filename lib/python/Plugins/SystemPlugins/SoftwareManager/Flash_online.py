@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from Components.config import config
 from Components.Label import Label
 from Components.ActionMap import ActionMap
@@ -17,14 +20,14 @@ import os
 import shutil
 import shutil
 import time
-import urllib2
 import zipfile
+from six.moves.urllib.request import urlopen, Request
 
 
 from boxbranding import getBoxType, getImageDistro, getMachineBrand, getMachineMtdKernel, getMachineMtdRoot, getMachineName
 
 feedserver = 'flash.hdfreaks.cc'
-feedurl = 'http://%s/%s/json' % (feedserver, getImageDistro())
+feedurl = 'https://%s/%s/json' % (feedserver, getImageDistro())
 
 
 def checkimagefiles(files):
@@ -91,15 +94,15 @@ class FlashOnline(Screen):
 	def getImagesList(self):
 
 		def getImages(files):
-			for file in [x for x in files if os.path.splitext(x)[1] == ".zip" and box in x]:
+			for _file in [x for x in files if os.path.splitext(x)[1] == ".zip" and box in x]:
 				try:
-					if checkimagefiles([x.split(os.sep)[-1] for x in zipfile.ZipFile(file).namelist()]):
+					if checkimagefiles([x.split(os.sep)[-1] for x in zipfile.ZipFile(_file).namelist()]):
 						imagetyp = _("Downloaded Images")
-						if (file.find("backup") != -1):
+						if (_file.find("backup") != -1):
 							imagetyp = _("Fullbackup Images")
 						if imagetyp not in self.imagesList:
 							self.imagesList[imagetyp] = {}
-						self.imagesList[imagetyp][file] = {'link': file, 'name': file.split(os.sep)[-1]}
+						self.imagesList[imagetyp][_file] = {'link': _file, 'name': _file.split(os.sep)[-1]}
 				except:
 					pass
 
@@ -107,9 +110,7 @@ class FlashOnline(Screen):
 			box = GetBoxName()
 			if not self.jsonlist:
 				try:
-					self.jsonlist = dict(json.load(urllib2.urlopen('%s/%s' % (feedurl, box))))
-					#if config.usage.alternative_imagefeed.value:
-					#	self.jsonlist.update(dict(json.load(urllib2.urlopen('%s%s' % (config.usage.alternative_imagefeed.value, box)))))
+					self.jsonlist = dict(json.load(urlopen(Request('%s/%s' % (feedurl, box), headers={'User-Agent': 'Mozilla/5.0'}))))
 				except:
 					pass
 			self.imagesList = dict(self.jsonlist)
@@ -124,27 +125,27 @@ class FlashOnline(Screen):
 							media = os.path.join(media, customDir)
 							if os.path.isdir(media) and not os.path.islink(media) and not os.path.ismount(media):
 								getImages([os.path.join(media, x) for x in os.listdir(media) if os.path.splitext(x)[1] == ".zip" and box in x])
-								for dir in [dir for dir in [os.path.join(media, dir) for dir in os.listdir(media)] if os.path.isdir(dir) and os.path.splitext(dir)[1] == ".unzipped"]:
-									shutil.rmtree(dir)
+								for _dir in [_dir for _dir in [os.path.join(media, _dir) for _dir in os.listdir(media)] if os.path.isdir(_dir) and os.path.splitext(_dir)[1] == ".unzipped"]:
+									shutil.rmtree(_dir)
 
-		list = []
-		for catagorie in reversed(sorted(self.imagesList.keys())):
+		_list = []
+		for catagorie in reversed(sorted(list(self.imagesList.keys()))):
 			if catagorie in self.expanded:
-				list.append(ChoiceEntryComponent('expanded', ((str(catagorie)), "Expander")))
-				for image in reversed(sorted(self.imagesList[catagorie].keys(), key=lambda x: x.split(os.sep)[-1])):
-					list.append(ChoiceEntryComponent('verticalline', ((str(self.imagesList[catagorie][image]['name'])), str(self.imagesList[catagorie][image]['link']))))
+				_list.append(ChoiceEntryComponent('expanded', ((str(catagorie)), "Expander")))
+				for image in reversed(sorted(list(self.imagesList[catagorie].keys()), key=lambda x: x.split(os.sep)[-1])):
+					_list.append(ChoiceEntryComponent('verticalline', ((str(self.imagesList[catagorie][image]['name'])), str(self.imagesList[catagorie][image]['link']))))
 			else:
-				for image in self.imagesList[catagorie].keys():
-					list.append(ChoiceEntryComponent('expandable', ((str(catagorie)), "Expander")))
+				for image in list(self.imagesList[catagorie].keys()):
+					_list.append(ChoiceEntryComponent('expandable', ((str(catagorie)), "Expander")))
 					break
-		if list:
-			self["list"].setList(list)
+		if _list:
+			self["list"].setList(_list)
 			if self.setIndex:
-				self["list"].moveToIndex(self.setIndex if self.setIndex < len(list) else len(list) - 1)
+				self["list"].moveToIndex(self.setIndex if self.setIndex < len(_list) else len(_list) - 1)
 				if self["list"].l.getCurrentSelection()[0][1] == "Expander":
 					self.setIndex -= 1
 					if self.setIndex:
-						self["list"].moveToIndex(self.setIndex if self.setIndex < len(list) else len(list) - 1)
+						self["list"].moveToIndex(self.setIndex if self.setIndex < len(_list) else len(_list) - 1)
 				self.setIndex = 0
 			self.selectionChanged()
 		else:
@@ -260,8 +261,8 @@ class FlashImage(Screen):
 		choices = []
 		HIslot = len(imagedict) + 1
 		currentimageslot = GetCurrentImage()
-		print "[FlashOnline] Current Image Slot %s, Imagelist %s" % (currentimageslot, imagedict)
-		for x in range(1, HIslot):
+		print("[FlashOnline] Current Image Slot %s, Imagelist %s" % (currentimageslot, imagedict))
+		for x in list(range(1, HIslot)):
 			choices.append(((_("slot%s - %s (current)") if x == currentimageslot else _("slot%s - %s")) % (x, imagedict[x]['imagename']), (x, True)))
 		choices.append((_("No, do not flash an image"), False))
 		self.session.openWithCallback(self.checkMedia, MessageBox, self.message, list=choices, default=currentimageslot, simple=True)
@@ -288,7 +289,7 @@ class FlashImage(Screen):
 					if not '/mmc' in path and os.path.isdir(path) and os.access(path, os.W_OK):
 						try:
 							statvfs = os.statvfs(path)
-							return (statvfs.f_bavail * statvfs.f_frsize) / (1 << 20)
+							return (statvfs.f_bavail * statvfs.f_frsize) // (1 << 20)
 						except:
 							pass
 
@@ -405,16 +406,16 @@ class FlashImage(Screen):
 				try:
 					if not os.path.exists('/media/hdd/images'):
 						os.makedirs('/media/hdd/images')
-					print "AfterFlashAction: create /media/hdd/images/hdfrestore"
-					print "AfterFlashAction: filename:", self.fullbackupfilename
+					print("AfterFlashAction: create /media/hdd/images/hdfrestore")
+					print("AfterFlashAction: filename:", self.fullbackupfilename)
 					backupsourcefile = self.fullbackupfilename
 					backupdestfile = '/media/hdd/images/hdfrestore'
 					if not os.path.exists(backupsourcefile):
-						print "AfterFlashAction: No settings found."
+						print("AfterFlashAction: No settings found.")
 					else:
 						shutil.copyfile(backupsourcefile, backupdestfile)
 				except:
-					print "AfterFlashAction: failed to create /media/hdd/images/hdfrestore"
+					print("AfterFlashAction: failed to create /media/hdd/images/hdfrestore")
 			if restoreSettings:
 				self.SaveEPG()
 			if answer[1] != "abort":
@@ -424,7 +425,7 @@ class FlashImage(Screen):
 							os.makedirs('/media/hdd/images/config')
 						open('/media/hdd/images/config/settings', 'w').close()
 					except:
-						print "[FlashOnline] postFlashActionCallback: failed to create /media/hdd/images/config/settings"
+						print("[FlashOnline] postFlashActionCallback: failed to create /media/hdd/images/config/settings")
 				else:
 					if os.path.exists('/media/hdd/images/config/settings'):
 						os.unlink('/media/hdd/images/config/settings')
@@ -434,7 +435,7 @@ class FlashImage(Screen):
 							os.makedirs('/media/hdd/images/config')
 						open('/media/hdd/images/config/plugins', 'w').close()
 					except:
-						print "[FlashOnline] postFlashActionCallback: failed to create /media/hdd/images/config/plugins"
+						print("[FlashOnline] postFlashActionCallback: failed to create /media/hdd/images/config/plugins")
 				else:
 					if os.path.exists('/media/hdd/images/config/plugins'):
 						os.unlink('/media/hdd/images/config/plugins')
@@ -444,7 +445,7 @@ class FlashImage(Screen):
 							os.makedirs('/media/hdd/images/config')
 						open('/media/hdd/images/config/noplugins', 'w').close()
 					except:
-						print "[FlashOnline] postFlashActionCallback: failed to create /media/hdd/images/config/noplugins"
+						print("[FlashOnline] postFlashActionCallback: failed to create /media/hdd/images/config/noplugins")
 				else:
 					if os.path.exists('/media/hdd/images/config/noplugins'):
 						os.unlink('/media/hdd/images/config/noplugins')
@@ -475,7 +476,7 @@ class FlashImage(Screen):
 								if os.path.exists('/media/hdd/images/config/fast'):
 									os.unlink('/media/hdd/images/config/fast')
 						except:
-							print "[FlashOnline] postFlashActionCallback: failed to create restore mode flagfile"
+							print("[FlashOnline] postFlashActionCallback: failed to create restore mode flagfile")
 				self.startDownload()
 			else:
 				self.abort()
@@ -506,7 +507,7 @@ class FlashImage(Screen):
 			self.abort()
 
 	def downloadProgress(self, current, total):
-		self["progress"].setValue(int(100 * current / total))
+		self["progress"].setValue(int(100 * current // total))
 
 	def downloadError(self, reason, status):
 		self.downloader.stop()

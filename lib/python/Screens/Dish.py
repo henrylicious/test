@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from Screens.Screen import Screen
 from Components.BlinkingPixmap import BlinkingPixmapConditional
 from Components.Pixmap import Pixmap
@@ -81,7 +84,7 @@ class Dish(Screen):
 			self["turnTime"].setText(self.FormatTurnTime(self.turn_time))
 			self.close_timeout -= 1
 			if self.close_timeout < 0:
-				print "[Dish] timeout!"
+				print("[Dish] timeout!")
 				self.__toHide()
 
 	def __onShow(self):
@@ -147,13 +150,13 @@ class Dish(Screen):
 			info = service and service.info()
 			pmt = info and info.getInfo(iServiceInformation.sPMTPID)
 			if pmt >= 0:
-				print "[Dish] tuned, closing..."
+				print("[Dish] tuned, closing...")
 				self.__toHide()
 			else:
 				self.pmt_timeout -= 0.5
 		else:
 			self.__toHide()
-			print "[Dish] tuning failed"
+			print("[Dish] tuning failed")
 
 	def dishState(self):
 		return self.__state
@@ -185,7 +188,7 @@ class Dish(Screen):
 				mrt = 3600 - mrt
 			if mrt % 10:
 				mrt += 10
-			mrt = round((mrt * 1000 / self.getTurningSpeed(pol)) / 10000) + 3
+			mrt = round((mrt * 1000 // self.getTurningSpeed(pol)) // 10000) + 3
 		return mrt
 
 	def getTurningSpeed(self, pol=0):
@@ -200,7 +203,7 @@ class Dish(Screen):
 					return nim.turningspeedH.float
 			elif nimConfig.configMode.value == "advanced":
 				if self.cur_orbpos != INVALID_POSITION:
-					satlist = nimConfig.advanced.sat.keys()
+					satlist = list(nimConfig.advanced.sat.keys())
 					if self.cur_orbpos in satlist:
 						currSat = nimConfig.advanced.sat[self.cur_orbpos]
 						lnbnum = int(currSat.lnb.value)
@@ -228,9 +231,9 @@ class Dish(Screen):
 			nims = nimmanager.nimList()
 			if nr < len(nims) and nr >= 0:
 				return "".join(nims[nr].split(':')[:1])
-			print "[Dish.py] bug hunting nr: %s\n" % nr
-			print "[Dish.py] bug hunting nims:\n"
-			print nims
+			print("[Dish.py] bug hunting nr: %s\n" % nr)
+			print("[Dish.py] bug hunting nims:\n")
+			print(nims)
 			raise
 #			return " ".join((_("Tuner"),str(nr)))
 		return ""
@@ -240,12 +243,12 @@ class Dish(Screen):
 			return "N/A"
 		if orbpos > 1800:
 			orbpos = 3600 - orbpos
-			return "%d.%d°W" % (orbpos / 10, orbpos % 10)
-		return "%d.%d°E" % (orbpos / 10, orbpos % 10)
+			return "%d.%d°W" % (orbpos // 10, orbpos % 10)
+		return "%d.%d°E" % (orbpos // 10, orbpos % 10)
 
 	def FormatTurnTime(self, time):
 		t = abs(time)
-		return "%s%02d:%02d" % (time < 0 and "- " or "", t / 60 % 60, t % 60)
+		return "%s%02d:%02d" % (time < 0 and "- " or "", t // 60 % 60, t % 60)
 
 
 class Dishpip(Dish, Screen):

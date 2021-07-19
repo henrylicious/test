@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 from skin import parseColor, parseFont, parseSize
 from Components.config import config, ConfigClock, ConfigInteger, ConfigSubsection, ConfigYesNo, ConfigSelection, ConfigSelectionNumber
 from Components.Pixmap import Pixmap
@@ -27,7 +30,7 @@ from Tools.Alternatives import CompareWithAlternatives
 from Tools import Notifications
 from enigma import eEPGCache, eListbox, gFont, eListboxPythonMultiContent, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER,\
 	RT_VALIGN_CENTER, RT_WRAP, BT_SCALE, BT_KEEP_ASPECT_RATIO, eSize, eRect, eTimer, getBestPlayableServiceReference, loadPNG
-from GraphMultiEpgSetup import GraphMultiEpgSetup
+from .GraphMultiEpgSetup import GraphMultiEpgSetup
 from time import localtime, time, strftime
 
 MAX_TIMELINES = 6
@@ -221,7 +224,7 @@ class EPGList(HTMLComponent, GUIComponent):
 
 	def getIndexFromService(self, serviceref):
 		if serviceref is not None:
-			for x in range(len(self.list)):
+			for x in list(range(len(self.list))):
 				if CompareWithAlternatives(self.list[x][0], serviceref.toString()):
 					return x
 		return 0
@@ -299,9 +302,9 @@ class EPGList(HTMLComponent, GUIComponent):
 		global listscreen
 		if self.listHeight > 0:
 			if listscreen:
-				itemHeight = self.listHeight / config.misc.graph_mepg.items_per_page_listscreen.value
+				itemHeight = self.listHeight // config.misc.graph_mepg.items_per_page_listscreen.value
 			else:
-				itemHeight = self.listHeight / config.misc.graph_mepg.items_per_page.value
+				itemHeight = self.listHeight // config.misc.graph_mepg.items_per_page.value
 		else:
 			itemHeight = 54 # some default (270/5)
 		if listscreen:
@@ -334,7 +337,7 @@ class EPGList(HTMLComponent, GUIComponent):
 		width = esize.width()
 		height = esize.height()
 		if self.showServiceTitle:
-			w = width / 10 * 2
+			w = width // 10 * 2
 		else:     # if self.showPicon:    # this must be set if showServiceTitle is None
 			w = 2 * height - 2 * self.serviceBorderWidth  # FIXME: could do better...
 		self.service_rect = Rect(0, 0, w, height)
@@ -346,8 +349,8 @@ class EPGList(HTMLComponent, GUIComponent):
 		self.picon_size = eSize(piconWidth, piconHeight)
 
 	def calcEntryPosAndWidthHelper(self, stime, duration, start, end, width):
-		xpos = (stime - start) * width / (end - start)
-		ewidth = (stime + duration - start) * width / (end - start)
+		xpos = (stime - start) * width // (end - start)
+		ewidth = (stime + duration - start) * width // (end - start)
 		ewidth -= xpos
 		if xpos < 0:
 			ewidth += xpos
@@ -505,7 +508,7 @@ class EPGList(HTMLComponent, GUIComponent):
 						color_sel=foreColorSelected))
 				# recording icons
 				if rec is not None:
-					for i in range(len(rec[1])):
+					for i in list(range(len(rec[1]))):
 						if ewidth < (i + 1) * 22:
 							break
 						res.append(MultiContentEntryPixmapAlphaTest(
@@ -554,11 +557,11 @@ class EPGList(HTMLComponent, GUIComponent):
 					self.fillMultiEPG(None) # refill
 					return True
 			elif dir == +3: #next day
-				self.offs += 60 * 24 / self.time_epoch
+				self.offs += 60 * 24 // self.time_epoch
 				self.fillMultiEPG(None) # refill
 				return True
 			elif dir == -3: #prev day
-				self.offs -= 60 * 24 / self.time_epoch
+				self.offs -= 60 * 24 // self.time_epoch
 				if self.offs < 0:
 					self.offs = 0
 				self.fillMultiEPG(None) # refill
@@ -690,11 +693,11 @@ class TimelineText(HTMLComponent, GUIComponent):
 			service_rect = l.getServiceRect()
 			itemHeight = self.l.getItemSize().height()
 			time_steps = 60 if time_epoch > 180 else 30
-			num_lines = time_epoch / time_steps
+			num_lines = time_epoch // time_steps
 			timeStepsCalc = time_steps * 60
-			incWidth = event_rect.width() / num_lines
+			incWidth = event_rect.width() // num_lines
 			if int(config.misc.graph_mepg.center_timeline.value):
-				tlMove = incWidth / 2
+				tlMove = incWidth // 2
 				tlFlags = RT_HALIGN_CENTER | RT_VALIGN_CENTER
 			else:
 				tlMove = 0
@@ -709,12 +712,12 @@ class TimelineText(HTMLComponent, GUIComponent):
 					backcolor=self.backColor, backcolor_sel=self.backColor))
 
 			xpos = 0 # eventLeft
-			for x in range(0, num_lines):
+			for x in list(range(0, num_lines)):
 				res.append(MultiContentEntryText(
-					pos =(service_rect.width() + xpos - tlMove, 0),
+					pos=(service_rect.width() + xpos - tlMove, 0),
 					size=(incWidth, itemHeight),
 					font=0, flags=tlFlags,
-					text =strftime("%H:%M", localtime(time_base + x * timeStepsCalc)),
+					text=strftime("%H:%M", localtime(time_base + x * timeStepsCalc)),
 					color=self.foreColor, color_sel=self.foreColor,
 					backcolor=self.backColor, backcolor_sel=self.backColor))
 				line = time_lines[x]
@@ -722,7 +725,7 @@ class TimelineText(HTMLComponent, GUIComponent):
 				line.setPosition(xpos + eventLeft, old_pos[1])
 				line.visible = True
 				xpos += incWidth
-			for x in range(num_lines, MAX_TIMELINES):
+			for x in list(range(num_lines, MAX_TIMELINES)):
 				time_lines[x].visible = False
 			self.l.setList([res])
 			self.time_base = time_base
@@ -730,7 +733,7 @@ class TimelineText(HTMLComponent, GUIComponent):
 
 		now = time()
 		if now >= time_base and now < (time_base + time_epoch * 60):
-			xpos = int((((now - time_base) * event_rect.width()) / (time_epoch * 60)) - (timeline_now.instance.size().width() / 2))
+			xpos = int((((now - time_base) * event_rect.width()) // (time_epoch * 60)) - (timeline_now.instance.size().width() // 2))
 			old_pos = timeline_now.position
 			new_pos = (xpos + eventLeft, old_pos[1])
 			if old_pos != new_pos:
@@ -770,7 +773,7 @@ class GraphMultiEPG(Screen, HelpableScreen):
 		self["Service"] = ServiceEvent()
 		self["Event"] = Event()
 		self.time_lines = []
-		for x in range(0, MAX_TIMELINES):
+		for x in list(range(0, MAX_TIMELINES)):
 			pm = Pixmap()
 			self.time_lines.append(pm)
 			self["timeline%d" % (x)] = pm
@@ -1041,7 +1044,7 @@ class GraphMultiEPG(Screen, HelpableScreen):
 			self.session.openWithCallback(self.finishedTimerAdd, TimerEntry, newEntry)
 
 	def finishedTimerAdd(self, answer):
-		print "finished add"
+		print("finished add")
 		if answer[0]:
 			entry = answer[1]
 			simulTimerList = self.session.nav.RecordTimer.record(entry)
@@ -1070,7 +1073,7 @@ class GraphMultiEPG(Screen, HelpableScreen):
 		else:
 			self["key_green"].setText(_("Add timer"))
 			self.key_green_choice = self.ADD_TIMER
-			print "Timeredit aborted"
+			print("Timeredit aborted")
 
 	def finishSanityCorrection(self, answer):
 		self.finishedTimerAdd(answer)

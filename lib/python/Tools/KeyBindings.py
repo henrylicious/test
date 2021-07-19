@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 keyBindings = {}
 
 from keyids import KEYIDS
@@ -263,4 +264,4 @@ def getKeyDescription(key):
 def removeKeyBindings(domain):
 	# remove all entries of domain 'domain'
 	for x in keyBindings:
-		keyBindings[x] = filter(lambda e: e[1] != domain, keyBindings[x])
+		keyBindings[x] = [e for e in keyBindings[x] if e[1] != domain]

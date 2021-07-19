@@ -1,37 +1,31 @@
+from __future__ import absolute_import
 from Plugins.Plugin import PluginDescriptor
 from enigma import getDesktop
-from Components.config import config
-from ui import *
 
 #------------------------------------------------------------------------------------------
 
 
 def Pic_Thumb(*args, **kwa):
-	import ui
+	from . import ui
 	return ui.Pic_Thumb(*args, **kwa)
 
 
 def picshow(*args, **kwa):
-	import ui
+	from . import ui
 	return ui.picshow(*args, **kwa)
 
 
 def main(session, **kwargs):
-	from ui import picshow
+	from .ui import picshow
 	session.open(picshow)
 
 
-def menu(menuid, **kwargs):
-	if menuid == "mainmenu" and config.pic.onMainMenu.value:
-		return [(_("Picture player"), main, "picshow", 45)]
-	return []
-
-
 def filescan_open(list, session, **kwargs):
+	_list = list
 	# Recreate List as expected by PicView
-	filelist = [((file.path, False), None) for file in list]
-	from ui import Pic_Full_View
-	session.open(Pic_Full_View, filelist, 0, file.path)
+	filelist = [((_file.path, False), None) for _file in _list]
+	from .ui import Pic_Full_View
+	session.open(Pic_Full_View, filelist, 0, _file.path)
 
 
 def filescan(**kwargs):
@@ -40,8 +34,8 @@ def filescan(**kwargs):
 
 	# Overwrite checkFile to only detect local
 	class LocalScanner(Scanner):
-		def checkFile(self, file):
-			return os.path.exists(file.path)
+		def checkFile(self, _file):
+			return os.path.exists(_file.path)
 
 	return \
 		LocalScanner(mimetypes=["image/jpeg", "image/png", "image/gif", "image/bmp"],
@@ -61,11 +55,9 @@ def Plugins(**kwargs):
 		return \
 			[PluginDescriptor(name=_("Picture player"), description=_("fileformats (BMP, PNG, JPG, GIF)"), icon="pictureplayerhd.png", where=PluginDescriptor.WHERE_PLUGINMENU, needsRestart=False, fnc=main),
 			 PluginDescriptor(name=_("Picture player"), where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main),
-			 PluginDescriptor(name=_("Picture player"), description=_("fileformats (BMP, PNG, JPG, GIF)"), where=PluginDescriptor.WHERE_MENU, fnc=menu),
 			 PluginDescriptor(name=_("Picture player"), where=PluginDescriptor.WHERE_FILESCAN, needsRestart=False, fnc=filescan)]
 	else:
 		return \
 		[PluginDescriptor(name=_("Picture player"), description=_("fileformats (BMP, PNG, JPG, GIF)"), icon="pictureplayer.png", where=PluginDescriptor.WHERE_PLUGINMENU, needsRestart=False, fnc=main),
 			 PluginDescriptor(name=_("Picture player"), where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main),
-			 PluginDescriptor(name=_("Picture player"), description=_("fileformats (BMP, PNG, JPG, GIF)"), where=PluginDescriptor.WHERE_MENU, fnc=menu),
 			 PluginDescriptor(name=_("Picture player"), where=PluginDescriptor.WHERE_FILESCAN, needsRestart=False, fnc=filescan)]

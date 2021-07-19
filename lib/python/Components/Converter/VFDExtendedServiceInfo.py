@@ -11,6 +11,8 @@
 ## If you have one service in different bouquets the first index of the service will be taken
 ## If you rename, move, delete or add a channel the numbers will not be OK any more. You have to restart E2 then
 ##
+from __future__ import absolute_import
+from __future__ import division
 from Components.config import config
 from Components.Converter.Converter import Converter
 from Components.Element import cached
@@ -142,7 +144,7 @@ class VFDExtendedServiceInfo(Converter, object):
 			list = self.tv_list
 		number = ""
 		if name in list:
-			for idx in range(1, len(list)):
+			for idx in list(range(1, len(list))):
 				if name == list[idx - 1]:
 					number = str(idx)
 					break
@@ -154,13 +156,13 @@ class VFDExtendedServiceInfo(Converter, object):
 		if transponderData is not None:
 			if isinstance(transponderData, float):
 				return ""
-			if transponderData.has_key("tuner_type"):
+			if "tuner_type" in transponderData:
 				if (transponderData["tuner_type"] == "DVB-S") or (transponderData["tuner_type"] == "DVB-S2"):
 					orbital = transponderData["orbital_position"]
 					orbital = int(orbital)
 					if orbital > 1800:
-						orbital = str((float(3600 - orbital)) / 10.0) + "W"
+						orbital = str((float(3600 - orbital)) // 10.0) + "W"
 					else:
-						orbital = str((float(orbital)) / 10.0) + "E"
+						orbital = str((float(orbital)) // 10.0) + "E"
 					return orbital
 		return ""

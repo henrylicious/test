@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import sys
 
 
@@ -12,9 +14,9 @@ def inputChoices(list, backcmd="b", backtext="back"):
 		repeat = False
 		count = 0
 		for item in list:
-			print count, "-", item
+			print(count, "-", item)
 			count += 1
-		print backcmd, "-", backtext
+		print(backcmd, "-", backtext)
 		input = inputText()
 		if input == backcmd:
 			return None

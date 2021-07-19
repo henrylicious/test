@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
 from time import localtime, mktime, time, strftime
 from datetime import datetime
 
 from enigma import eEPGCache
 
 from Screens.Screen import Screen
-import ChannelSelection
+import Screens.ChannelSelection
 from ServiceReference import ServiceReference
 from Components.config import config, ConfigSelection, ConfigText, ConfigSubList, ConfigDateTime, ConfigClock, ConfigYesNo, getConfigListEntry
 from Components.ActionMap import NumberActionMap, ActionMap
@@ -248,9 +250,9 @@ class TimerEntry(Screen, ConfigListScreen):
 		try:
 			if self.timerentry_justplay.value != "zap":
 				stat = statvfs(self.timerentry_dirname.value)
-				a = float(stat.f_blocks) * stat.f_bsize / 1024 / 1024 / 1024
-				b = float(stat.f_bavail) * stat.f_bsize / 1024 / 1024 / 1024
-				c = 100.0 * b / a
+				a = float(stat.f_blocks) * stat.f_bsize // 1024 // 1024 // 1024
+				b = float(stat.f_bavail) * stat.f_bsize // 1024 // 1024 // 1024
+				c = 100.0 * b // a
 				free = ("%0.f GB (%0.f %s) " + _("free diskspace")) % (b, c, "%")
 				description = _("Current location")
 		except:
@@ -276,20 +278,20 @@ class TimerEntry(Screen, ConfigListScreen):
 			if len(self["config"].getCurrent()) > 2 and self["config"].getCurrent()[2]:
 				self["description"].setText(self["config"].getCurrent()[2])
 			if isinstance(self["config"].getCurrent()[1], ConfigText):
-				if self.has_key("VKeyIcon"):
+				if "VKeyIcon" in self:
 					self["VirtualKB"].setEnabled(True)
 					self["VKeyIcon"].boolean = True
-				if self.has_key("HelpWindow"):
+				if "HelpWindow" in self:
 					if self["config"].getCurrent()[1].help_window and self["config"].getCurrent()[1].help_window.instance is not None:
 						helpwindowpos = self["HelpWindow"].getPosition()
 						from enigma import ePoint
 						self["config"].getCurrent()[1].help_window.instance.move(ePoint(helpwindowpos[0], helpwindowpos[1]))
 					else:
-						if self.has_key("VKeyIcon"):
+						if "VKeyIcon" in self:
 							self["VirtualKB"].setEnabled(False)
 							self["VKeyIcon"].boolean = False
 		else:
-			if self.has_key("VKeyIcon"):
+			if "VKeyIcon" in self:
 				self["VirtualKB"].setEnabled(False)
 				self["VKeyIcon"].boolean = False
 
@@ -515,7 +517,7 @@ class TimerEntry(Screen, ConfigListScreen):
 					ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
 					parent = self.timer.service_ref.ref
 					selection = 0
-					for x in range(n):
+					for x in list(range(n)):
 						i = event.getLinkageService(parent, x)
 						if i.toString() == ref.toString():
 							selection = x

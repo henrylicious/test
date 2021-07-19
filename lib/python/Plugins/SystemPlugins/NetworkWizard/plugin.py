@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from Screens.Screen import Screen
 from Plugins.Plugin import PluginDescriptor
 from Components.config import getConfigListEntry, config, ConfigBoolean
@@ -17,7 +18,7 @@ def startSetup(menuid):
 
 
 def NetworkWizard(*args, **kwargs):
-	from NetworkWizard import NetworkWizard
+	from .NetworkWizard import NetworkWizard
 	return NetworkWizard(*args, **kwargs)
 
 

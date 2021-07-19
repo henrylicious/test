@@ -1,5 +1,7 @@
 # shamelessly copied from pliExpertInfo (Vali, Mirakels, Littlesat)
 
+from __future__ import absolute_import
+from __future__ import division
 from os import path
 from enigma import iServiceInformation, iPlayableService
 from Components.Converter.Converter import Converter
@@ -7,7 +9,7 @@ from Components.Element import cached
 from Components.config import config
 from Tools.Transponder import ConvertToHumanReadable, getChannelNumber
 from Tools.GetEcmInfo import GetEcmInfo
-from Poll import Poll
+from Components.Converter.Poll import Poll
 
 caid_data = (
 	("0x100", "0x1ff", "Seca", "S", True),
@@ -361,7 +363,7 @@ class PliExtraInfo(Poll, Converter, object):
 			return ""
 		yres = info.getInfo(iServiceInformation.sVideoHeight)
 		mode = ("i", "p", "", " ")[info.getInfo(iServiceInformation.sProgressive)]
-		fps = str((info.getInfo(iServiceInformation.sFrameRate) + 500) / 1000)
+		fps = str((info.getInfo(iServiceInformation.sFrameRate) + 500) // 1000)
 		if int(fps) <= 0:
 			fps = ""
 		try:
@@ -466,14 +468,14 @@ class PliExtraInfo(Poll, Converter, object):
 	def createOrbPos(self, feraw):
 		orbpos = feraw.get("orbital_position")
 		if orbpos > 1800:
-			return str((float(3600 - orbpos)) / 10.0) + "\xc2\xb0 W"
+			return str((float(3600 - orbpos)) // 10.0) + "\xc2\xb0 W"
 		elif orbpos > 0:
-			return str((float(orbpos)) / 10.0) + "\xc2\xb0 E"
+			return str((float(orbpos)) // 10.0) + "\xc2\xb0 E"
 		return ""
 
 	def createOrbPosOrTunerSystem(self, fedata, feraw):
 		orbpos = self.createOrbPos(feraw)
-		if orbpos is not "":
+		if orbpos != "":
 			return orbpos
 		return self.createTunerSystem(fedata)
 
@@ -583,9 +585,9 @@ class PliExtraInfo(Poll, Converter, object):
 		if orbpos in sat_names:
 			return sat_names[orbpos]
 		elif orbpos > 1800:
-			return str((float(3600 - orbpos)) / 10.0) + "W"
+			return str((float(3600 - orbpos)) // 10.0) + "W"
 		else:
-			return str((float(orbpos)) / 10.0) + "E"
+			return str((float(orbpos)) // 10.0) + "E"
 
 	def createProviderName(self, info):
 		return info.getInfoString(iServiceInformation.sProvider)
