@@ -2,7 +2,7 @@ ARG GCC=8
 ARG PY=27
 
 FROM dendes/build-${GCC}-${PY}
-ARG BRANCH=master
+ARG CIRCLE_BRANCH=master
 
 SHELL ["/bin/bash", "-c"]
 
