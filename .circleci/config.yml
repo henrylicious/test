@@ -15,7 +15,7 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-                  docker build --build-arg GCC=<< parameters.CC >> --build-arg PY=<< parameters.PYTHON >> .
+                  docker build --build-arg GCC=<< parameters.CC >> --build-arg PY=<< parameters.PYTHON >> --build-arg CIRCLE_BRANCH=${CIRCLE_BRANCH}.
 #      - run:
 #          name: Publish Docker Image to Docker Hub
 #          command: |
