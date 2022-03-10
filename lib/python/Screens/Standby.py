@@ -5,18 +5,14 @@ from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.config import config
 from Components.AVSwitch import AVSwitch
-from Components.Console import Console
 from Components.SystemInfo import SystemInfo
 from Components.Harddisk import harddiskmanager
 from GlobalActions import globalActionMap
 from enigma import eDVBVolumecontrol, eTimer, eDVBLocalTimeHandler, eServiceReference
-from boxbranding import getMachineBrand, getMachineBuild, getMachineName, getBoxType, getBrandOEM
+from boxbranding import getBrandOEM, getMachineBrand, getMachineBuild, getMachineName
 from Tools import Notifications
-from time import localtime, time
+from time import time
 import Screens.InfoBar
-import PowerTimer
-import RecordTimer
-from gettext import dgettext
 import Components.RecordingConfig
 
 inStandby = None

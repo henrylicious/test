@@ -5,12 +5,12 @@ from Components.Harddisk import harddiskmanager, findMountPoint
 from Components.Input import Input
 from Components.Label import Label
 from Components.About import about
-from Components.MovieList import AUDIO_EXTENSIONS, MOVIE_EXTENSIONS, DVD_EXTENSIONS
+from Components.MovieList import AUDIO_EXTENSIONS
 import Screens.MovieSelection
 from Components.PluginComponent import plugins
 from Components.ServiceEventTracker import ServiceEventTracker
+from Components.Sources.ServiceEvent import ServiceEvent
 from Components.Sources.Boolean import Boolean
-from Components.Sources.List import List
 from Components.config import config, configfile, ConfigBoolean, ConfigClock
 from Components.SystemInfo import SystemInfo
 from Components.UsageConfig import preferredInstantRecordPath, defaultMoviePath, preferredTimerPath, ConfigSelection
@@ -25,7 +25,7 @@ from Plugins.Plugin import PluginDescriptor
 
 from Screens.Screen import Screen
 from Screens import ScreenSaver
-from Screens.ChannelSelection import ChannelSelection, PiPZapSelection, BouquetSelector, SilentBouquetSelector, EpgBouquetSelector, service_types_tv
+from Screens.ChannelSelection import BouquetSelector, ChannelSelection, EpgBouquetSelector, PiPZapSelection
 from Screens.ChoiceBox import ChoiceBox
 from Screens.Dish import Dish
 from Screens.EventView import EventViewEPGSelect, EventViewSimple
@@ -38,20 +38,19 @@ from Screens.PictureInPicture import PictureInPicture
 from Screens.PVRState import PVRState, TimeshiftState
 from Screens.SubtitleDisplay import SubtitleDisplay
 from Screens.RdsDisplay import RdsInfoDisplay, RassInteractive
-from Screens.Standby import Standby, TryQuitMainloop
 from Screens.TimeDateInput import TimeDateInput
 from Screens.TimerEdit import TimerEditList
 from Screens.UnhandledKey import UnhandledKey
 from Screens.ShowPressedButtons import ShowPressedButtons
 from ServiceReference import ServiceReference, isPlayableForCur
-from RecordTimer import RecordTimer, RecordTimerEntry, parseEvent, AFTEREVENT, findSafeRecordPath
+from RecordTimer import AFTEREVENT, RecordTimerEntry, findSafeRecordPath, parseEvent
 from Screens.TimerEntry import TimerEntry as TimerEntry
-from Tools import Directories, Notifications
-from Tools.Directories import pathExists, fileExists, getRecordingFilename, copyfile, moveFiles, resolveFilename, SCOPE_TIMESHIFT, SCOPE_CURRENT_SKIN
+from Tools import Notifications
+from Tools.Directories import fileExists, isPluginInstalled
 from Tools.KeyBindings import getKeyDescription
 from Tools.ServiceReference import hdmiInServiceRef
 from enigma import eTimer, eServiceCenter, eDVBServicePMTHandler, iServiceInformation, iPlayableService, eServiceReference, eEPGCache, eActionMap, eDVBVolumecontrol, getDesktop, quitMainloop, eDVBDB
-from boxbranding import getBoxType, getMachineBrand, getMachineName, getBrandOEM, getDriverDate, getImageVersion, getImageBuild, getMachineProcModel, getMachineBuild, getMachineMtdKernel, getDisplayType
+from boxbranding import getBoxType, getBrandOEM, getDisplayType, getDriverDate, getImageBuild, getImageVersion, getMachineBrand, getMachineBuild, getMachineMtdKernel, getMachineName
 
 from time import time, localtime, strftime
 from bisect import insort
@@ -69,20 +68,20 @@ import Screens.Standby
 
 
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
+	HEADER = '\033[95m'
+	OKBLUE = '\033[94m'
+	OKGREEN = '\033[92m'
+	WARNING = '\033[93m'
+	FAIL = '\033[91m'
+	ENDC = '\033[0m'
 
-    def disable(self):
-        self.HEADER = ''
-        self.OKBLUE = ''
-        self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
-        self.ENDC = ''
+	def disable(self):
+		self.HEADER = ''
+		self.OKBLUE = ''
+		self.OKGREEN = ''
+		self.WARNING = ''
+		self.FAIL = ''
+		self.ENDC = ''
 
 
 AUDIO = False
@@ -91,7 +90,7 @@ jump_pts_adder = 0
 jump_last_pts = None
 jump_last_pos = None
 
-if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/CoolTVGuide/plugin.pyo"):
+if isPluginInstalled("CoolTVGuide"):
 	COOLTVGUIDE = True
 else:
 	COOLTVGUIDE = False
@@ -181,27 +180,6 @@ def updateresumePointCache():
 	resumePointCache = loadResumePoints()
 
 
-def ToggleVideo():
-	mode = open("/proc/stb/video/policy").read()[:-1]
-	print("[InfoBarGenerics] toggle videomode:", mode)
-	if mode == "letterbox":
-		f = open("/proc/stb/video/policy", "w")
-		f.write("panscan")
-		f.close()
-	elif mode == "panscan":
-		f = open("/proc/stb/video/policy", "w")
-		f.write("letterbox")
-		f.close()
-	else:
-		# if current policy is not panscan or letterbox, set to panscan
-		f = open("/proc/stb/video/policy", "w")
-		f.write("panscan")
-		f.close()
-
-
-resumePointCache = loadResumePoints()
-resumePointCacheLast = int(time())
-
 subservice_groupslist = None
 
 
@@ -242,8 +220,9 @@ def getActiveSubservicesForCurrentChannel(current_service):
 				if title and "Sendepause" not in title:
 					starttime = datetime.datetime.fromtimestamp(event[0]).strftime('%H:%M')
 					endtime = datetime.datetime.fromtimestamp(event[0] + event[1]).strftime('%H:%M')
-					current_show_name = title + " " + str(starttime) + "-" + str(endtime)
-					activeSubservices.append((current_show_name, subservice))
+					servicename = ServiceReference(subservice).getServiceName()
+					schedule = str(starttime) + "-" + str(endtime)
+					activeSubservices.append((servicename + " " + "[ " + schedule + " ]  - " + " " + title, subservice))
 		return activeSubservices
 
 
@@ -254,7 +233,6 @@ def hasActiveSubservicesForCurrentChannel(current_service):
 
 def ToggleVideo():
 	mode = open("/proc/stb/video/policy").read()[:-1]
-	print(mode)
 	if mode == "letterbox":
 		f = open("/proc/stb/video/policy", "w")
 		f.write("panscan")
@@ -315,13 +293,19 @@ class InfoBarUnhandledKey:
 
 	#this function is called on every keypress!
 	def actionA(self, key, flag):
-		try:
-			print('[InfoBarGenerics] KEY: %s %s %s %s' % (key, flag, six.next(key_name for key_name, value in list(KEYIDS.items()) if value == key), getKeyDescription(key)[0]))
-		except:
+		if config.plisettings.ShowPressedButtons.value:
+			if config.hdf.ShowPressedButtonGUI.value:
+				self.pressedButtonsDialog.setButton((key_name for key_name, value in KEYIDS.items() if value == key).next())
+				self.pressedButtonsDialog.show()
+				self.hideShowPressedButtonsTimer.start(2000, True)
+			# print "Enable debug mode for every pressed key."
 			try:
-				print('[InfoBarGenerics] KEY: %s %s %s' % (key, flag, six.next(key_name for key_name, value in list(KEYIDS.items()) if value == key))) # inverse dictionary lookup in KEYIDS
+				print('[InfoBarGenerics] KEY: %s %s %s %s' % (key, flag, six.next(key_name for key_name, value in list(KEYIDS.items()) if value == key), getKeyDescription(key)[0]))
 			except:
-				print('[InfoBarGenerics] KEY: %s %s' % (key, flag))
+				try:
+					print('[InfoBarGenerics] KEY: %s %s %s' % (key, flag, six.next(key_name for key_name, value in list(KEYIDS.items()) if value == key))) # inverse dictionary lookup in KEYIDS
+				except:
+					print('[InfoBarGenerics] KEY: %s %s' % (key, flag))
 		self.unhandledKeyDialog.hide()
 		if self.closeSIB(key) and self.secondInfoBarScreen and self.secondInfoBarScreen.shown:
 			self.secondInfoBarScreen.hide()
@@ -366,13 +350,13 @@ class InfoBarScreenSaver:
 		self.screensaver.hide()
 
 	def __onExecBegin(self):
+		eActionMap.getInstance().bindAction('', -maxsize - 1, self.keypressScreenSaver)
 		self.ScreenSaverTimerStart()
 
 	def __onExecEnd(self):
-		if self.screensaver.shown:
-			self.screensaver.hide()
-			eActionMap.getInstance().unbindAction('', self.keypressScreenSaver)
 		self.screenSaverTimer.stop()
+		self.screensaver.hide()
+		eActionMap.getInstance().unbindAction('', self.keypressScreenSaver)
 
 	def ScreenSaverTimerStart(self):
 		time = int(config.usage.screen_saver.value)
@@ -381,7 +365,7 @@ class InfoBarScreenSaver:
 			ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
 			if ref and not (hasattr(self.session, "pipshown") and self.session.pipshown):
 				ref = ref.toString().split(":")
-				flag = ref[2] == "2" or os.path.splitext(ref[10])[1].lower() in AUDIO_EXTENSIONS
+				flag = ref[2] == "2" or ref[2] == "A" or os.path.splitext(ref[10])[1].lower() in AUDIO_EXTENSIONS
 		if time and flag:
 			self.screenSaverTimer.startLongTimer(time)
 		else:
@@ -650,6 +634,7 @@ class SecondInfoBar(Screen):
 			self.hide()
 			self.secondInfoBarWasShown = False
 			self.session.open(EPGSelection, refstr, None, _id)
+
 
 
 class InfoBarShowHide(InfoBarScreenSaver):
@@ -1146,12 +1131,22 @@ class NumberZap(Screen):
 
 		self.handleServiceName()
 		self["service_summary"].setText(self["servicename"].getText())
+		if config.usage.numzappicon.value:
+			self.showPicon()
 
 		if len(self.numberString) >= int(config.usage.maxchannelnumlen.value):
 			self.keyOK()
 
+	def showPicon(self):
+		self["Service"].newService(self.service)
+
 	def __init__(self, session, number, searchNumberFunction=None):
 		Screen.__init__(self, session)
+
+		if config.usage.numzappicon.value:
+			self.onLayoutFinish.append(self.showPicon)
+			self.skinName = ["NumberZapPicon", "NumberZapWithName"]
+
 		self.onChangedEntry = []
 		self.numberString = str(number)
 		self.field = str(number)
@@ -1162,10 +1157,11 @@ class NumberZap(Screen):
 		self["channel_summary"] = StaticText(_("Channel:"))
 
 		self["number"] = Label(self.numberString)
+		self["servicenumber"] = Label(self.numberString)
 		self["number_summary"] = StaticText(self.numberString)
 		self["servicename"] = Label()
 		self["service_summary"] = StaticText("")
-
+		self["Service"] = ServiceEvent()
 		self.handleServiceName()
 		self["service_summary"].setText(self["servicename"].getText())
 
@@ -1275,10 +1271,10 @@ class InfoBarNumberZap:
 								while serviceIterator.valid():
 									service, bouquet2 = self.searchNumber(1)
 									if service == serviceIterator:
-									    break
+										break
 									serviceIterator = servicelist.getNext()
 								if serviceIterator.valid() and service == serviceIterator:
-								    break
+									break
 					self.servicelist.enterPath(rootbouquet)
 					self.servicelist.enterPath(bouquet)
 					self.servicelist.saveRoot()
@@ -1484,7 +1480,7 @@ class InfoBarChannelSelection:
 		if config.usage.bookmarkmode.value == "1":
 			self.showEMC()
 		elif config.usage.bookmarkmode.value == "2":
-			if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
+			if isPluginInstalled("simplelist"):
 				self.showsimplelist()
 		else:
 			self.showMovies()
@@ -1836,33 +1832,6 @@ class InfoBarEPG:
 				iPlayableService.evUpdatedEventInfo: self.__evEventInfoChanged,
 			})
 
-#		self["EPGActions"] = HelpableActionMap(self, "InfobarEPGActions",
-#			{
-#				"RedButtonPressed": (self.RedButtonPressed, _("show red button information...")),
-#				"RedButtonLongPressed": (self.RedButtonLongPressed, _("show red button information...")),
-#				"GreenButtonPressed": (self.GreenButtonPressed, _("show green button information...")),
-#				"GreenButtonLongPressed": (self.GreenButtonLongPressed, _("show green button information...")),
-#				"YellowButtonPressed": (self.YellowButtonPressed, _("show yellow button information...")),
-#				"YellowButtonLongPressed": (self.YellowButtonLongPressed, _("show yellow button information...")),
-#				"BlueButtonPressed": (self.BlueButtonPressed, _("show blue button information...")),
-#				"BlueButtonLongPressed": (self.BlueButtonLongPressed, _("show blue button information...")),
-#				"IPressed": (self.IPressed, _("show program information...")),
-#				"InfoPressed": (self.InfoPressed, _("show program information...")),
-#				"FavPressed": (self.FavPressed, _("show fav information...")),
-#				"F1Pressed": (self.F1Pressed, _("show f1 information...")),
-#				"F2Pressed": (self.F2Pressed, _("show f2 information...")),
-#				"F3Pressed": (self.F3Pressed, _("show f3 information...")),
-#				"F4Pressed": (self.F4Pressed, _("show f4 information...")),
-#				"HomePressed": (self.HomePressed, _("show home information...")),
-#				"EndPressed": (self.EndPressed, _("show end information...")),
-#				"WebButtonPressed": (self.WebButtonPressed, _("show WebButton information...")),
-#				"PluginButtonPressed": (self.PluginButtonPressed, _("show PluginButton information...")),
-#				"showEventInfoPlugin": (self.showEventInfoPlugins, _("List EPG functions...")),
-#				"EPGPressed":  (self.showDefaultEPG, _("show EPG...")),
-#				"showEventGuidePlugin": (self.showEventGuidePlugins, _("List EPG functions...")),
-#				"showInfobarOrEpgWhenInfobarAlreadyVisible": self.showEventInfoWhenNotVisible,
-#			})
-
 	def getEPGPluginList(self):
 		pluginlist = [(p.name, boundFunction(self.runPlugin, p)) for p in plugins.getPlugins(where=PluginDescriptor.WHERE_EVENTINFO)]
 		if pluginlist:
@@ -1941,582 +1910,6 @@ class InfoBarEPG:
 		if answer is not None:
 			answer[1]()
 
-	def RedButtonPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.redbutton_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.redbutton_mode.value == "timerSelection":
-				self.showTimerList()
-			elif config.plisettings.redbutton_mode.value == "subserviceSelection":
-				self.subserviceSelection()
-			elif config.plisettings.redbutton_mode.value == "subtitleSelection":
-				self.subtitleSelection()
-			elif config.plisettings.redbutton_mode.value == "audioSelection":
-				self.audioSelection()
-			elif config.plisettings.redbutton_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.redbutton_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.redbutton_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.redbutton_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.redbutton_mode.value == "openInfoBarEPG":
-				self.openInfoBarEPG()
-			elif config.plisettings.redbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.redbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.redbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.redbutton_mode.value == "extensions":
-				self.showExtensionSelection()
-			elif config.plisettings.redbutton_mode.value == "showPluginBrowser":
-				self.showPluginBrowser()
-			elif config.plisettings.redbutton_mode.value == "instantRecord":
-				self.instantRecord()
-			elif config.plisettings.redbutton_mode.value == "showEventInfoPlugins":
-				self.showEventInfoPlugins()
-			elif config.plisettings.redbutton_mode.value == "hbbtv":
-				self.activateRedButton()
-			elif config.plisettings.redbutton_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.redbutton_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-			elif config.plisettings.redbutton_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.redbutton_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.redbutton_mode.value == "werbezapper":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPER()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.redbutton_mode.value == "werbezappermon":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPERMON()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def GreenButtonPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.greenbutton_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.greenbutton_mode.value == "timerSelection":
-				self.showTimerList()
-			elif config.plisettings.greenbutton_mode.value == "subserviceSelection":
-				self.subserviceSelection()
-			elif config.plisettings.greenbutton_mode.value == "subtitleSelection":
-				self.subtitleSelection()
-			elif config.plisettings.greenbutton_mode.value == "audioSelection":
-				self.audioSelection()
-			elif config.plisettings.greenbutton_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.greenbutton_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.greenbutton_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.greenbutton_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.greenbutton_mode.value == "openInfoBarEPG":
-				self.openInfoBarEPG()
-			elif config.plisettings.greenbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.greenbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.greenbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.greenbutton_mode.value == "extensions":
-				self.showExtensionSelection()
-			elif config.plisettings.greenbutton_mode.value == "showPluginBrowser":
-				self.showPluginBrowser()
-			elif config.plisettings.greenbutton_mode.value == "instantRecord":
-				self.instantRecord()
-			elif config.plisettings.greenbutton_mode.value == "showEventInfoPlugins":
-				self.showEventInfoPlugins()
-			elif config.plisettings.greenbutton_mode.value == "hbbtv":
-				self.activateRedButton()
-			elif config.plisettings.greenbutton_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.greenbutton_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-			elif config.plisettings.greenbutton_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.greenbutton_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.greenbutton_mode.value == "werbezapper":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPER()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.greebutton_mode.value == "werbezappermon":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPERMON()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def YellowButtonPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.yellowbutton_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.yellowbutton_mode.value == "timerSelection":
-				self.showTimerList()
-			elif config.plisettings.yellowbutton_mode.value == "subserviceSelection":
-				self.subserviceSelection()
-			elif config.plisettings.yellowbutton_mode.value == "subtitleSelection":
-				self.subtitleSelection()
-			elif config.plisettings.yellowbutton_mode.value == "audioSelection":
-				self.audioSelection()
-			elif config.plisettings.yellowbutton_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.yellowbutton_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.yellowbutton_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.yellowbutton_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.yellowbutton_mode.value == "openInfoBarEPG":
-				self.openInfoBarEPG()
-			elif config.plisettings.yellowbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.yellowbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.yellowbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.yellowbutton_mode.value == "extensions":
-				self.showExtensionSelection()
-			elif config.plisettings.yellowbutton_mode.value == "showPluginBrowser":
-				self.showPluginBrowser()
-			elif config.plisettings.yellowbutton_mode.value == "instantRecord":
-				self.instantRecord()
-			elif config.plisettings.yellowbutton_mode.value == "showEventInfoPlugins":
-				self.showEventInfoPlugins()
-			elif config.plisettings.yellowbutton_mode.value == "hbbtv":
-				self.activateRedButton()
-			elif config.plisettings.yellowbutton_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.yellowbutton_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-			elif config.plisettings.yellowbutton_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.yellowbutton_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.yellowbutton_mode.value == "werbezapper":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPER()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.yellowbutton_mode.value == "werbezappermon":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPERMON()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def BlueButtonPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.bluebutton_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.bluebutton_mode.value == "timerSelection":
-				self.showTimerList()
-			elif config.plisettings.bluebutton_mode.value == "subserviceSelection":
-				self.subserviceSelection()
-			elif config.plisettings.bluebutton_mode.value == "subtitleSelection":
-				self.subtitleSelection()
-			elif config.plisettings.bluebutton_mode.value == "audioSelection":
-				self.audioSelection()
-			elif config.plisettings.bluebutton_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.bluebutton_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.bluebutton_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.bluebutton_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.bluebutton_mode.value == "openInfoBarEPG":
-				self.openInfoBarEPG()
-			elif config.plisettings.bluebutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.bluebutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.bluebutton_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.bluebutton_mode.value == "extensions":
-				self.showExtensionSelection()
-			elif config.plisettings.bluebutton_mode.value == "showPluginBrowser":
-				self.showPluginBrowser()
-			elif config.plisettings.bluebutton_mode.value == "instantRecord":
-				self.instantRecord()
-			elif config.plisettings.bluebutton_mode.value == "showEventInfoPlugins":
-				self.showEventInfoPlugins()
-			elif config.plisettings.bluebutton_mode.value == "hbbtv":
-				self.activateRedButton()
-			elif config.plisettings.bluebutton_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.bluebutton_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-			elif config.plisettings.bluebutton_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.bluebutton_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.bluebutton_mode.value == "werbezapper":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPER()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.bluebutton_mode.value == "werbezappermon":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPERMON()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def RedButtonLongPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.redbuttonlong_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.redbuttonlong_mode.value == "timerSelection":
-				self.showTimerList()
-			elif config.plisettings.redbuttonlong_mode.value == "subserviceSelection":
-				self.subserviceSelection()
-			elif config.plisettings.redbuttonlong_mode.value == "subtitleSelection":
-				self.subtitleSelection()
-			elif config.plisettings.redbuttonlong_mode.value == "audioSelection":
-				self.audioSelection()
-			elif config.plisettings.redbuttonlong_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.redbuttonlong_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.redbuttonlong_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.redbuttonlong_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.redbuttonlong_mode.value == "openInfoBarEPG":
-				self.openInfoBarEPG()
-			elif config.plisettings.redbuttonlong_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.redbuttonlong_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.redbuttonlong_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.redbuttonlong_mode.value == "extensions":
-				self.showExtensionSelection()
-			elif config.plisettings.redbuttonlong_mode.value == "showPluginBrowser":
-				self.showPluginBrowser()
-			elif config.plisettings.redbuttonlong_mode.value == "instantRecord":
-				self.instantRecord()
-			elif config.plisettings.redbuttonlong_mode.value == "showEventInfoPlugins":
-				self.showEventInfoPlugins()
-			elif config.plisettings.redbuttonlong_mode.value == "hbbtv":
-				self.activateRedButton()
-			elif config.plisettings.redbuttonlong_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.redbuttonlong_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-			elif config.plisettings.redbuttonlong_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.redbuttonlong_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.redbuttonlong_mode.value == "werbezapper":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPER()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.redbuttonlong_mode.value == "werbezappermon":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPERMON()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def GreenButtonLongPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.greenbuttonlong_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.greenbuttonlong_mode.value == "timerSelection":
-				self.showTimerList()
-			elif config.plisettings.greenbuttonlong_mode.value == "subserviceSelection":
-				self.subserviceSelection()
-			elif config.plisettings.greenbuttonlong_mode.value == "subtitleSelection":
-				self.subtitleSelection()
-			elif config.plisettings.greenbuttonlong_mode.value == "audioSelection":
-				self.audioSelection()
-			elif config.plisettings.greenbuttonlong_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.greenbuttonlong_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.greenbuttonlong_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.greenbuttonlong_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.greenbuttonlong_mode.value == "openInfoBarEPG":
-				self.openInfoBarEPG()
-			elif config.plisettings.greenbuttonlong_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.greenbuttonlong_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.greenbuttonlong_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.greenbuttonlong_mode.value == "extensions":
-				self.showExtensionSelection()
-			elif config.plisettings.greenbuttonlong_mode.value == "showPluginBrowser":
-				self.showPluginBrowser()
-			elif config.plisettings.greenbuttonlong_mode.value == "instantRecord":
-				self.instantRecord()
-			elif config.plisettings.greenbuttonlong_mode.value == "showEventInfoPlugins":
-				self.showEventInfoPlugins()
-			elif config.plisettings.greenbuttonlong_mode.value == "hbbtv":
-				self.activateRedButton()
-			elif config.plisettings.greenbuttonlong_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.greenbuttonlong_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-			elif config.plisettings.greenbuttonlong_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.greenbuttonlong_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.greenbuttonlong_mode.value == "werbezapper":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPER()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.greenbuttonlong_mode.value == "werbezappermon":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPERMON()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def YellowButtonLongPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.yellowbuttonlong_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.yellowbuttonlong_mode.value == "timerSelection":
-				self.showTimerList()
-			elif config.plisettings.yellowbuttonlong_mode.value == "subserviceSelection":
-				self.subserviceSelection()
-			elif config.plisettings.yellowbuttonlong_mode.value == "subtitleSelection":
-				self.subtitleSelection()
-			elif config.plisettings.yellowbuttonlong_mode.value == "audioSelection":
-				self.audioSelection()
-			elif config.plisettings.yellowbuttonlong_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.yellowbuttonlong_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.yellowbuttonlong_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.yellowbuttonlong_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.yellowbuttonlong_mode.value == "openInfoBarEPG":
-				self.openInfoBarEPG()
-			elif config.plisettings.yellowbuttonlong_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.yellowbuttonlong_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.yellowbuttonlong_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.yellowbuttonlong_mode.value == "extensions":
-				self.showExtensionSelection()
-			elif config.plisettings.yellowbuttonlong_mode.value == "showPluginBrowser":
-				self.showPluginBrowser()
-			elif config.plisettings.yellowbuttonlong_mode.value == "instantRecord":
-				self.instantRecord()
-			elif config.plisettings.yellowbuttonlong_mode.value == "showEventInfoPlugins":
-				self.showEventInfoPlugins()
-			elif config.plisettings.yellowbuttonlong_mode.value == "hbbtv":
-				self.activateRedButton()
-			elif config.plisettings.yellowbuttonlong_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.yellowbuttonlong_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-			elif config.plisettings.yellowbuttonlong_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.yellowbuttonlong_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.yellowbuttonlong_mode.value == "werbezapper":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPER()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.yellowbuttonlong_mode.value == "werbezappermon":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPERMON()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def BlueButtonLongPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if config.plisettings.bluebuttonlong_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.bluebuttonlong_mode.value == "timerSelection":
-				self.showTimerList()
-			elif config.plisettings.bluebuttonlong_mode.value == "subserviceSelection":
-				self.subserviceSelection()
-			elif config.plisettings.bluebuttonlong_mode.value == "subtitleSelection":
-				self.subtitleSelection()
-			elif config.plisettings.bluebuttonlong_mode.value == "audioSelection":
-				self.audioSelection()
-			elif config.plisettings.bluebuttonlong_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.bluebuttonlong_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.bluebuttonlong_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.bluebuttonlong_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.bluebuttonlong_mode.value == "openInfoBarEPG":
-				self.openInfoBarEPG()
-			elif config.plisettings.bluebuttonlong_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.bluebuttonlong_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.bluebuttonlong_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.bluebuttonlong_mode.value == "extensions":
-				self.showExtensionSelection()
-			elif config.plisettings.bluebuttonlong_mode.value == "showPluginBrowser":
-				self.showPluginBrowser()
-			elif config.plisettings.bluebuttonlong_mode.value == "instantRecord":
-				self.instantRecord()
-			elif config.plisettings.bluebuttonlong_mode.value == "showEventInfoPlugins":
-				self.showEventInfoPlugins()
-			elif config.plisettings.bluebuttonlong_mode.value == "hbbtv":
-				self.activateRedButton()
-			elif config.plisettings.bluebuttonlong_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.bluebuttonlong_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-			elif config.plisettings.bluebuttonlong_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.bluebuttonlong_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.bluebuttonlong_mode.value == "werbezapper":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPER()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.bluebuttonlong_mode.value == "werbezappermon":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/WerbeZapper/plugin.pyo"):
-					self.showWERBEZAPPERMON()
-				else:
-					self.session.open(MessageBox, _("The WerbeZapper plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
 	def InfoPressed(self):
 		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
 			if getBoxType().startswith('vu'):
@@ -2539,7 +1932,7 @@ class InfoBarEPG:
 				if self.isInfo:
 					self.showCoolTVGuide()
 			elif config.plisettings.PLIINFO_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+				if isPluginInstalled("EtPortal"):
 					self.showETPORTAL()
 				else:
 					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -2564,7 +1957,7 @@ class InfoBarEPG:
 				if self.isInfo:
 					self.showCoolTVGuide()
 			elif config.plisettings.PLIEPG_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
+				if isPluginInstalled("EtPortal"):
 					self.showETPORTAL()
 				else:
 					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -2710,7 +2103,6 @@ class InfoBarEPG:
 	def showETPORTAL(self):
 		try:
 			from Plugins.Extensions.EtPortal.plugin import EtPortalScreen
-			from Components.PluginComponent import plugins
 			self.session.open(EtPortalScreen)
 		except Exception as e:
 			self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -2718,7 +2110,6 @@ class InfoBarEPG:
 	def showEMC(self):
 		try:
 			import Plugins.Extensions.EnhancedMovieCenter.plugin
-			from Components.PluginComponent import plugins
 			EnhancedMovieCenter.showMoviesNew()
 		except Exception as e:
 			self.session.open(MessageBox, _("The Enhanced Movie Center plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -2726,7 +2117,6 @@ class InfoBarEPG:
 	def showMEDIAPORTAL(self):
 		try:
 			from Plugins.Extensions.MediaPortal.plugin import haupt_Screen
-			from Components.PluginComponent import plugins
 			self.session.open(haupt_Screen)
 		except Exception as e:
 			self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -2734,7 +2124,6 @@ class InfoBarEPG:
 	def showDREAMPLEX(self):
 		try:
 			from Plugins.Extensions.DreamPlex.plugin import DPS_MainMenu
-			from Components.PluginComponent import plugins
 			self.session.open(DPS_MainMenu)
 		except Exception as e:
 			self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -2910,518 +2299,6 @@ class InfoBarEPG:
 			epglist[0] = epglist[1]
 			epglist[1] = tmp
 			setEvent(epglist[0])
-
-	def FavPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.PLIFAV_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.PLIFAV_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.PLIFAV_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.PLIFAV_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.PLIFAV_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.PLIFAV_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.PLIFAV_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.PLIFAV_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.PLIFAV_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.PLIFAV_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.PLIFAV_mode.value == "dreamplex":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
-					self.showDREAMPLEX()
-				else:
-					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def F1Pressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.F1_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.F1_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.F1_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.F1_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.F1_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.F1_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.F1_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.F1_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.F1_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F1_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F1_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F1_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F1_mode.value == "dreamplex":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
-					self.showDREAMPLEX()
-				else:
-					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F1_mode.value == "oscaminfo":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/OscamInfo/plugin.pyo"):
-					self.showOSCAMINFO()
-				else:
-					self.session.open(MessageBox, _("The OscamInfo plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F1_mode.value == "oscamstatus":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/OSCamStatusView/plugin.pyo"):
-					self.showOSCAMSTATUS()
-				else:
-					self.session.open(MessageBox, _("The OSCamStatusView plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F1_mode.value == "showsimplelist":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
-					self.showsimplelist()
-				else:
-					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def F2Pressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.F2_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.F2_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.F2_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.F2_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.F2_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.F2_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.F2_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.F2_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.F2_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F2_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F2_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F2_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F2_mode.value == "dreamplex":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
-					self.showDREAMPLEX()
-				else:
-					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F2_mode.value == "showsimplelist":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
-					self.showsimplelist()
-				else:
-					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def F3Pressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.F3_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.F3_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.F3_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.F3_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.F3_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.F3_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.F3_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.F3_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.F3_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F3_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F3_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F3_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F3_mode.value == "dreamplex":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
-					self.showDREAMPLEX()
-				else:
-					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F3_mode.value == "showsimplelist":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
-					self.showsimplelist()
-				else:
-					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def F4Pressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.F4_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.F4_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.F4_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.F4_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.F4_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.F4_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.F4_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.F4_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.F4_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F4_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F4_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F4_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F4_mode.value == "dreamplex":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
-					self.showDREAMPLEX()
-				else:
-					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.F4_mode.value == "showsimplelist":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
-					self.showsimplelist()
-				else:
-					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def HomePressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.homemode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.homemode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.homemode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.homemode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.homemode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.homemode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.homemode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.homemode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.homemode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.homemode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.homemode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.homemode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.homemode.value == "dreamplex":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
-					self.showDREAMPLEX()
-				else:
-					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.homemode.value == "oscaminfo":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/OscamInfo/plugin.pyo"):
-					self.showOSCAMINFO()
-				else:
-					self.session.open(MessageBox, _("The OscamInfo plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.homemode.value == "oscamstatus":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/OSCamStatusView/plugin.pyo"):
-					self.showOSCAMSTATUS()
-				else:
-					self.session.open(MessageBox, _("The OSCamStatusView plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.homemode.value == "showsimplelist":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
-					self.showsimplelist()
-				else:
-					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def EndPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.endmode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.endmode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.endmode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.endmode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.endmode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.endmode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.endmode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.endmode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.endmode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.endmode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.endmode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.endmode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.endmode.value == "dreamplex":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/DreamPlex/plugin.pyo"):
-					self.showDREAMPLEX()
-				else:
-					self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.endmode.value == "oscaminfo":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/OscamInfo/plugin.pyo"):
-					self.showOSCAMINFO()
-				else:
-					self.session.open(MessageBox, _("The OscamInfo plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.endmode.value == "oscamstatus":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/OSCamStatusView/plugin.pyo"):
-					self.showOSCAMSTATUS()
-				else:
-					self.session.open(MessageBox, _("The OSCamStatusView plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.endmode.value == "showsimplelist":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
-					self.showsimplelist()
-				else:
-					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def WebButtonPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.webbutton_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.webbutton_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.webbutton_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.webbutton_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.webbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.webbutton_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.webbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.webbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.webbutton_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.webbutton_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.webbutton_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.webbutton_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.webbutton_mode.value == "showsimplelist":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
-					self.showsimplelist()
-				else:
-					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
-
-	def PluginButtonPressed(self):
-		if isStandardInfoBar(self) or isMoviePlayerInfoBar(self):
-			if getBoxType().startswith('vu'):
-				self.showDefaultEPG()
-			elif config.plisettings.pluginbutton_mode.value == "eventview":
-				self.openEventView()
-			elif config.plisettings.pluginbutton_mode.value == "showfavourites":
-				self.serviceListType = "Norm"
-				self.servicelist.showFavourites()
-				self.session.execDialog(self.servicelist)
-			elif config.plisettings.pluginbutton_mode.value == "epgpress":
-				self.showDefaultEPG()
-			elif config.plisettings.pluginbutton_mode.value == "single":
-				self.openSingleServiceEPG()
-			elif config.plisettings.pluginbutton_mode.value == "coolinfoguide" and COOLTVGUIDE:
-				self.showCoolInfoGuide()
-			elif config.plisettings.pluginbutton_mode.value == "vmodeSelection":
-				self.vmodeSelection()
-			elif config.plisettings.pluginbutton_mode.value == "coolsingleguide" and COOLTVGUIDE:
-				self.showCoolSingleGuide()
-			elif config.plisettings.pluginbutton_mode.value == "cooltvguide" and COOLTVGUIDE:
-				if self.isInfo:
-					self.showCoolTVGuide()
-			elif config.plisettings.pluginbutton_mode.value == "hdftoolbox":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/HDF-Toolbox/plugin.pyo"):
-					self.showHDFTOOLBOX()
-				else:
-					self.session.open(MessageBox, _("The HDF-Toolbox is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.pluginbutton_mode.value == "etportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EtPortal/plugin.pyo"):
-					self.showETPORTAL()
-				else:
-					self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.pluginbutton_mode.value == "emc":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
-					self.showEMC()
-				else:
-					self.session.open(MessageBox, _("The EnhancedMovieCenter plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.pluginbutton_mode.value == "mediaportal":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/MediaPortal/plugin.pyo"):
-					self.showMEDIAPORTAL()
-				else:
-					self.session.open(MessageBox, _("The Media Portal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			elif config.plisettings.pluginbutton_mode.value == "showsimplelist":
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/simplelist/plugin.pyo"):
-					self.showsimplelist()
-				else:
-					self.session.open(MessageBox, _("The Simple Movie List plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
-			else:
-				self.showDefaultEPG()
 
 
 class InfoBarRdsDecoder:
@@ -3861,7 +2738,7 @@ class InfoBarSeek:
 		SystemInfo["StatePlayPause"] = False
 		if self.seekstate == self.SEEK_STATE_PLAY:
 			if self.seekAction != 0:
-			    self.playpauseService()
+				self.playpauseService()
 			#return 0 # if 'return 0', plays timeshift again from the beginning
 			return
 		self.doPause(False)
@@ -4332,13 +3209,15 @@ class InfoBarExtensions:
 					"openEPGSearch": (self.showEPGSearch, _("Search the epg for current event.")),
 					"openIMDB": (self.showIMDB, _("Search IMDb for information about current event.")),
 					"showMediaPlayer": (self.showMediaPlayer, _("Show the media player...")),
+					"openDreamPlex": (self.showDreamPlex, _("Show the DreamPlex player...")),
 				}, 1) # lower priority
 		else:
 			self["InstantExtensionsActions"] = HelpableActionMap(self, "InfobarExtensions",
 				{
 					"extensions": (self.bluekey_ex, _("view extensions...")),
 					"showPluginBrowser": (self.showPluginBrowser, _("Show the plugin browser..")),
-					"showEventInfo": (self.SelectopenEventView, _("Show the infomation on current event.")),
+					"showDreamPlex": (self.showDreamPlex, _("Show the DreamPlex player...")),
+					"showEventInfo": (self.SelectopenEventView, _("Show the information on current event.")),
 					"showMediaPlayer": (self.showMediaPlayer, _("Show the media player...")),
 				}, 1) # lower priority
 
@@ -4346,7 +3225,6 @@ class InfoBarExtensions:
 		self.addExtension(extension=self.getOsd3DSetup, type=InfoBarExtensions.EXTENSION_LIST)
 		self.addExtension(extension=self.getCCcamInfo, type=InfoBarExtensions.EXTENSION_LIST)
 		self.addExtension(extension=self.getOScamInfo, type=InfoBarExtensions.EXTENSION_LIST)
-		#self.addExtension(extension = self.getRestartNetwork, type = InfoBarExtensions.EXTENSION_LIST)
 
 	def bluekey_ex(self):
 		self.showExtensionSelection()
@@ -4365,12 +3243,6 @@ class InfoBarExtensions:
 			return [((boundFunction(self.getLMname), boundFunction(self.openLogManager), lambda: True), None)]
 		else:
 			return []
-
-	def getRestartNetworkname(self):
-		return _("Restart Network")
-
-	def getRestartNetwork(self):
-		return [((boundFunction(self.getRestartNetworkname), boundFunction(self.openRestartNetwork), lambda: True), None)]
 
 	def get3DSetupname(self):
 		return _("OSD 3D Setup")
@@ -4490,16 +3362,8 @@ class InfoBarExtensions:
 		from Screens.UserInterfacePositioner import OSD3DSetupScreen
 		self.session.open(OSD3DSetupScreen)
 
-	def openRestartNetwork(self):
-		try:
-			from Plugins.Extensions.Infopanel.RestartNetwork import RestartNetwork
-			self.session.open(RestartNetwork)
-		except:
-			print('[INFOBARGENERICS] failed to restart network')
-
 	def showAutoTimerList(self):
-		if os.path.exists("/usr/lib/enigma2/python/Plugins/Extensions/AutoTimer/plugin.pyo"):
-			from Plugins.Extensions.AutoTimer.plugin import main, autostart
+		if isPluginInstalled("AutoTimer"):
 			from Plugins.Extensions.AutoTimer.AutoTimer import AutoTimer
 			from Plugins.Extensions.AutoTimer.AutoPoller import AutoPoller
 			self.autopoller = AutoPoller()
@@ -4573,7 +3437,7 @@ class InfoBarExtensions:
 			self.session.open(EPGSearch)
 
 	def showIMDB(self):
-		if os.path.exists("/usr/lib/enigma2/python/Plugins/Extensions/IMDb/plugin.pyo"):
+		if isPluginInstalled("IMDb"):
 			from Plugins.Extensions.IMDb.plugin import IMDB
 			s = self.session.nav.getCurrentService()
 			if s:
@@ -4593,6 +3457,13 @@ class InfoBarExtensions:
 					no_plugin = False
 				except Exception as e:
 					self.session.open(MessageBox, _("The MediaPlayer plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
+
+	def showDreamPlex(self):
+		if isPluginInstalled("DreamPlex"):
+			from Plugins.Extensions.DreamPlex.plugin import DPS_MainMenu
+			self.session.open(DPS_MainMenu)
+		else:
+			self.session.open(MessageBox, _("The DreamPlex plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
 
 
 from Tools.BoundFunction import boundFunction
@@ -4716,40 +3587,10 @@ class InfoBarPiP:
 				self.session.pip.servicePath = currentServicePath
 
 	def showPiP(self):
-		if config.usage.pip_mode.value != "standard":
-			from Screens.InfoBar import InfoBar
-		self.lastPiPServiceTimeoutTimer.stop()
-		slist = self.servicelist
-		if self.session.pipshown:
-			if slist and slist.dopipzap:
-				self.togglePipzap()
-			if self.session.pipshown:
-				currentBouquet = self.session.pip.getCurrentBouquetMain()
-				navCurrentService = self.session.nav.getCurrentlyPlayingServiceOrGroup()
-				lastPiPServiceTimeout = int(config.usage.pip_last_service_timeout.value)
-				if lastPiPServiceTimeout >= 0:
-					self.lastPiPService = self.session.pip.getCurrentServiceReference()
-					if lastPiPServiceTimeout:
-						self.lastPiPServiceTimeoutTimer.startLongTimer(lastPiPServiceTimeout)
-				self.session.pip.inactive()
-				self.session.pip.inactiveToogle()
-				self.session.pip.inactiveSide()
-				del self.session.pip
-				if SystemInfo["LCDMiniTV"]:
-					if config.lcd.modepip.value >= "1":
-						print('[InfoBarGenerics] [LCDMiniTV] disable PIP')
-						f = open("/proc/stb/lcd/mode", "w")
-						f.write(config.lcd.modeminitv.value)
-						f.close()
-				self.session.pipshown = False
-				config.usage.pip_lastusage = ConfigInteger(default=int(time()))
-				config.usage.pip_lastusage.setValue(int(time()) - 1)
-				config.usage.pip_lastusage.save()
-				configfile.save()
-				self.zapToServiceinList(navCurrentService, currentBouquet)
-				self.session.nav.playService(navCurrentService, checkParentalControl=False, adjust=False)
-			if hasattr(self, "ScreenSaverTimerStart"):
-				self.ScreenSaverTimerStart()
+		ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
+		iptv_service = str(ServiceReference(ref))
+		if iptv_service.startswith('4097:') or iptv_service.startswith('5001:') or iptv_service.startswith('5002:'):
+			self.session.open(MessageBox, _("PiP is currently not available because your are using iptv streams!"), MessageBox.TYPE_INFO)
 		else:
 			self.lastPiPServiceTimeoutTimer.stop()
 			slist = self.servicelist
@@ -4782,34 +3623,7 @@ class InfoBarPiP:
 					self.session.pip.setAnimationMode(0)
 					self.session.pip.show()
 					newservice = self.lastPiPService or self.session.nav.getCurrentlyPlayingServiceReference() or self.servicelist.servicelist.getCurrent()
-				elif info:
-					self.session.open(MessageBox, _("Your %s %s does not support PiP HD") % (getMachineBrand(), getMachineName()), type=MessageBox.TYPE_INFO, timeout=5)
-				else:
-					self.session.open(MessageBox, _("No active channel found."), type=MessageBox.TYPE_INFO, timeout=5)
-				if self.session.pip.playService(newservice, curBouquet):
-					self.session.pip.setCurrentBouquetMain(curBouquet)
-					self.session.pipshown = True
-					InfoBarPiP.pipWindowActive = False
-					self.session.pip.servicePath = curServicePath
-					if SystemInfo["LCDMiniTVPiP"] and int(config.lcd.modepip.value) >= 1:
-						print('[InfoBarGenerics] [LCDMiniTV] enable PIP')
-						f = open("/proc/stb/lcd/mode", "w")
-						f.write(config.lcd.modepip.value)
-						f.close()
-						f = open("/proc/stb/vmpeg/1/dst_width", "w")
-						f.write("0")
-						f.close()
-						f = open("/proc/stb/vmpeg/1/dst_height", "w")
-						f.write("0")
-						f.close()
-						f = open("/proc/stb/vmpeg/1/dst_apply", "w")
-						f.write("1")
-						f.close()
-				else:
-					if config.usage.pip_mode.value == "standard":
-						newservice = self.session.nav.getCurrentlyPlayingServiceReference() or self.servicelist.servicelist.getCurrent()
-					if self.session.pip.playService(newservice, curBouquet):
-						self.session.pip.setCurrentBouquetMain(curBouquet)
+					if self.session.pip.playService(newservice):
 						self.session.pipshown = True
 						self.session.pip.servicePath = self.servicelist.getCurrentServicePath()
 						if SystemInfo["LCDMiniTVPiP"] and int(config.lcd.modepip.value) >= 1:
@@ -4849,6 +3663,10 @@ class InfoBarPiP:
 							self.lastPiPService = None
 							self.session.pipshown = False
 							del self.session.pip
+				elif info:
+					self.session.open(MessageBox, _("Your %s %s does not support PiP HD") % (getMachineBrand(), getMachineName()), type=MessageBox.TYPE_INFO, timeout=5)
+				else:
+					self.session.open(MessageBox, _("No active channel found."), type=MessageBox.TYPE_INFO, timeout=5)
 			if self.session.pipshown and hasattr(self, "screenSaverTimer"):
 				self.screenSaverTimer.stop()
 
@@ -4900,174 +3718,6 @@ class InfoBarPiP:
 		elif "stop" == use:
 			self.showPiP()
 
-	def doSwapPiP(self):
-		if "pip" in self.session:
-			if InfoBarPiP.pipWindowActive:
-				slist = self.servicelist
-				if slist and self.session.pipshown:
-					slist.togglePipzapSidebySide()
-					if slist.dopipzap:
-						currentServicePath = slist.getCurrentServicePath()
-						self.servicelist.setCurrentServicePath(self.session.pip.servicePath, doZap=False)
-						self.session.pip.servicePath = currentServicePath
-					else:
-						self.session.pip.inactive()
-						self.session.pip.inactiveToogle()
-						self.session.pip.activeSide()
-						InfoBarPiP.pipWindowActive = False
-						currbo = self.session.pip.getCurrentBouquetMain()
-						currservice = self.session.nav.getCurrentlyPlayingServiceOrGroup()
-						self.zapToServiceinList(currservice, currbo)
-			else:
-				self.session.pip.inactive()
-				if config.usage.pip_mode.value == "byside":
-					self.session.pip.inactiveToogle()
-					self.session.pip.activeSide()
-					global onzap_show_infobar
-					onzap_show_infobar = False
-					self.swapPiP()
-					onzap_show_infobar = True
-				else:
-					self.session.pip.inactiveToogle()
-					self.session.pip.inactiveSide()
-					self.swapPiP()
-		else:
-			if isinstance(self, InfoBarChannelSelection):
-				self.LeftPressed()
-
-	def doTogglePipzap(self):
-		if "pip" in self.session:
-			if self.session.pipshown:
-				if config.usage.pip_mode.value == "byside":
-					if InfoBarPiP.pipWindowActive:
-						self.doSwapPiP()
-					else:
-						slist = self.servicelist
-						if slist:
-							slist.togglePipzapSidebySide()
-							if slist.dopipzap:
-
-								self.session.pip.inactive()
-								self.session.pip.inactiveSide()
-								self.session.pip.activeToggle()
-								currentServicePath = slist.getCurrentServicePath()
-								pip_servicePath = self.session.pip.servicePath
-								self.servicelist.setCurrentServicePath(self.session.pip.servicePath, doZap=False)
-								self.session.pip.servicePath = currentServicePath
-								InfoBarPiP.pipWindowActive = True
-								currbo = self.session.pip.getCurrentBouquetPiP()
-								currservice = self.session.pip.getCurrentService()
-								self.zapToServiceinList(currservice, currbo)
-		else:
-			if isinstance(self, InfoBarChannelSelection):
-				self.RightPressed()
-
-	def doExit(self):
-		if isinstance(self, InfoBarShowHide):
-			self.keyHide()
-
-
-class InfoBarINFOpanel:
-	"""INFO-Panel - handles the infoPanel action"""
-
-	def __init__(self):
-		self["INFOpanelActions"] = HelpableActionMap(self, "InfoBarINFOpanel",
-			{
-				"infoPanel": (self.selectRedKeytask, _("INFO-Panel...")),
-				"softcamPanel": (self.softcamPanel, _("Softcam-Panel...")),
-			})
-		self.onHBBTVActivation = []
-		self.onRedButtonActivation = []
-
-	def selectRedKeytask(self):
-		isWEBBROWSER = None
-		isHBBTV = None
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/WebBrowser/browser.py"):
-			isWEBBROWSER = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/HbbTV/plugin.py"):
-			isHBBTV = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/E3Opera/plugin.py"):
-			isHBBTV = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/NXHbbTV/plugin.py"):
-			isHBBTV = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/OpenOpera/plugin.py"):
-			isHBBTV = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/WebkitHbbTV/plugin.py"):
-			isHBBTV = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/QtHbbtv/plugin.py"):
-			isHBBTV = True
-		if os.path.isfile("/usr/lib/enigma2/python/Plugins/Extensions/Hbbtv/plugin.py"):
-			isHBBTV = True
-
-		if isWEBBROWSER or isHBBTV:
-			service = self.session.nav.getCurrentService()
-			info = service and service.info()
-			if info and info.getInfoString(iServiceInformation.sHBBTVUrl) != "":
-				for x in self.onHBBTVActivation:
-					x()
-
-			elif config.plugins.infopanel_redpanel.selection.value == '0':
-				self.instantRecord()
-			else:
-				self.doRedKeyTask()
-
-		elif config.plugins.infopanel_redpanel.selection.value == '0':
-			self.instantRecord()
-		else:
-			self.doRedKeyTask()
-
-	def doRedKeyTask(self):
-		try:
-			if config.plugins.infopanel_redpanel.selection.value == '0':
-				self.instantRecord()
-			elif config.plugins.infopanel_redpanel.selection.value == '1':
-				from Plugins.Extensions.Infopanel.plugin import Infopanel
-				self.session.open(Infopanel, services=self.servicelist)
-			elif config.plugins.infopanel_redpanel.selection.value == '2':
-				self.session.open(TimerEditList)
-			elif config.plugins.infopanel_redpanel.selection.value == '3':
-				self.showMovies()
-			elif config.plugins.infopanel_redpanel.selection.value == '4':
-				self.StartsoftcamPanel()
-			else:
-				self.StartPlugin(config.plugins.infopanel_redpanel.selection.value)
-
-		except:
-			print("[InfoBarGenerics] Error on RedKeyTask !!")
-
-	def softcamPanel(self):
-		try:
-			if config.plugins.infopanel_redpanel.selectionLong.value == '0':
-				self.instantRecord()
-			elif config.plugins.infopanel_redpanel.selectionLong.value == '1':
-				from Plugins.Extensions.Infopanel.plugin import Infopanel
-				self.session.open(Infopanel, services=self.servicelist)
-			elif config.plugins.infopanel_redpanel.selectionLong.value == '2':
-				self.session.open(TimerEditList)
-			elif config.plugins.infopanel_redpanel.selectionLong.value == '3':
-				self.showMovies()
-			elif config.plugins.infopanel_redpanel.selectionLong.value == '4':
-				self.StartsoftcamPanel()
-			else:
-				self.StartPlugin(config.plugins.infopanel_redpanel.selectionLong.value)
-
-		except:
-			print("[InfoBarGenerics] Error on RedKeyTask Long!!")
-
-	def StartsoftcamPanel(self):
-		try:
-			from Plugins.Extensions.Infopanel.SoftcamPanel import SoftcamPanel
-			self.session.open(SoftcamPanel)
-		except:
-			pass
-
-	def StartPlugin(self, name):
-		pluginlist = plugins.getPlugins(PluginDescriptor.WHERE_PLUGINMENU)
-		for p in pluginlist:
-			if p.name == name:
-				p(session=self.session)
-				break
-
 
 class InfoBarQuickMenu:
 	def __init__(self):
@@ -5078,6 +3728,7 @@ class InfoBarQuickMenu:
 
 	def bluekey_qm(self):
 		self.showExtensionSelection()
+
 
 
 class InfoBarInstantRecord:
@@ -5218,8 +3869,7 @@ class InfoBarInstantRecord:
 			else:
 				self.session.openWithCallback(self.setEndtime, TimerSelection, list)
 		elif answer[1] == "timer":
-			import Screens.TimerEdit
-			self.session.open(TimerEdit.TimerEditList)
+			self.session.open(TimerEditList)
 		elif answer[1] == "stop":
 			self.session.openWithCallback(self.stopCurrentRecording, TimerSelection, list)
 		elif answer[1] in ("indefinitely", "manualduration", "manualendtime", "event"):
@@ -5229,21 +3879,16 @@ class InfoBarInstantRecord:
 			elif answer[1] == "manualendtime":
 				self.setEndtime(len(self.recording) - 1)
 		elif answer[1] == "savetimeshift":
-			# print('test1')
 			if self.isSeekable() and self.pts_eventcount != self.pts_currplaying:
-				# print('test2')
 				InfoBarTimeshift.SaveTimeshift(self, timeshiftfile="pts_livebuffer_%s" % self.pts_currplaying)
 			else:
-				# print('test3')
 				Notifications.AddNotification(MessageBox, _("Timeshift will get saved at end of event!"), MessageBox.TYPE_INFO, timeout=5)
 				self.save_current_timeshift = True
 				config.timeshift.isRecording.value = True
 		elif answer[1] == "savetimeshiftEvent":
-			# print('test4')
 			InfoBarTimeshift.saveTimeshiftEventPopup(self)
 
 		elif answer[1].startswith("pts_livebuffer") is True:
-			# print('test2')
 			InfoBarTimeshift.SaveTimeshift(self, timeshiftfile=answer[1])
 
 		if answer[1] != "savetimeshiftEvent":
@@ -5439,7 +4084,7 @@ class InfoBarSubserviceSelection:
 			service = self.session.nav.getCurrentService()
 			subservices = service and service.subServices()
 			if not subservices or subservices.getNumberOfSubservices() == 0:
-				if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/CustomSubservices/plugin.pyo"):
+				if isPluginInstalled("CustomSubservices"):
 					serviceRef = self.session.nav.getCurrentlyPlayingServiceReference()
 					subservices = self.getAvailableSubservices(serviceRef)
 					if not subservices or len(subservices) == 0:
@@ -5630,7 +4275,6 @@ class InfoBarTimerButton:
 			})
 
 	def timerSelection(self):
-		from Screens.TimerEdit import TimerEditList
 		self.session.open(TimerEditList)
 
 

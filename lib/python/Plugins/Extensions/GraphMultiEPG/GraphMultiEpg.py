@@ -1,17 +1,15 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-from skin import parseColor, parseFont, parseSize
+from skin import parseColor, parseFont
 from Components.config import config, ConfigClock, ConfigInteger, ConfigSubsection, ConfigYesNo, ConfigSelection, ConfigSelectionNumber
 from Components.Pixmap import Pixmap
 from Components.Button import Button
 from Components.ActionMap import HelpableActionMap
-from Components.HTMLComponent import HTMLComponent
 from Components.GUIComponent import GUIComponent
 from Components.EpgList import Rect
 from Components.Sources.Event import Event
 from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
-from Components.TimerList import TimerList
 from Components.Renderer.Picon import getPiconName
 from Components.Sources.ServiceEvent import ServiceEvent
 from Screens.Screen import Screen
@@ -27,9 +25,8 @@ from RecordTimer import RecordTimerEntry, parseEvent, AFTEREVENT
 from ServiceReference import ServiceReference, isPlayableForCur
 from Tools.LoadPixmap import LoadPixmap
 from Tools.Alternatives import CompareWithAlternatives
-from Tools import Notifications
 from enigma import eEPGCache, eListbox, gFont, eListboxPythonMultiContent, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER,\
-	RT_VALIGN_CENTER, RT_WRAP, BT_SCALE, BT_KEEP_ASPECT_RATIO, eSize, eRect, eTimer, getBestPlayableServiceReference, loadPNG
+	RT_VALIGN_CENTER, RT_WRAP, BT_SCALE, BT_KEEP_ASPECT_RATIO, eSize, eRect, eTimer, loadPNG
 from .GraphMultiEpgSetup import GraphMultiEpgSetup
 from time import localtime, time, strftime
 
@@ -64,7 +61,7 @@ config.misc.graph_mepg.extension_menu = ConfigYesNo(default=True)
 listscreen = config.misc.graph_mepg.default_mode.value
 
 
-class EPGList(HTMLComponent, GUIComponent):
+class EPGList(GUIComponent):
 	def __init__(self, selChangedCB=None, timer=None, time_epoch=120, overjump_empty=True):
 		GUIComponent.__init__(self)
 		self.cur_event = None
@@ -302,9 +299,9 @@ class EPGList(HTMLComponent, GUIComponent):
 		global listscreen
 		if self.listHeight > 0:
 			if listscreen:
-				itemHeight = self.listHeight // config.misc.graph_mepg.items_per_page_listscreen.value
+				itemHeight = self.listHeight / config.misc.graph_mepg.items_per_page_listscreen.value
 			else:
-				itemHeight = self.listHeight // config.misc.graph_mepg.items_per_page.value
+				itemHeight = self.listHeight / config.misc.graph_mepg.items_per_page.value
 		else:
 			itemHeight = 54 # some default (270/5)
 		if listscreen:
@@ -557,11 +554,11 @@ class EPGList(HTMLComponent, GUIComponent):
 					self.fillMultiEPG(None) # refill
 					return True
 			elif dir == +3: #next day
-				self.offs += 60 * 24 // self.time_epoch
+				self.offs += 60 * 24 / self.time_epoch
 				self.fillMultiEPG(None) # refill
 				return True
 			elif dir == -3: #prev day
-				self.offs -= 60 * 24 // self.time_epoch
+				self.offs -= 60 * 24 / self.time_epoch
 				if self.offs < 0:
 					self.offs = 0
 				self.fillMultiEPG(None) # refill
@@ -637,7 +634,7 @@ class EPGList(HTMLComponent, GUIComponent):
 		self.offs = 0
 
 
-class TimelineText(HTMLComponent, GUIComponent):
+class TimelineText(GUIComponent):
 	def __init__(self):
 		GUIComponent.__init__(self)
 		self.l = eListboxPythonMultiContent()
@@ -695,9 +692,9 @@ class TimelineText(HTMLComponent, GUIComponent):
 			time_steps = 60 if time_epoch > 180 else 30
 			num_lines = time_epoch // time_steps
 			timeStepsCalc = time_steps * 60
-			incWidth = event_rect.width() // num_lines
+			incWidth = event_rect.width() / num_lines
 			if int(config.misc.graph_mepg.center_timeline.value):
-				tlMove = incWidth // 2
+				tlMove = incWidth / 2
 				tlFlags = RT_HALIGN_CENTER | RT_VALIGN_CENTER
 			else:
 				tlMove = 0
@@ -733,7 +730,7 @@ class TimelineText(HTMLComponent, GUIComponent):
 
 		now = time()
 		if now >= time_base and now < (time_base + time_epoch * 60):
-			xpos = int((((now - time_base) * event_rect.width()) // (time_epoch * 60)) - (timeline_now.instance.size().width() // 2))
+			xpos = int((((now - time_base) * event_rect.width()) / (time_epoch * 60)) - (timeline_now.instance.size().width() / 2))
 			old_pos = timeline_now.position
 			new_pos = (xpos + eventLeft, old_pos[1])
 			if old_pos != new_pos:

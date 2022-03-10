@@ -164,6 +164,7 @@ public:
 		: type(type), flags(flags), path(path)
 	{
 		memset(data, 0, sizeof(data));
+		number = 0;
 	}
 #ifdef SWIG
 	eServiceReference(const eServiceReference &ref);
@@ -422,8 +423,8 @@ So we move all enum's to own classes (with _ENUMS as name ending) and let our re
 class inherit from the *_ENUMS class. This *_ENUMS classes are normally exportet via swig to python.
 But in the python code we doesn't like to write iServiceInformation_ENUMS.sVideoType....
 we like to write iServiceInformation.sVideoType.
-So until swig have no Solution for this Problem we call in lib/python/Makefile.am a python script named
-enigma_py_patcher.py to remove the "_ENUMS" strings in enigma.py at all needed locations. */
+So until swig have no Solution for this Problem we call in lib/python/Makefile.inc a sed command
+to remove the "_ENUMS" strings in enigma.py at all needed locations. */
 
 class iServiceInformation: public iServiceInformation_ENUMS, public iObject
 {
@@ -710,6 +711,7 @@ class PyList;
 struct eDVBTeletextSubtitlePage;
 struct eDVBSubtitlePage;
 struct ePangoSubtitlePage;
+struct eVobSubtitlePage;
 class eRect;
 class gRegion;
 class gPixmap;
@@ -721,6 +723,7 @@ public:
 	virtual void setPage(const eDVBTeletextSubtitlePage &p) = 0;
 	virtual void setPage(const eDVBSubtitlePage &p) = 0;
 	virtual void setPage(const ePangoSubtitlePage &p) = 0;
+	virtual void setPage(const eVobSubtitlePage &p) = 0;
 	virtual void setPixmap(ePtr<gPixmap> &pixmap, gRegion changed, eRect dest) = 0;
 	virtual void destroy() = 0;
 };
@@ -844,6 +847,7 @@ public:
 	virtual SWIG_VOID(RESULT) getAdapterId(int &result) const = 0;
 	virtual SWIG_VOID(RESULT) getDemuxId(int &result) const = 0;
 	virtual SWIG_VOID(RESULT) getCaIds(std::vector<int> &caids, std::vector<int> &ecmpids, std::vector<std::string> &ecmdatabytes) const = 0;
+	virtual SWIG_VOID(RESULT) getDefaultAudioPid(int &result) const = 0;
 };
 
 class iStreamableService: public iObject

@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import division
 from Screens.Screen import Screen
 from Screens.Setup import getConfigMenuItem, Setup
 from Screens.InputBox import PinInput
@@ -17,7 +16,6 @@ from Components.SystemInfo import SystemInfo
 from Components.VolumeControl import VolumeControl
 from enigma import iPlayableService, eTimer, eSize
 from Tools.ISO639 import LanguageCodes
-from Tools.BoundFunction import boundFunction
 from boxbranding import getBoxType
 FOCUS_CONFIG, FOCUS_STREAMS = list(range(2))
 [PAGE_AUDIO, PAGE_SUBTITLES] = ["audio", "subtitles"]
@@ -40,6 +38,8 @@ class AudioSelection(Screen, ConfigListScreen):
 		self.protectContextMenu = True
 		ConfigListScreen.__init__(self, [])
 		self.infobar = infobar or self.session.infobar
+		if not hasattr(self.infobar, "selected_subtitle"):
+			self.infobar.selected_subtitle = None
 
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap={
 				iPlayableService.evUpdatedInfo: self.__updatedInfo
@@ -427,7 +427,7 @@ class AudioSelection(Screen, ConfigListScreen):
 		config.av.downmix_dts.save()
 
 	def setAACTranscode(self, transcode):
-		config.av.transcodeaac.setValue(transcode)
+		config.av.transcodeaac.setValue(transcode.value)
 		config.av.transcodeaac.save()
 
 	def changeMode(self, mode):
@@ -701,7 +701,7 @@ class QuickSubtitlesConfigMenu(ConfigListScreen, Screen):
 			return ""
 		fps = info.getInfo(iServiceInformation.sFrameRate)
 		if fps > 0:
-			return "%6.3f" % (fps // 1000.)
+			return "%6.3f" % (fps / 1000.)
 		return ""
 
 	def cancel(self):

@@ -13,9 +13,8 @@ from Components.Sources.Boolean import Boolean
 from Components.Sources.StaticText import StaticText
 from Components.SystemInfo import SystemInfo
 
-from enigma import eEnv
-import xml.etree.cElementTree
 import six
+
 
 
 class SetupSummary(Screen):

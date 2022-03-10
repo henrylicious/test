@@ -1,12 +1,10 @@
 from __future__ import absolute_import
-from __future__ import division
-from Components.HTMLComponent import HTMLComponent
 from Components.GUIComponent import GUIComponent
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from ServiceReference import ServiceReference
-from enigma import eListboxPythonMultiContent, eListbox, gFont, iServiceInformation, eServiceCenter, getDesktop, RT_HALIGN_LEFT, RT_VALIGN_CENTER, eDVBFrontendParametersSatellite
+from enigma import RT_HALIGN_LEFT, eDVBFrontendParametersSatellite, eListbox, eListboxPythonMultiContent, eServiceCenter, gFont, getDesktop, iServiceInformation
 from Tools.Transponder import ConvertToHumanReadable
 from Components.Converter.ChannelNumbers import channelnumbers
 import skin
@@ -57,7 +55,7 @@ def ServiceInfoListEntry(a, b, valueType=TYPE_TEXT, param=4):
 	]
 
 
-class ServiceInfoList(HTMLComponent, GUIComponent):
+class ServiceInfoList(GUIComponent):
 	def __init__(self, source):
 		GUIComponent.__init__(self)
 		self.l = eListboxPythonMultiContent()
@@ -162,7 +160,7 @@ class ServiceInfo(Screen):
 				if width > 0 and height > 0:
 					resolution = "%dx%d" % (width, height)
 					resolution += ("i", "p", "-")[self.info.getInfo(iServiceInformation.sProgressive)]
-					resolution += str((self.info.getInfo(iServiceInformation.sFrameRate) + 500) // 1000)
+					resolution += str((self.info.getInfo(iServiceInformation.sFrameRate) + 500) / 1000)
 					aspect = self.getServiceInfoValue(iServiceInformation.sAspect)
 					aspect = aspect in (1, 2, 5, 6, 9, 0xA, 0xD, 0xE) and "4:3" or "16:9"
 					resolution += " - [" + aspect + "]"

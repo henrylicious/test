@@ -1,6 +1,5 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Button import Button
@@ -13,7 +12,7 @@ from Components.About import about
 from Components.ScrollLabel import ScrollLabel
 from Components.SystemInfo import SystemInfo
 from Components.config import config
-from enigma import eTimer, getEnigmaVersionString, getDesktop, eGetEnigmaDebugLvl
+from enigma import eTimer, getDesktop, getEnigmaVersionString
 from boxbranding import getBoxType, getMachineBuild, getMachineBrand, getMachineName, getImageVersion, getImageBuild, getDriverDate, getBrandOEM, getOEVersion
 
 from Components.Pixmap import MultiPixmap
@@ -27,7 +26,7 @@ from Tools.Directories import fileCheck
 
 import os
 import re
-from os import path, popen, system
+from os import path, popen
 from re import search
 import six
 
@@ -50,7 +49,7 @@ def read_startup(FILE):
 		myfile.close()
 	except IOError:
 		print("[ERROR] failed to open file %s" % filename)
-	return ret
+	return data
 
 
 class About(Screen):
@@ -121,10 +120,10 @@ class About(Screen):
 		model = None
 		AboutText = ""
 		self["lab2"] = StaticText(_("Support @") + " www.hdfreaks.cc")
-		AboutText += _("Model:\t%s %s - OEM Model: %s\n") % (getMachineBrand(), getMachineName(), getBrandOEM())
+		AboutText += _("Model:\t\t%s %s - OEM Model: %s\n") % (getMachineBrand(), getMachineName(), getBrandOEM())
 
 		if path.exists('/proc/stb/info/chipset'):
-			AboutText += _("Chipset:\t%s") % about.getChipSetString() + "\n"
+			AboutText += _("Chipset:\t\t%s") % about.getChipSetString() + "\n"
 
 		cmd = 'cat /proc/cpuinfo | grep "cpu MHz" -m 1 | awk -F ": " ' + "'{print $2}'"
 		cmd2 = 'cat /proc/cpuinfo | grep "BogoMIPS" -m 1 | awk -F ": " ' + "'{print $2}'"
@@ -165,7 +164,7 @@ class About(Screen):
 				f = open('/sys/firmware/devicetree/base/cpus/cpu@0/clock-frequency', 'rb')
 				clockfrequency = f.read()
 				f.close()
-				cpuMHz = "%s MHz" % str(round(int(binascii.hexlify(clockfrequency), 16) // 1000000, 1))
+				cpuMHz = "%s MHz" % str(round(int(binascii.hexlify(clockfrequency), 16) / 1000000, 1))
 			except:
 				cpuMHz = "1,7 GHz"
 		else:
@@ -190,9 +189,9 @@ class About(Screen):
 			bogoMIPS = "" + res2.replace("\n", "")
 
 		if getMachineBuild() in ('vusolo4k', 'hd51', 'hd52', 'sf4008', 'dm900', 'h7', 'gb7252', '8100s'):
-			AboutText += _("CPU:\t%s") % about.getCPUString() + cpuMHz + "\n"
+			AboutText += _("CPU:\t\t%s") % about.getCPUString() + cpuMHz + "\n"
 		else:
-			AboutText += _("CPU:\t%s") % about.getCPUString() + " " + cpuMHz + "\n"
+			AboutText += _("CPU:\t\t%s") % about.getCPUString() + " " + cpuMHz + "\n"
 		dMIPS = 0
 		if getMachineBuild() in ('vusolo4k'):
 			dMIPS = "10.500"
@@ -201,7 +200,7 @@ class About(Screen):
 		if getMachineBuild() in ('vusolo4k', 'hd51', 'hd52', 'sf4008', 'dm900', 'h7', 'gb7252', '8100s'):
 			AboutText += _("DMIPS:\t") + dMIPS + "\n"
 		else:
-			AboutText += _("BogoMIPS:\t%s") % bogoMIPS + "\n"
+			AboutText += _("BogoMIPS:\t\t%s") % bogoMIPS + "\n"
 
 		tempinfo = ""
 		if path.exists('/proc/stb/sensors/temp0/value'):
@@ -226,8 +225,7 @@ class About(Screen):
 				tempinfo = ""
 
 		if tempinfo and int(tempinfo.replace('\n', '')) > 0:
-			mark = str('\xc2\xb0')
-			AboutText += _("System Temp:\t%s") % tempinfo.replace('\n', '').replace(' ', '') + mark + "C\n"
+			AboutText += _("System Temp:\t\t%s") % tempinfo.replace('\n', '').replace(' ', '') + SIGN + "C\n"
 
 		tempinfo = ""
 		if path.exists('/proc/stb/fp/temp_sensor_avs'):
@@ -257,19 +255,18 @@ class About(Screen):
 			except:
 				tempinfo = ""
 		if tempinfo and int(tempinfo.replace('\n', '')) > 0:
-			mark = str('\xc2\xb0')
-			AboutText += _("CPU Temp:\t%s") % tempinfo.replace('\n', '').replace(' ', '') + mark + "C\n"
+			AboutText += _("CPU Temp:\t\t%s") % tempinfo.replace('\n', '').replace(' ', '') + SIGN + "C\n"
 
-		AboutText += _("Cores:\t%s") % about.getCpuCoresString() + "\n"
-		AboutText += _("HDF Version:\tV%s") % getImageVersion() + " Build #" + getImageBuild() + " based on " + getOEVersion() + "\n"
-		AboutText += _("Kernel (Box):\t%s") % about.getKernelVersionString() + " (" + getBoxType() + ")" + "\n"
+		AboutText += _("Cores:\t\t%s") % about.getCpuCoresString() + "\n"
+		AboutText += _("HDF Version:\t\tV%s") % getImageVersion() + " Build #" + getImageBuild() + " based on " + getOEVersion() + "\n"
+		AboutText += _("Kernel (Box):\t\t%s") % about.getKernelVersionString() + " (" + getBoxType() + ")" + "\n"
 
 		if path.isfile("/etc/issue"):
 			version = open("/etc/issue").readlines()[-2].upper().strip()[:-6]
 			if path.isfile("/etc/image-version"):
 				build = self.searchString("/etc/image-version", "^build=")
 				version = "%s #%s" % (version, build)
-			AboutText += _("Image:\t%s") % version + "\n"
+			AboutText += _("Image:\t\t%s") % version + "\n"
 
 		imagestarted = ""
 		bootname = ''
@@ -279,7 +276,7 @@ class About(Screen):
 			f.close()
 		if SystemInfo["HasRootSubdir"]:
 			image = find_rootfssubdir("STARTUP")
-			AboutText += _("Selected Image:\t%s") % "STARTUP_" + image[-1:] + bootname + "\n"
+			AboutText += _("Selected Image:\t\t%s") % "STARTUP_" + image[-1:] + bootname + "\n"
 		elif getMachineBuild() in ('gbmv200', 'cc1', 'sf8008', 'ustym4kpro', 'beyonwizv2', "viper4k"):
 			if path.exists('/boot/STARTUP'):
 				f = open('/boot/STARTUP', 'r')
@@ -314,10 +311,10 @@ class About(Screen):
 		if SystemInfo["HaveMultiBoot"]:
 			MyFlashDate = about.getFlashDateString()
 			if path.isfile("/etc/filesystems"):
-				AboutText += _("Flashed:\t%s") % MyFlashDate + "\n"
+				AboutText += _("Flashed:\t\t%s") % MyFlashDate + "\n"
 				#AboutText += _("Flashed:\tMultiboot active\n")
 		else:
-			AboutText += _("Flashed:\t%s\n") % about.getFlashDateString()
+			AboutText += _("Flashed:\t\t%s\n") % about.getFlashDateString()
 
 		string = getDriverDate()
 		year = string[0:4]
@@ -327,20 +324,20 @@ class About(Screen):
 		gstcmd = 'opkg list-installed | grep "gstreamer1.0 -" | cut -c 16-32'
 		gstcmd2 = os.system(gstcmd)
 		#return (gstcmd2)
-		AboutText += _("Drivers:\t%s") % driversdate + "\n"
-		AboutText += _("GStreamer:\t%s") % about.getGStreamerVersionString() + "\n"
-		AboutText += _("Python:\t%s\n") % about.getPythonVersionString()
-		AboutText += _("Free Flash:\t%s\n") % freeflash()
-		AboutText += _("Skin:\t%s (%s x %s)\n") % (config.skin.primary_skin.value.split('/')[0], getDesktop(0).size().width(), getDesktop(0).size().height())
-		AboutText += _("Last update:\t%s") % getEnigmaVersionString() + " to Build #" + getImageBuild() + "\n"
-		AboutText += _("E2 (re)starts:\t%s\n") % config.misc.startCounter.value
-		AboutText += _("Uptime") + ":\t" + about.getBoxUptime() + "\n"
+		AboutText += _("Drivers:\t\t%s") % driversdate + "\n"
+		AboutText += _("GStreamer:\t\t%s") % about.getGStreamerVersionString() + "\n"
+		AboutText += _("Python:\t\t%s\n") % about.getPythonVersionString()
+		AboutText += _("Free Flash:\t\t%s\n") % freeflash()
+		AboutText += _("Skin:\t\t%s (%s x %s)\n") % (config.skin.primary_skin.value.split('/')[0], getDesktop(0).size().width(), getDesktop(0).size().height())
+		AboutText += _("Last update:\t\t%s") % getEnigmaVersionString() + " to Build #" + getImageBuild() + "\n"
+		AboutText += _("E2 (re)starts:\t\t%s\n") % config.misc.startCounter.value
+		AboutText += _("Uptime") + ":\t\t" + about.getBoxUptime() + "\n"
 		if SystemInfo["WakeOnLAN"]:
 			if fileCheck("/proc/stb/power/wol"):
 				WOLmode = open("/proc/stb/power/wol").read()[:-1]
 			if fileCheck("/proc/stb/fp/wol"):
 				WOLmode = open("/proc/stb/fp/wol").read()[:-1]
-			AboutText += _("WakeOnLAN:\t%s\n") % WOLmode
+			AboutText += _("WakeOnLAN:\t\t%s\n") % WOLmode
 		AboutText += _("Network:")
 		eth0 = about.getIfConfig('eth0')
 		eth1 = about.getIfConfig('eth1')
@@ -349,22 +346,23 @@ class About(Screen):
 		wlan1 = about.getIfConfig('wlan1')
 		if 'addr' in eth0:
 			for x in about.GetIPsFromNetworkInterfaces():
-				AboutText += "\t" + str(x[0]) + ": " + str(x[1]) + " (" + netspeed() + ")\n"
+				print(x)
+				AboutText += "\t\t" + str(x[1]) + " (" + netspeed() + ")\n"
 		elif 'addr' in eth1:
 			for x in about.GetIPsFromNetworkInterfaces():
-				AboutText += "\t" + str(x[0]) + ": " + str(x[1]) + " (" + netspeed_eth1() + ")\n"
+				AboutText += "\t\t" + str(x[1]) + " (" + netspeed_eth1() + ")\n"
 		elif 'addr' in ra0:
 			for x in about.GetIPsFromNetworkInterfaces():
-				AboutText += "\t" + str(x[0]) + ": " + str(x[1]) + " (~" + netspeed_ra0() + ")\n"
+				AboutText += "\t\t" + str(x[1]) + " (~" + netspeed_ra0() + ")\n"
 		elif 'addr' in wlan0:
 			for x in about.GetIPsFromNetworkInterfaces():
-				AboutText += "\t" + str(x[0]) + ": " + str(x[1]) + " (~" + netspeed_wlan0() + ")\n"
+				AboutText += "\t\t" + str(x[1]) + " (~" + netspeed_wlan0() + ")\n"
 		elif 'addr' in wlan1:
 			for x in about.GetIPsFromNetworkInterfaces():
-				AboutText += "\t" + str(x[0]) + ": " + str(x[1]) + " (~" + netspeed_wlan1() + ")\n"
+				AboutText += "\t\t" + str(x[1]) + " (~" + netspeed_wlan1() + ")\n"
 		else:
 			for x in about.GetIPsFromNetworkInterfaces():
-				AboutText += "\t" + str(x[0]) + ": " + str(x[1]) + "\n"
+				AboutText += "\t\t" + str(x[0]) + ": " + str(x[1]) + "\n"
 
 		fp_version = getFPVersion()
 		if fp_version is None:
@@ -463,19 +461,19 @@ class Devices(Screen):
 				size = Harddisk(device).diskSize()
 				free = Harddisk(device).free()
 
-				if ((float(size) // 1024) // 1024) >= 1:
-					sizeline = _("Size: ") + str(round(((float(size) // 1024) // 1024), 2)) + " " + _("TB")
-				elif (size // 1024) >= 1:
-					sizeline = _("Size: ") + str(round((float(size) // 1024), 2)) + " " + _("GB")
+				if ((float(size) / 1024) / 1024) >= 1:
+					sizeline = _("Size: ") + str(round(((float(size) / 1024) / 1024), 2)) + " " + _("TB")
+				elif (size / 1024) >= 1:
+					sizeline = _("Size: ") + str(round((float(size) / 1024), 2)) + " " + _("GB")
 				elif size >= 1:
 					sizeline = _("Size: ") + str(size) + " " + _("MB")
 				else:
 					sizeline = _("Size: ") + _("unavailable")
 
-				if ((float(free) // 1024) // 1024) >= 1:
-					freeline = _("Free: ") + str(round(((float(free) // 1024) // 1024), 2)) + " " + _("TB")
-				elif (free // 1024) >= 1:
-					freeline = _("Free: ") + str(round((float(free) // 1024), 2)) + " " + _("GB")
+				if ((float(free) / 1024) / 1024) >= 1:
+					freeline = _("Free: ") + str(round(((float(free) / 1024) / 1024), 2)) + " " + _("TB")
+				elif (free / 1024) >= 1:
+					freeline = _("Free: ") + str(round((float(free) / 1024), 2)) + " " + _("GB")
 				elif free >= 1:
 					freeline = _("Free: ") + str(free) + " " + _("MB")
 				else:
@@ -870,8 +868,7 @@ class AboutSummary(Screen):
 		elif path.exists('/proc/stb/fp/temp_sensor'):
 			tempinfo = open('/proc/stb/fp/temp_sensor', 'r').read()
 		if tempinfo and int(tempinfo.replace('\n', '')) > 0:
-			mark = str('\xc2\xb0')
-			AboutText += _("Temperature: %s") % tempinfo.replace('\n', '') + mark + "C"
+			AboutText += _("Temperature: %s") % tempinfo.replace('\n', '') + SIGN + "C"
 
 		self["AboutText"] = StaticText(AboutText)
 
@@ -1061,9 +1058,9 @@ class MemoryInfo(Screen):
 			self['rmemtext'].setText(rtext)
 			self['rmemvalue'].setText(rvalue)
 
-			self["slide"].setValue(int(100.0 * (mem - free) // mem + 0.25))
-			self['pfree'].setText("%.1f %s" % (100. * free // mem, '%'))
-			self['pused'].setText("%.1f %s" % (100. * (mem - free) // mem, '%'))
+			self["slide"].setValue(int(100.0 * (mem - free) / mem + 0.25))
+			self['pfree'].setText("%.1f %s" % (100. * free / mem, '%'))
+			self['pused'].setText("%.1f %s" % (100. * (mem - free) / mem, '%'))
 
 		except Exception as e:
 			print("[About] getMemoryInfo FAIL:", e)

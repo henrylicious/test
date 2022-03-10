@@ -126,7 +126,7 @@ void keyEvent(const eRCKey &key)
 #include <lib/dvb/epgcache.h>
 
 /* Defined in eerror.cpp */
-void setDebugTime(bool enable);
+void setDebugTime(int level);
 class eMain: public eApplication, public sigc::trackable
 {
 	eInit init;
@@ -278,8 +278,9 @@ int main(int argc, char **argv)
 	if (debugLvl < 0)
 		debugLvl = 0;
 	printf("ENIGMA_DEBUG_LVL=%d\n", debugLvl);
-	if (getenv("ENIGMA_DEBUG_TIME"))
-		setDebugTime(atoi(getenv("ENIGMA_DEBUG_TIME")) != 0);
+	debugTime = getenv("ENIGMA_DEBUG_TIME") ? atoi(getenv("ENIGMA_DEBUG_TIME")) : 6;
+	setDebugTime(debugTime);
+	printf("ENIGMA_DEBUG_TIME=%d\n", debugTime);
 	ePython python;
 	eMain main;
 
@@ -382,8 +383,7 @@ int main(int argc, char **argv)
 	/* start at full size */
 	eVideoWidget::setFullsize(true);
 
-	//	python.execute("mytest", "__main__");
-	python.execFile(eEnv::resolve("${libdir}/enigma2/python/mytest.py").c_str());
+	python.execFile(eEnv::resolve("${libdir}/enigma2/python/StartEnigma.py").c_str());
 
 	/* restore both decoders to full size */
 	eVideoWidget::setFullsize(true);
@@ -427,6 +427,12 @@ const char *getEnigmaVersionString()
 	return enigma2_date;
 }
 
+const char *getE2Rev()
+{
+	return E2REV;
+}
+
+
 const char *getGStreamerVersionString()
 {
 	return gst_version_string();
@@ -440,21 +446,7 @@ void dump_malloc_stats(void)
 	eDebug("MALLOC: %d total", mi.uordblks);
 }
 
-#ifdef USE_LIBVUGLES2
-#include <vuplus_gles.h>
-
-void setAnimation_current(int a)
-{
-	gles_set_animation_func(a);
-}
-
-void setAnimation_speed(int speed)
-{
-	gles_set_animation_speed(speed);
-}
-#else
 #ifndef HAVE_OSDANIMATION
 void setAnimation_current(int a) {}
 void setAnimation_speed(int speed) {}
-#endif
 #endif

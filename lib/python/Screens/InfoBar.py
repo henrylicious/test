@@ -1,22 +1,18 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from Tools.Profile import profile
-from Tools.BoundFunction import boundFunction
 
 # workaround for required config entry dependencies.
 import Screens.MovieSelection
-from Components.PluginComponent import plugins
-from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Components.Label import Label
 from Components.Pixmap import MultiPixmap
-from Tools.Directories import fileExists
 
 profile("LOAD:enigma")
 import enigma
 import os
-from boxbranding import getBoxType, getMachineBrand, getBrandOEM
+from boxbranding import getBoxType, getMachineBrand
 
 boxtype = getBoxType()
 
@@ -94,7 +90,8 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 		self.helpList.append((self["actions"], "InfobarActions", [("showRadio", _("Listen to the radio..."))]))
 
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap={
-				enigma.iPlayableService.evUpdatedEventInfo: self.__eventInfoChanged
+				enigma.iPlayableService.evUpdatedEventInfo: self.__eventInfoChanged,
+				enigma.iPlayableService.evUpdatedInfo: self.__infoChanged
 			})
 
 		self.current_begin_time = 0
@@ -143,6 +140,14 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 				if old_begin_time and old_begin_time != self.current_begin_time:
 					self.doShow()
 
+	def __infoChanged(self):
+		if self.execing:
+			if config.usage.show_infobar_on_event_change.value:
+				service = self.session.nav.getCurrentlyPlayingServiceReference()
+				servicestring = service and service.toString()
+				if servicestring.split(':')[0] in ['4097', '5001', '5002', '5003']:
+					self.doShow()
+
 	def __checkServiceStarted(self):
 		self.__serviceStarted(True)
 		self.onExecBegin.remove(self.__checkServiceStarted)
@@ -179,8 +184,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 
 	def showEMC(self):
 		try:
-			import Plugins.Extensions.EnhancedMovieCenter.plugin
-			from Components.PluginComponent import plugins
 			EnhancedMovieCenter.showMoviesNew()
 		except Exception as e:
 			self.session.open(MessageBox, _("The Enhanced Movie Center plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -188,7 +191,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 	def showETPORTAL(self):
 		try:
 			from Plugins.Extensions.EtPortal.plugin import EtPortalScreen
-			from Components.PluginComponent import plugins
 			self.session.open(EtPortalScreen)
 		except Exception as e:
 			self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -214,7 +216,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 	def showWWW(self):
 		try:
 			from Plugins.Extensions.EtPortal.plugin import EtPortalScreen
-			from Components.PluginComponent import plugins
 			self.session.open(EtPortalScreen)
 		except Exception as e:
 			self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)
@@ -244,7 +245,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide,
 		if getMachineBrand() == 'GI' or boxtype.startswith('azbox') or boxtype.startswith('ini') or boxtype.startswith('venton'):
 			try:
 				from Plugins.Extensions.EtPortal.plugin import EtPortalScreen
-				from Components.PluginComponent import plugins
 				self.session.open(EtPortalScreen)
 			except Exception as e:
 				self.session.open(MessageBox, _("The EtPortal plugin is not installed!\nPlease install it."), type=MessageBox.TYPE_INFO, timeout=10)

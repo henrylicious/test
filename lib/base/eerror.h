@@ -115,9 +115,10 @@ void DumpUnfreed();
  * main() will check the environemnt to set the values.
  */
 extern int debugLvl;
+extern int debugTime;
 
 void CHECKFORMAT eDebugImpl(int flags, const char*, ...);
-enum { lvlDebug=4, lvlInfo=3, lvlWarning=2, lvlError=1, lvlFatal=0 };
+enum { lvlTrace=5, lvlDebug=4, lvlInfo=3, lvlWarning=2, lvlError=1, lvlFatal=0 };
 
 #define DEFAULT_DEBUG_LVL  4
 
@@ -125,7 +126,7 @@ enum { lvlDebug=4, lvlInfo=3, lvlWarning=2, lvlError=1, lvlFatal=0 };
 # define MAX_DEBUG_LEVEL 0
 #else
 # ifndef MAX_DEBUG_LEVEL
-#  define MAX_DEBUG_LEVEL 4
+#  define MAX_DEBUG_LEVEL 5
 # endif
 #endif
 
@@ -149,6 +150,9 @@ enum { lvlDebug=4, lvlInfo=3, lvlWarning=2, lvlError=1, lvlFatal=0 };
 #define eDebug(...)			eDebugLow(lvlDebug,   0,                   __VA_ARGS__)
 #define eDebugNoNewLineStart(...)	eDebugLow(lvlDebug,   _DBGFLG_NONEWLINE,   __VA_ARGS__)
 #define eDebugNoNewLine(...)		eDebugLow(lvlDebug,   _DBGFLG_NOTIME | _DBGFLG_NONEWLINE, __VA_ARGS__)
+#define eTrace(...)			eDebugLow(lvlTrace,        0,                 ##__VA_ARGS__)
+#define eTraceNoNewLineStart(...)	eDebugLow(lvlTrace, _DBGFLG_NONEWLINE,                 ##__VA_ARGS__)
+#define eTraceNoNewLine(...)		eDebugLow(lvlTrace, _DBGFLG_NOTIME | _DBGFLG_NONEWLINE, ##__VA_ARGS__)
 #define ASSERT(x) { if (!(x)) eFatal("%s:%d ASSERTION %s FAILED!", __FILE__, __LINE__, #x); }
 
 #endif // SWIG

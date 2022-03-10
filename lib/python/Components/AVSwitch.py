@@ -4,8 +4,8 @@ from Components.config import config, ConfigSlider, ConfigSelection, ConfigSubDi
 from Components.About import about
 from Tools.CList import CList
 from Tools.HardwareInfo import HardwareInfo
-from enigma import eAVSwitch, eDVBVolumecontrol, getDesktop
-from boxbranding import getBoxType, getMachineBuild, getBrandOEM
+from enigma import eAVSwitch, getDesktop
+from boxbranding import getBoxType, getBrandOEM
 from Components.SystemInfo import SystemInfo
 import os
 from time import sleep
@@ -258,6 +258,21 @@ class AVSwitch:
 				f.close()
 			except IOError:
 				print("[AVSwitch] setting videomode failed.")
+
+		if SystemInfo["have24hz"]:
+			try:
+				open("/proc/stb/video/videomode_24hz", "w").write(mode_24)
+			except IOError:
+				print("[VideoHardware] cannot open /proc/stb/video/videomode_24hz")
+
+		if getBrandOEM() in ('gigablue'):
+			try:
+				# use 50Hz mode (if available) for booting
+				f = open("/etc/videomode", "w")
+				f.write(mode_50)
+				f.close()
+			except IOError:
+				print("[AVSwitch] writing initial videomode to /etc/videomode failed.")
 
 		if SystemInfo["have24hz"]:
 			try:

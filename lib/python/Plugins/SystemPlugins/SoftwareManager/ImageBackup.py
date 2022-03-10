@@ -5,7 +5,6 @@ from __future__ import print_function
 #################################################################################
 
 from __future__ import absolute_import
-from __future__ import division
 from enigma import getEnigmaVersionString
 from Screens.Screen import Screen
 from Components.Button import Button
@@ -29,13 +28,13 @@ from boxbranding import getBoxType, getMachineBrand, getMachineName, getImageDis
 VERSION = _("Version %s %s.1") % (getImageDistro().upper(), getImageVersion())
 
 HaveGZkernel = True
-if SystemInfo["HasRootSubdir"] or getMachineBuild() in ('multibox', 'gbmv200', 'viper4k', 'i55plus', 'osmio4k', 'osmio4kplus', 'osmini4k', 'sf8008', 'cc1', 'dags72604', 'u41', 'u51', 'u52', 'u53', 'u54', 'u55', 'u56', 'h9', 'h9combo', 'u5', 'u5pvr', 'sf5008', 'et1x000', 'hd51', 'hd52', 'sf4008', 'dags7252', 'gb7252', 'vs1500', 'h7', 'xc7439', '8100s', 'dm7080', 'dm820', 'dm520', 'dm525', 'dm900'):
+if SystemInfo["HasRootSubdir"] or getMachineBuild() in ('multibox', 'gbmv200', 'viper4k', 'i55plus', 'osmio4k', 'osmio4kplus', 'osmini4k', 'sf8008', 'cc1', 'dags72604', 'u41', 'u42', 'u51', 'u52', 'u53', 'u54', 'u55', 'u56', 'h9', 'h9combo', 'u5', 'u5pvr', 'sf5008', 'et1x000', 'hd51', 'hd52', 'sf4008', 'dags7252', 'gb7252', 'vs1500', 'h7', 'xc7439', '8100s', 'dm7080', 'dm820', 'dm520', 'dm525', 'dm900'):
 	HaveGZkernel = False
 
 
 def Freespace(dev):
 	statdev = statvfs(dev)
-	space = (statdev.f_bavail * statdev.f_frsize) // 1024
+	space = (statdev.f_bavail * statdev.f_frsize) / 1024
 	print("[FULL BACKUP] Free space on %s = %i kilobytes" % (dev, space))
 	return space
 
@@ -437,7 +436,7 @@ class ImageBackup(Screen):
 			cmdlist.append("dd if=/dev/mtd4 of=%s/logo.bin" % self.WORKDIR)
 
 		if self.EMMCIMG == "usb_update.bin" and self.list[self.selection] == "Recovery":
-			SEEK_CONT = (Harddisk.getFolderSize(self.backuproot) // 1024) + 100000
+			SEEK_CONT = (Harddisk.getFolderSize(self.backuproot) / 1024) + 100000
 			cmdlist.append('echo "' + _("Create:") + " fastboot dump" + '"')
 			cmdlist.append('cp -f /usr/share/fastboot.bin %s/fastboot.bin' % (self.WORKDIR))
 			cmdlist.append('echo "' + _("Create:") + " bootargs dump" + '"')

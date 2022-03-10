@@ -1,14 +1,12 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 import os
 from time import time
 from enigma import eDVBDB, eEPGCache, setTunerTypePriorityOrder, setPreferredTuner, setSpinnerOnOff, setEnableTtCachingOnOff, eEnv, Misc_Options, eBackgroundFileEraser, eServiceEvent, eDVBFrontend, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER, RT_VALIGN_CENTER, RT_WRAP
-from Components.About import about
 from Components.Harddisk import harddiskmanager
 from Components.config import ConfigSubsection, ConfigYesNo, config, ConfigSelection, ConfigText, ConfigNumber, ConfigSet, ConfigLocations, NoSave, ConfigClock, ConfigInteger, ConfigBoolean, ConfigPassword, ConfigIP, ConfigSlider, ConfigSelectionNumber
-from Tools.Directories import resolveFilename, SCOPE_HDD, SCOPE_TIMESHIFT, SCOPE_AUTORECORD, SCOPE_SYSETC, defaultRecordingLocation, fileExists, fileCheck
-from boxbranding import getBoxType, getMachineBuild, getMachineName, getBrandOEM, getDisplayType
+from Tools.Directories import SCOPE_HDD, SCOPE_HDD, SCOPE_TIMESHIFT, defaultRecordingLocation, fileCheck, fileContains, fileExists, isPluginInstalled, resolveFilename
+from boxbranding import getDisplayType
 from Components.NimManager import nimmanager
 from Components.ServiceList import refreshServiceList
 from Components.SystemInfo import SystemInfo
@@ -16,6 +14,7 @@ from Tools.HardwareInfo import HardwareInfo
 from keyids import KEYIDS
 from sys import maxsize
 from six.moves import map
+
 
 
 def InitUsageConfig():
@@ -31,7 +30,7 @@ def InitUsageConfig():
 		if i < 60:
 			m = ngettext("%d minute", "%d minutes", i) % i
 		else:
-			m = abs(i // 60)
+			m = abs(i / 60)
 			m = ngettext("%d hour", "%d hours", m) % m
 		choicelist.append(("%d" % i, m))
 	config.downloader.autoupdate_timer = ConfigSelection(default="240", choices=choicelist)
@@ -61,6 +60,25 @@ def InitUsageConfig():
 	config.usage.numzaptimeoutmode = ConfigSelection(default="standard", choices=[("standard", _("Standard")), ("userdefined", _("User defined")), ("off", _("off"))])
 	config.usage.numzaptimeout1 = ConfigSelectionNumber(default=3000, stepwidth=250, min=250, max=10000, wraparound=True)
 	config.usage.numzaptimeout2 = ConfigSelectionNumber(default=1000, stepwidth=250, min=250, max=10000, wraparound=True)
+	config.usage.numzappicon = ConfigYesNo(default=True)
+	if fileContains("/etc/network/interfaces", "iface eth0 inet static") and not fileContains("/etc/network/interfaces", "iface wlan0 inet dhcp") or fileContains("/etc/network/interfaces", "iface wlan0 inet static") and fileContains("/run/ifstate", "wlan0=wlan0"):
+		config.usage.dns = ConfigSelection(default="custom", choices=[
+			("custom", _("Static IP or Custom")),
+			("google", _("Google DNS")),
+			("cloudflare", _("Cloudflare")),
+			("opendns-familyshield", _("OpenDNS FamilyShield")),
+			("opendns-home", _("OpenDNS Home"))
+		])
+	else:
+		config.usage.dns = ConfigSelection(default="dhcp-router", choices=[
+			("dhcp-router", _("DHCP Router")),
+			("custom", _("Static IP or Custom")),
+			("google", _("Google DNS")),
+			("cloudflare", _("Cloudflare")),
+			("opendns-familyshield", _("OpenDNS FamilyShield")),
+			("opendns-home", _("OpenDNS Home"))
+		])
+
 	config.usage.subnetwork = ConfigYesNo(default=True)
 	config.usage.subnetwork_cable = ConfigYesNo(default=True)
 	config.usage.subnetwork_terrestrial = ConfigYesNo(default=True)
@@ -113,7 +131,7 @@ def InitUsageConfig():
 	config.usage.use_extended_pig = ConfigYesNo(default=False)
 	config.usage.use_extended_pig_channelselection = ConfigYesNo(default=False)
 	config.usage.servicelist_preview_mode = ConfigYesNo(default=False)
-	config.usage.numberzap_show_picon = ConfigYesNo(default=False)
+	config.usage.numberzap_show_picon = ConfigYesNo(default=True)
 	config.usage.numberzap_show_servicename = ConfigYesNo(default=False)
 #####################################################
 
@@ -146,6 +164,7 @@ def InitUsageConfig():
 
 	config.usage.show_picon_bkgrn = ConfigSelection(default="transparent", choices=[("none", _("Disabled")), ("transparent", _("Transparent")), ("blue", _("Blue")), ("red", _("Red")), ("black", _("Black")), ("white", _("White")), ("lightgrey", _("Light Grey")), ("grey", _("Grey"))])
 	config.usage.show_menupath = ConfigSelection(default="large", choices=[("large", _("large")), ("small", _("small"))])
+	config.usage.showScreenPath = ConfigSelection(default="small", choices=[("off", _("Disabled")), ("small", _("Small")), ("large", _("Large"))])
 
 	config.usage.show_spinner = ConfigYesNo(default=True)
 	config.usage.enable_tt_caching = ConfigYesNo(default=True)
@@ -190,10 +209,10 @@ def InitUsageConfig():
 	for i in (10, 30):
 		choicelist.append(("%d" % i, ngettext("%d second", "%d seconds", i) % i))
 	for i in (60, 120, 300, 600, 1200, 1800):
-		m = i // 60
+		m = i / 60
 		choicelist.append(("%d" % i, ngettext("%d minute", "%d minutes", m) % m))
 	for i in (3600, 7200, 14400):
-		h = i // 3600
+		h = i / 3600
 		choicelist.append(("%d" % i, ngettext("%d hour", "%d hours", h) % h))
 	config.usage.hdd_standby = ConfigSelection(default="60", choices=[("0", _("No standby"))] + choicelist)
 	config.usage.output_12V = ConfigSelection(default="do not change", choices=[
@@ -206,7 +225,7 @@ def InitUsageConfig():
 		("no", _("no")), ("popup", _("With popup")), ("without popup", _("Without popup"))])
 	choicelist = [("-1", _("Disabled")), ("0", _("No timeout"))]
 	for i in [60, 300, 600, 900, 1800, 2700, 3600]:
-		m = i // 60
+		m = i / 60
 		choicelist.append(("%d" % i, ngettext("%d minute", "%d minutes", m) % m))
 	config.usage.pip_last_service_timeout = ConfigSelection(default="-1", choices=choicelist)
 
@@ -256,12 +275,12 @@ def InitUsageConfig():
 	config.usage.timeshift_path.addNotifier(timeshiftpathChanged, immediate_feedback=False)
 	config.usage.allowed_timeshift_paths = ConfigLocations(default=[resolveFilename(SCOPE_TIMESHIFT)])
 
-	if not os.path.exists(resolveFilename(SCOPE_AUTORECORD)):
+	if not os.path.exists(resolveFilename(SCOPE_HDD)):
 		try:
-			os.mkdir(resolveFilename(SCOPE_AUTORECORD), 0o755)
+			os.mkdir(resolveFilename(SCOPE_HDD), 0o755)
 		except:
 			pass
-	config.usage.autorecord_path = ConfigText(default=resolveFilename(SCOPE_AUTORECORD))
+	config.usage.autorecord_path = ConfigText(default=resolveFilename(SCOPE_HDD))
 	if not config.usage.default_path.value.endswith('/'):
 		tmpvalue = config.usage.autorecord_path.value
 		config.usage.autorecord_path.setValue(tmpvalue + '/')
@@ -273,7 +292,7 @@ def InitUsageConfig():
 			config.usage.autorecord_path.setValue(tmpvalue + '/')
 			config.usage.autorecord_path.save()
 	config.usage.autorecord_path.addNotifier(autorecordpathChanged, immediate_feedback=False)
-	config.usage.allowed_autorecord_paths = ConfigLocations(default=[resolveFilename(SCOPE_AUTORECORD)])
+	config.usage.allowed_autorecord_paths = ConfigLocations(default=[resolveFilename(SCOPE_HDD)])
 	config.usage.movielist_trashcan = ConfigYesNo(default=True)
 	config.usage.movielist_trashcan_days = ConfigSelectionNumber(min=1, max=31, stepwidth=1, default=7, wraparound=True)
 	config.usage.movielist_trashcan_network_clean = ConfigYesNo(default=False)
@@ -296,13 +315,19 @@ def InitUsageConfig():
 		("intermediate", _("Intermediate")),
 		("expert", _("Expert"))])
 
+	config.usage.wakeup_enabled = ConfigSelection(default="no", choices=[
+		("no", _("Disabled")),
+		("yes", _("Enabled")),
+		("standby", _("Enabled, only from standby")),
+		("deepstandby", _("Enabled, only from deep standby"))])
+
 	config.usage.window_timeout = ConfigSelectionNumber(default=90, stepwidth=1, min=1, max=600, wraparound=True)
 
 	choicelist = [("standby", _("Standby")), ("deepstandby", _("Deep Standby"))]
 	config.usage.sleep_timer_action = ConfigSelection(default="deepstandby", choices=choicelist)
 	choicelist = [("0", _("Disabled")), ("event_standby", _("Execute after current event"))]
 	for i in list(range(900, 14401, 900)):
-		m = abs(i // 60)
+		m = abs(i / 60)
 		m = ngettext("%d minute", "%d minutes", m) % m
 		choicelist.append((str(i), _("Execute in ") + m))
 	config.usage.sleep_timer = ConfigSelection(default="0", choices=choicelist)
@@ -344,7 +369,7 @@ def InitUsageConfig():
 		if i < 60:
 			m = ngettext("%d second", "%d seconds", i) % i
 		else:
-			m = abs(i // 60)
+			m = abs(i / 60)
 			m = ngettext("%d minute", "%d minutes", m) % m
 		choicelist.append(("%d" % i, m))
 	config.usage.screen_saver = ConfigSelection(default="0", choices=choicelist)
@@ -362,6 +387,13 @@ def InitUsageConfig():
 
 	config.usage.remote_fallback_enabled = ConfigYesNo(default=False)
 	config.usage.remote_fallback = ConfigText(default="http://192.168.123.123:8001", fixed_size=False)
+
+
+	choicelist = [("0", _("Disabled"))]
+	for i in (10, 50, 100, 500, 1000, 2000):
+		choicelist.append(("%d" % i, _("%d ms") % i))
+
+	config.usage.http_startdelay = ConfigSelection(default="0", choices=choicelist)
 
 	nims = [("-1", _("auto")), ("expert_mode", _("Expert mode")), ("experimental_mode", _("Experimental mode"))]
 	rec_nims = [("-2", _("Disabled")), ("-1", _("auto")), ("expert_mode", _("Expert mode")), ("experimental_mode", _("Experimental mode"))]
@@ -580,6 +612,7 @@ def InitUsageConfig():
 	config.epg.opentv = ConfigYesNo(default=True)
 	config.epg.saveepg = ConfigYesNo(default=True)
 	config.usage.streamlinkserver = ConfigYesNo(default=False)
+	config.usage.serviceapp = ConfigYesNo(default=False)
 	config.usage.cleanmemlite = ConfigYesNo(default=False)
 	config.usage.hdfpicon = ConfigYesNo(default=True)
 
@@ -692,13 +725,11 @@ def InitUsageConfig():
 			(eEnv.resolve("${datadir}/enigma2/keymap.lng"), _("Long button keymap - keymap.lng")),
 			(eEnv.resolve("${datadir}/enigma2/keymap.usr"), _("User keymap - keymap.usr")),
 			(eEnv.resolve("${datadir}/enigma2/keymap.ntr"), _("Neutrino keymap - keymap.ntr")),
-			(eEnv.resolve("${datadir}/enigma2/keymap.xpe"), _("Xpeed keymap - keymap.xpe")),
 			(eEnv.resolve("${datadir}/enigma2/keymap.u80"), _("U80 keymap - keymap.u80"))])
 	else:
 		config.usage.keymap = ConfigSelection(default=eEnv.resolve("${datadir}/enigma2/keymap.xml"), choices=[
 			(eEnv.resolve("${datadir}/enigma2/keymap.xml"), _("Default keymap - keymap.xml")),
 			(eEnv.resolve("${datadir}/enigma2/keymap.lng"), _("Long button keymap - keymap.lng")),
-			(eEnv.resolve("${datadir}/enigma2/keymap.xpe"), _("Xpeed keymap - keymap.xpe")),
 			(eEnv.resolve("${datadir}/enigma2/keymap.ntr"), _("Neutrino keymap - keymap.ntr")),
 			(eEnv.resolve("${datadir}/enigma2/keymap.u80"), _("U80 keymap - keymap.u80"))])
 
@@ -740,7 +771,7 @@ def InitUsageConfig():
 	for i in (2, 3, 4, 5, 10, 20, 30):
 		choicelist.append(("%d" % i, ngettext("%d second", "%d seconds", i) % i))
 	for i in (60, 120, 300):
-		m = i // 60
+		m = i / 60
 		choicelist.append(("%d" % i, ngettext("%d minute", "%d minutes", m) % m))
 	config.timeshift.startdelay = ConfigSelection(default="0", choices=choicelist)
 	config.timeshift.showinfobar = ConfigYesNo(default=True)
@@ -912,7 +943,7 @@ def InitUsageConfig():
 		if i == 0:
 			subtitle_delay_choicelist.append(("0", _("No delay")))
 		else:
-			subtitle_delay_choicelist.append(("%d" % i, "%2.1f sec" % (i // 90000.)))
+			subtitle_delay_choicelist.append(("%d" % i, "%2.1f sec" % (i / 90000.)))
 	config.subtitles.subtitle_noPTSrecordingdelay = ConfigSelection(default="315000", choices=subtitle_delay_choicelist)
 
 	config.subtitles.dvb_subtitles_yellow = ConfigYesNo(default=False)
@@ -1084,7 +1115,7 @@ def InitUsageConfig():
 					("1", _("with long OK press")),
 					("2", _("with exit button")),
 					("3", _("with left/right buttons"))])
-	if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/CoolTVGuide/plugin.pyo"):
+	if isPluginInstalled("CoolTVGuide"):
 		config.plisettings.PLIEPG_mode = ConfigSelection(default="cooltvguide", choices=[
 					("pliepg", _("Show Graphical EPG")),
 					("single", _("Show Single EPG")),
@@ -1673,6 +1704,7 @@ def updateChoices(sel, choices):
 					defval = str(x)
 					break
 		sel.setChoices(list(map(str, choices)), defval)
+
 
 
 def preferredPath(path):

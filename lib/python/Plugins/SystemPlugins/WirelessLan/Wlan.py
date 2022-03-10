@@ -6,9 +6,8 @@ import re
 import six
 
 if sys.version_info[0] < 3:
-	from string import maketrans, strip
+	from string import maketrans
 
-from enigma import eConsoleAppContainer
 
 from Components.config import config, ConfigYesNo, NoSave, ConfigSubsection, ConfigText, ConfigSelection, ConfigPassword
 from Components.Console import Console
@@ -407,6 +406,7 @@ class Status:
 		data = {'essid': False, 'frequency': False, 'accesspoint': False, 'bitrate': False, 'encryption': False, 'quality': False, 'signal': False, 'channel': False, 'encryption_type': False, 'frequency': False, 'frequency_norm': False}
 		for line in result.splitlines():
 			line = line.strip()
+			# print "[Wlan.py] line -->",line
 			if "ESSID" in line:
 				if "off/any" in line:
 					ssid = "off"

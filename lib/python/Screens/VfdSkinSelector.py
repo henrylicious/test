@@ -7,11 +7,10 @@ from Components.ActionMap import NumberActionMap
 from Components.Pixmap import Pixmap
 from Components.Sources.StaticText import StaticText
 from Components.MenuList import MenuList
-from Plugins.Plugin import PluginDescriptor
-import Components.config
+from Components.config import config, ConfigSelection
 from Components.Label import Label
-from Tools.Directories import resolveFilename, SCOPE_PLUGINS
-from os import path, walk
+from Tools.Directories import SCOPE_CURRENT_LCDSKIN
+from os import walk
 from enigma import eEnv
 from skin import *
 import os
@@ -129,7 +128,7 @@ class VFDSkinSelector(Screen):
 
 	def ok(self):
 		skinfile = self["SkinList"].getCurrent()[0] + ".xml"
-		addSkin(skinfile, SCOPE_CONFIG)
+		loadSkin(skinfile, scope=SCOPE_CURRENT_LCDSKIN, desktop=getDesktop(DISPLAY_SKIN_ID), screenID=DISPLAY_SKIN_ID)
 		config.skin.display_skin.value = skinfile
 		config.skin.display_skin.save()
 		print("Selected Value", config.skin.display_skin.value)

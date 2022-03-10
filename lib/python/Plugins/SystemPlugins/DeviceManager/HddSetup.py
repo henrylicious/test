@@ -1,19 +1,11 @@
 from __future__ import absolute_import
-from __future__ import division
 from . import _
-from enigma import *
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.Sources.List import List
 from Tools.Directories import resolveFilename, SCOPE_CURRENT_PLUGIN
-from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
-from .ExtrasList import ExtrasList
-from Components.MenuList import MenuList
-from Components.GUIComponent import GUIComponent
-from Components.HTMLComponent import HTMLComponent
 from Tools.LoadPixmap import LoadPixmap
 from Components.Button import Button
-from Components.Label import Label
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
 from .HddPartitions import HddPartitions
@@ -24,7 +16,6 @@ from .ExtraActionBox import ExtraActionBox
 from .MountPoints import MountPoints
 from boxbranding import getMachineBrand, getMachineName
 import os
-import sys
 
 
 def DiskEntry(model, size, removable):
@@ -67,7 +58,7 @@ class HddSetup(Screen):
 		self.disks = list()
 		self.mdisks = Disks()
 		for disk in self.mdisks.disks:
-			capacity = "%d MB" % (disk[1] // (1024 * 1024))
+			capacity = "%d MB" % (disk[1] / (1024 * 1024))
 			self.disks.append(DiskEntry(disk[3], capacity, disk[2]))
 		self["menu"] = List(self.disks)
 		self["key_red"] = Button(_("Exit"))
@@ -100,7 +91,7 @@ class HddSetup(Screen):
 		self.disks = list()
 		self.mdisks = Disks()
 		for disk in self.mdisks.disks:
-			capacity = "%d MB" % (disk[1] // (1024 * 1024))
+			capacity = "%d MB" % (disk[1] / (1024 * 1024))
 			self.disks.append(DiskEntry(disk[3], capacity, disk[2]))
 
 		self["menu"].setList(self.disks)

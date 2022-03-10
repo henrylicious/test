@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from boxbranding import getImageVersion
 
-from enigma import eConsoleAppContainer, eEnv
+from enigma import eEnv
 
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
@@ -14,6 +14,7 @@ from Components.Task import Task, Job, job_manager, Condition
 from Screens.TaskView import JobView
 from Tools.Directories import fileExists
 from Tools.HardwareInfo import HardwareInfo
+
 
 
 class md5Postcondition(Condition):
@@ -50,6 +51,7 @@ class md5verify(Task):
 
 	def processOutput(self, data):
 		print("[md5sum]", end=' ')
+
 
 
 class writeNAND(Task):

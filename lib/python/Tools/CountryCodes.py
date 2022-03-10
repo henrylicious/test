@@ -163,6 +163,7 @@ ISO3166 = [
 	(_("Nigeria"), "NG", "NGA"),
 	(_("Niue"), "NU", "NIU"),
 	(_("Norfolk Island"), "NF", "NFK"),
+	(_("North Macedonia (The Republic of)"), "MK", "MKD"),
 	(_("Northern Mariana Islands"), "MP", "MNP"),
 	(_("Norway"), "NO", "NOR"),
 	(_("Oman"), "OM", "OMN"),

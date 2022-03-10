@@ -1,6 +1,5 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 from Components.ActionMap import ActionMap
 from Components.Button import Button
 from Components.Label import Label
@@ -21,10 +20,11 @@ from Screens.EventView import EventViewSimple
 from Screens.TimerEntry import TimerEntry, TimerLog
 from Tools.BoundFunction import boundFunction
 from Tools.FuzzyDate import FuzzyTime
-from Tools.Directories import resolveFilename, SCOPE_HDD, fileExists
+from Tools.Directories import resolveFilename, SCOPE_HDD, isPluginInstalled
 from time import time, localtime
 from timer import TimerEntry as RealTimerEntry
-from enigma import eServiceCenter, eEPGCache
+from enigma import eEPGCache
+from functools import cmp_to_key
 import Tools.CopyFiles
 import os
 
@@ -202,7 +202,7 @@ class TimerEditList(Screen):
 			try:
 				name = str(timer.name)
 				time = "%s %s ... %s" % (FuzzyTime(timer.begin)[0], FuzzyTime(timer.begin)[1], FuzzyTime(timer.end)[1])
-				duration = ("(%d " + _("mins") + ")") % ((timer.end - timer.begin) // 60)
+				duration = ("(%d " + _("mins") + ")") % ((timer.end - timer.begin) / 60)
 				service = str(timer.service_ref.getServiceName())
 
 				if timer.state == RealTimerEntry.StateWaiting:
@@ -223,29 +223,34 @@ class TimerEditList(Screen):
 				time = ""
 				duration = ""
 				service = ""
+				state = ""
 		else:
 			name = ""
 			time = ""
 			duration = ""
 			service = ""
+			state = ""
 		for cb in self.onChangedEntry:
 			cb(name, time, duration, service, state)
 
 	def fillTimerList(self):
 		#helper function to move finished timers to end of list
+		def _cmp(a, b):
+			return (a > b) - (a < b)
+
 		def eol_compare(x, y):
 			if x[0].state != y[0].state and x[0].state == RealTimerEntry.StateEnded or y[0].state == RealTimerEntry.StateEnded:
-				return cmp(x[0].state, y[0].state)
-			return cmp(x[0].begin, y[0].begin)
+				return _cmp(x[0].state, y[0].state)
+			return _cmp(x[0].begin, y[0].begin)
 
-		list = self.list
-		del list[:]
-		list.extend([(timer, False) for timer in self.session.nav.RecordTimer.timer_list])
-		list.extend([(timer, True) for timer in self.session.nav.RecordTimer.processed_timers])
+		_list = self.list
+		del _list[:]
+		_list.extend([(timer, False) for timer in self.session.nav.RecordTimer.timer_list])
+		_list.extend([(timer, True) for timer in self.session.nav.RecordTimer.processed_timers])
 		if config.usage.timerlist_finished_timer_position.index: #end of list
-			list.sort(cmp=eol_compare)
+			_list.sort(key=cmp_to_key(eol_compare))
 		else:
-			list.sort(key=lambda x: x[0].begin)
+			_list.sort(key=lambda x: x[0].begin)
 
 	def getEPGEvent(self, timer):
 		event = None
@@ -260,7 +265,7 @@ class TimerEditList(Screen):
 				else:
 					ref = timer.service_ref.ref.toString()
 				begin = timer.begin + config.recording.margin_before.value * 60
-				duration = (timer.end - begin - config.recording.margin_after.value * 60) // 60
+				duration = (timer.end - begin - config.recording.margin_after.value * 60) / 60
 				if duration <= 0:
 					duration = 30 # it seems to be a reminder or a justplay timer without end time, so search epg events for the next 30 min
 				list = epgcache.lookupEvent(['IBDT', (ref, 0, begin, duration)])
@@ -347,7 +352,7 @@ class TimerEditList(Screen):
 		elif answer[1] == 'yes':
 			self.removeTimer(True)
 		elif answer[1] == 'yesremove':
-			if fileExists("/usr/lib/enigma2/python/Plugins/Extensions/EnhancedMovieCenter/plugin.pyo"):
+			if isPluginInstalled("EnhancedMovieCenter"):
 				if config.EMC.movie_trashcan_enable.value:
 					trashpath = config.EMC.movie_trashcan_path.value
 					self.MoveToTrash(trashpath)

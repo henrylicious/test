@@ -14,19 +14,18 @@ from enigma import eTimer
 
 from Screens.Rc import Rc
 
-from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
+from Tools.Directories import resolveFilename, SCOPE_GUISKIN
 from Tools.LoadPixmap import LoadPixmap
-import gettext
 
 inWizzard = False
 
 
 def LanguageEntryComponent(file, name, index):
-	png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + index + ".png"))
+	png = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "countries/" + index + ".png"))
 	if png is None:
-		png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + file + ".png"))
+		png = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "countries/" + file + ".png"))
 		if png is None:
-			png = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/missing.png"))
+			png = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "countries/missing.png"))
 	res = (index, name, png)
 	return res
 
@@ -165,6 +164,15 @@ class LanguageSelection(Screen):
 			_list = [LanguageEntryComponent(file=x[1][2].lower(), name=x[1][0], index=x[0]) for x in languageList]
 		self.list = _list
 		self["languages"].list = _list
+
+	def installLanguage(self):
+		from Screens.PluginBrowser import PluginDownloadBrowser
+		self.session.openWithCallback(self.update_after_installLanguage, PluginDownloadBrowser, 0)
+
+	def update_after_installLanguage(self):
+		language.InitLang()
+		self.updateList()
+		self.selectActiveLanguage()
 
 	def installLanguage(self):
 		from Screens.PluginBrowser import PluginDownloadBrowser

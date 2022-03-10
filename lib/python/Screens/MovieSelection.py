@@ -96,6 +96,7 @@ def setPreferredTagEditor(te):
 		print("Preferred tag editor already set to", preferredTagEditor, "ignoring", te)
 
 
+
 def getPreferredTagEditor():
 	global preferredTagEditor
 	return preferredTagEditor
@@ -935,7 +936,6 @@ class MovieSelection(Screen, HelpableScreen, SelectionEventInfo, InfoBarBase, Pr
 			NavigationInstance.instance.RecordTimer.on_state_change.remove(self.list.updateRecordings)
 		except Exception as e:
 			print("[ML] failed to unsubscribe:", e)
-			pass
 
 	def createSummary(self):
 		return MovieSelectionSummary

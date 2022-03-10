@@ -1007,7 +1007,6 @@ RESULT eServiceFactoryDVB::lookupService(ePtr<eDVBService> &service, const eServ
 	}
 	else
 	{
-			// TODO: handle the listing itself
 		// if (ref.... == -1) .. return "... bouquets ...";
 		// could be also done in another serviceFactory (with seperate ID) to seperate actual services and lists
 			// TODO: cache
@@ -1186,7 +1185,7 @@ void eDVBServicePlay::serviceEvent(int event)
 		updateEpgCacheNowNext();
 
 		/* default behaviour is to start an eit reader, and wait for now/next info, unless this is disabled */
-		if (eConfigManager::getConfigBoolValue("config.usage.show_eit_nownext", true))
+		if (m_dvb_service && m_dvb_service->useEIT() && eConfigManager::getConfigBoolValue("config.usage.show_eit_nownext", true))
 		{
 			ePtr<iDVBDemux> m_demux;
 			if (!m_service_handler.getDataDemux(m_demux))
@@ -1377,6 +1376,15 @@ RESULT eDVBServicePlay::start()
 
 		type = eDVBServicePMTHandler::streamclient;
 	}
+
+#if HAVE_ALIEN5
+	if(m_is_stream || m_is_pvr)
+	{
+			eDebug("[eDVBServicePlay]start m_is_pvr %d", m_is_pvr);
+			aml_set_demux2_source();
+	}
+#endif
+
 
 	m_first_program_info = 1;
 	ePtr<iTsSource> source = createTsSource(service, packetsize);
@@ -2239,9 +2247,10 @@ int eDVBServicePlay::selectAudioStream(int i)
 			ePtr<iDVBDemux> data_demux;
 			if (!h.getDataDemux(data_demux))
 			{
-				m_rds_decoder = new eDVBRdsDecoder(data_demux, different_pid);
+				m_rds_decoder = new eDVBRdsDecoder(data_demux, different_pid, apidtype);
 				m_rds_decoder->connectEvent(sigc::mem_fun(*this, &eDVBServicePlay::rdsDecoderEvent), m_rds_decoder_event_connection);
 				m_rds_decoder->start(rdsPid);
+				eDebug("[eDVBServicePlay] Using rds pid %d", rdsPid);
 			}
 		}
 	}
@@ -2307,9 +2316,9 @@ std::string eDVBServicePlay::getText(int x)
 		switch(x)
 		{
 			case RadioText:
-				return convertLatin1UTF8(m_rds_decoder->getRadioText());
+				return m_rds_decoder->getRadioText();
 			case RtpText:
-				return convertLatin1UTF8(m_rds_decoder->getRtpText());
+				return m_rds_decoder->getRtpText();
 		}
 	return "";
 }

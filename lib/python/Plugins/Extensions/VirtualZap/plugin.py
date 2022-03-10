@@ -21,10 +21,9 @@
 #  distributed other than under the conditions noted above.
 #
 from __future__ import absolute_import
-from __future__ import division
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
-from Components.ActionMap import ActionMap, NumberActionMap
+from Components.ActionMap import ActionMap
 from Components.Label import Label
 from enigma import eServiceReference, eTimer, getDesktop
 from ServiceReference import ServiceReference
@@ -32,7 +31,7 @@ from Components.SystemInfo import SystemInfo
 from Components.ParentalControl import parentalControl
 from enigma import eServiceCenter, getBestPlayableServiceReference
 from Components.VideoWindow import VideoWindow
-from enigma import ePoint, eEPGCache
+from enigma import eEPGCache
 from time import localtime, time
 from Screens.InfoBarGenerics import InfoBarShowHide, InfoBarPiP
 from Screens.InfoBar import InfoBar
@@ -48,14 +47,14 @@ from Screens.PictureInPicture import PictureInPicture
 InfoBarShowHideINIT = None
 
 from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, getConfigListEntry, configfile, ConfigPosition, ConfigText, ConfigInteger
-from Components.ConfigList import ConfigList, ConfigListScreen
+from Components.ConfigList import ConfigListScreen
 
 # for localized messages
 from . import _
 
 # PiPServiceRelation installed?
 try:
-	from Plugins.SystemPlugins.PiPServiceRelation.plugin import getRelationDict, CONFIG_FILE
+	from Plugins.SystemPlugins.PiPServiceRelation.plugin import getRelationDict
 	plugin_PiPServiceRelation_installed = True
 except:
 	plugin_PiPServiceRelation_installed = False
@@ -431,9 +430,9 @@ class VirtualZap(Screen):
 					t = localtime(event[0][1])
 					duration = event[0][2]
 					if modus == 0:
-						timedisplay = "+%d min" % (((event[0][1] + duration) - time()) // 60)
+						timedisplay = "+%d min" % (((event[0][1] + duration) - time()) / 60)
 					elif modus == 1:
-						timedisplay = "%d min" % (duration // 60)
+						timedisplay = "%d min" % (duration / 60)
 					return "%02d:%02d %s" % (t[3], t[4], event[0][4]), timedisplay
 				else:
 					return "", ""

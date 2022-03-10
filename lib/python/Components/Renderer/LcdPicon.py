@@ -6,10 +6,11 @@ import unicodedata
 from Components.Renderer.Renderer import Renderer
 from enigma import ePixmap, ePicLoad
 from Tools.Alternatives import GetWithAlternative
-from Tools.Directories import pathExists, SCOPE_ACTIVE_SKIN, resolveFilename
+from Tools.Directories import pathExists, SCOPE_GUISKIN, resolveFilename
 from Components.Harddisk import harddiskmanager
 from boxbranding import getBoxType
 from ServiceReference import ServiceReference
+import six
 
 searchPaths = []
 lastLcdPiconPath = None
@@ -39,6 +40,7 @@ def onMountpointAdded(mountpoint):
 					break
 	except Exception as ex:
 		print("[LcdPicon] Failed to investigate %s:" % mountpoint, ex)
+
 
 
 def onMountpointRemoved(mountpoint):
@@ -99,7 +101,10 @@ def getLcdPiconName(serviceName):
 		pngname = findLcdPicon('_'.join(fields))
 	if not pngname: # picon by channel name
 		name = ServiceReference(serviceName).getServiceName()
-		name = unicodedata.normalize('NFKD', unicode(name, 'utf_8', errors='ignore')).encode('ASCII', 'ignore')
+		if six.PY3:
+			name = unicodedata.normalize('NFKD', name)
+		else:
+			name = unicodedata.normalize('NFKD', six.text_type(name, 'utf_8', errors='ignore')).encode('ASCII', 'ignore')
 		name = re.sub('[^a-z0-9]', '', name.replace('&', 'and').replace('+', 'plus').replace('*', 'star').lower())
 		if len(name) > 0:
 			pngname = findLcdPicon(name)
@@ -123,16 +128,16 @@ class LcdPicon(Renderer):
 		self.defaultpngname = None
 		if not pngname:
 			if getBoxType() in ('vuultimo', 'et10000', 'mutant2400', 'xpeedlx3', 'quadbox2400', 'atemionemesis', 'dm7020hd', 'dm7080'):
-				tmp = resolveFilename(SCOPE_ACTIVE_SKIN, "lcd_picon_default.png")
+				tmp = resolveFilename(SCOPE_GUISKIN, "lcd_picon_default.png")
 			else:
-				tmp = resolveFilename(SCOPE_ACTIVE_SKIN, "picon_default.png")
+				tmp = resolveFilename(SCOPE_GUISKIN, "picon_default.png")
 			if pathExists(tmp):
 				pngname = tmp
 			else:
 				if getBoxType() == 'vuultimo':
-					pngname = resolveFilename(SCOPE_ACTIVE_SKIN, "lcd_picon_default.png")
+					pngname = resolveFilename(SCOPE_GUISKIN, "lcd_picon_default.png")
 				else:
-					pngname = resolveFilename(SCOPE_ACTIVE_SKIN, "picon_default.png")
+					pngname = resolveFilename(SCOPE_GUISKIN, "picon_default.png")
 		if os.path.getsize(pngname):
 			self.defaultpngname = pngname
 

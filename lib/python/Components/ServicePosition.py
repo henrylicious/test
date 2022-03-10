@@ -1,20 +1,18 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 from Components.PerServiceDisplay import PerServiceDisplay, PerServiceBase
 from Components.GUIComponent import GUIComponent
 from enigma import eTimer, iPlayableService, ePositionGauge
 import time
 
 
-class ServicePosition(PerServiceDisplay, object):
+class ServicePosition(PerServiceDisplay):
 	TYPE_LENGTH = 0,
 	TYPE_POSITION = 1,
 	TYPE_REMAINING = 2,
 	TYPE_RELATIVE = 3
 
 	def __init__(self, navcore, type):
-		object.__init__(self)
 		self.updateTimer = eTimer()
 		self.updateTimer.callback.append(self.update)
 		PerServiceDisplay.__init__(self, navcore,
@@ -47,7 +45,7 @@ class ServicePosition(PerServiceDisplay, object):
 			elif what == self.TYPE_POSITION:
 				r = seek.getPlayPosition()
 			if not r[0]:
-				return r[1] // 90000
+				return r[1] / 90000
 
 		return -1
 
@@ -66,7 +64,7 @@ class ServicePosition(PerServiceDisplay, object):
 				elif self.type == self.TYPE_REMAINING:
 					l = self.get(self.TYPE_LENGTH) - self.get(self.TYPE_POSITION)
 
-				self.setText("%d:%02d" % (l // 60, l % 60))
+				self.setText("%d:%02d" % (l / 60, l % 60))
 			else:
 				l = self.get(self.TYPE_POSITION)
 				if l != -1:

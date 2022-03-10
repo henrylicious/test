@@ -28,7 +28,7 @@
 		gettimeofday(&end, NULL); \
 		duration = (((end.tv_usec - start.tv_usec)/1000) + 1000 ) % 1000; \
 		if (duration>35) \
-			eWarning("[eDVBFrontend] Slow ioctl '%s', potential driver issue, %dms",x,duration); \
+			eTrace("[eDVBFrontend] Slow ioctl '%s', potential driver issue, %dms",x,duration); \
 	} while(0)
 
 #define eDebugNoSimulateNoNewLineEnd(x...) \
@@ -152,7 +152,7 @@ void eDVBFrontendParametersSatellite::set(const SatelliteDeliverySystemDescripto
 	t2mi_pid = eDVBFrontendParametersSatellite::T2MI_Default_Pid;
 	if (system == System_DVB_S2)
 	{
-		eDebug("[eDVBFrontendParametersSatellite] SAT DVB-S2 freq %d, %s, pos %d, sr %d, fec %d, modulation %d, rolloff %d, is_id %d, pls_mode %d, pls_code %d t2mi_plp_id %d",
+		eDebug("[eDVBFrontendParametersSatellite] SAT DVB-S2 freq %d, %s, pos %d, sr %d, fec %d, modulation %d, rolloff %d, is_id %d, pls_mode %d, pls_code %d t2mi_plp_id %d t2mi_pid %d",
 			frequency,
 			polarisation ? "hor" : "vert",
 			orbital_position,
@@ -1119,6 +1119,16 @@ void eDVBFrontend::timeout()
 	{
 		retune();
 	}
+	else
+		eDebug("[eDVBFrontend] not retuning after tune error 3 (noPatEntry) - disabled");
+}
+
+void eDVBFrontend::retune()
+{
+	m_timeout->stop();
+	m_state = stateFailed;
+	m_data[CSW] = m_data[UCSW] = m_data[TONEBURST] = -1; // reset diseqc
+	m_stateChanged(this);
 }
 
 void eDVBFrontend::setConfigRetuneNoPatEntry(int value)
@@ -1136,14 +1146,6 @@ void eDVBFrontend::checkRetune()
 	}
 	else
 		eDebug("[eDVBFrontend] not retuning after tune error 3 (noPatEntry) - disabled");
-}
-
-void eDVBFrontend::retune()
-{
-	m_timeout->stop();
-	m_state = stateFailed;
-	m_data[CSW] = m_data[UCSW] = m_data[TONEBURST] = -1; // reset diseqc
-	m_stateChanged(this);
 }
 
 #define INRANGE(X,Y,Z) (((X<=Y) && (Y<=Z))||((Z<=Y) && (Y<=X)) ? 1 : 0)
@@ -1402,7 +1404,7 @@ void eDVBFrontend::calculateSignalQuality(int snr, int &signalquality, int &sign
 	}
 	else if (!strcmp(m_description, "Vuplus DVB-S NIM(7376 FBC)")) // VU+ Solo4k
 	{
-		ret = (int)((((double(snr) / (65535.0 / 100.0)) * 0.1850) - 0.3500) * 100);
+		ret = (int)((((double(snr) / (65535.0 / 100.0)) * 0.1480) + 0.9560) * 100);
 	}
 	else if (!strcmp(m_description, "BCM7346 (internal)")) // MaxDigital XP1000
 	{
@@ -2115,7 +2117,7 @@ int eDVBFrontend::tuneLoopInt()  // called by m_tuneTimer
 					gettimeofday(&start, NULL);
 					sec_fe->sendToneburst(m_sec_sequence.current()->toneburst);
 					gettimeofday(&end, NULL);
-					eDebugNoSimulateNoNewLineStart("[SEC] toneburst ioctl duration: %d ms",(end.tv_usec - start.tv_usec)/1000);
+					eDebugNoSimulateNoNewLineStart("[SEC] toneburst ioctl duration: %ld ms",(end.tv_usec - start.tv_usec)/1000);
 					duration = (((end.tv_usec - start.tv_usec)/1000) + 1000 ) % 1000;
 					duration_est = 24;
 					if (duration < duration_est)

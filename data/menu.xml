@@ -81,14 +81,6 @@ self.session.open(HdmiCECSetupScreen)
 				<!--item level="2" entryID="settings_overlan_setup"><setup id="settingsoverlansetup" /></item-->
 			</menu>
 
-			<!-- Aufnahme / Timeshift Menu -->
-			<menu weight="11" level="2" text="Recording / Playback" entryID="record_menu">
-				<id val="record_menu" />
-				<item level="0" text="Recording settings" entryID="recording_setup"><screen module="Recordings" screen="RecordingSettings" /></item>
-				<item level="1" entryID="rfmod_setup" requires="RfModulator"><setup id="RFmod"/></item>
-				<item level="0" text="HDMI-IN Recording settings" entryID="hdmirecord_setup" requires="HDMIin"><setup id="HDMIRecord"/></item>
-				<item level="0" text="Timeshift settings" entryID="timshift_setup"><screen module="Timershift" screen="TimeshiftSettings" /></item>
-			</menu>
 
 			<!-- Menu / Settings / EPG Menu -->
 			<menu weight="15" level="2" text="EPG" entryID="epg_menu">
@@ -200,12 +192,9 @@ self.session.open(SABnzbdSetupScreen)
 				<!-- Menu / Settings / Frontpanel Menu -->
 				<menu weight="15" level="0" text="Frontpanel / Display / VFD" entryID="fp_menu">
 					<id val="fp_menu" />
-					<menu level="0" text="Display" entryID="display_selection">
-						<id val="display" />
-						<item level="0" entryID="displaysetup" requires="Display"><setup id="display" /></item>
-						<!--item requires="OledDisplay" level="0" text="VFD Skin Selector" entryID="vfd_skin"><screen module="VfdSkinSelector" screen="VFDSkinSelector"/></item-->
-						<item requires="LCDSKINSetup" level="0" text="VFD Skin Selector" entryID="vfd_skin"><screen module="VfdSkinSelector" screen="VFDSkinSelector"/></item>
-					</menu>
+					<item weight="5" level="0" text="Display Skin" entryID="display_skin_selector" requires="OledDisplay"><screen module="SkinSelector" screen="LcdSkinSelector"/></item>
+					<item weight="10" level="0" text="Standby Skin" entryID="standby_skin_selector" requires="OledDisplay"><screen module="SkinSelector" screen="StandbySkinSelector"/></item>
+					<item level="0" entryID="displaysetup" requires="Display"><setup id="display" /></item>
 				</menu>
 
 				<!-- Menu / Settings / Devices / Input Devices -->
@@ -231,6 +220,7 @@ self.session.open(SABnzbdSetupScreen)
 					<item level="2" entryID="logs_setup"><setup id="logs" /></item>
 					<item level="2" text="Logs manager" entryID="logs_man"><screen module="LogManager" screen="LogManager"/></item>
 				</menu>
+				<!-- Aufnahme / Timeshift Menu -->
 				<menu level="2" text="Recording" entryID="record_menu">
 					<id val="record_menu" />
 					<item level="0" text="Recording settings" entryID="recording_setup"><screen module="Recordings" screen="RecordingSettings" /></item>
@@ -248,6 +238,7 @@ self.session.open(SABnzbdSetupScreen)
 					<item weight="5" level="2" text="NFS setup" entryID="netnfs_setup"><screen module="NetworkSetup" screen="NetworkNfs"/></item>
 					<item weight="6" level="2" text="Password Setup" entryID="password_setup"><screen module="NetworkSetup" screen="NetworkPassword"/></item>
 					<item weight="7" level="2" text="SATPI Setup" entryID="netsatpi_setup"><screen module="NetworkSetup" screen="NetworkSATPI"/></item>
+					<item weight="7" level="2" text="MinisatIP Setup" entryID="netsatpi_setup"><screen module="NetworkSetup" screen="NetworkMinisatIP"/></item>
 					<item weight="8" level="2" text="AFP setup" entryID="netafp_setup"><screen module="NetworkSetup" screen="NetworkAfp"/></item>
 					<item weight="9" level="2" text="Inadyn setup" entryID="Inadyn_setup"><screen module="NetworkSetup" screen="NetworkInadyn"/></item>
 					<item weight="10" level="2" text="MiniDLNA setup" entryID="netushare_setup"><screen module="NetworkSetup" screen="NetworkMiniDLNA"/></item>
@@ -291,6 +282,7 @@ self.session.openWithCallback(msgClosed, FactoryReset)
 				<item weight="35" text="Satfinder" entryID="satfinder" requires="Satfinder"><plugin system="Satfinder" screen="Satfinder" /></item>
 				<!-- item weight="40" text="Remote Tuner Server Setup" entryID="netrts_setup"><screen module="NetworkSetup" screen="RemoteTunerServer"/></item -->
 			</menu>
+			<item weight="99" level="2" text="Software update" entryID="software_update"><screen module="SoftwareUpdate" screen="UpdatePlugin" /></item>
 		</menu>
 
 		<!-- Menu / Standby -->
@@ -323,6 +315,7 @@ else:
 			<item text="Restart" entryID="restart"><screen module="Standby" screen="TryQuitMainloop">2</screen></item>
 			<item text="SleepTimer" entryID="sleep" level="0" requires="DeepstandbySupport" ><screen module="SleepTimerEdit" screen="SleepTimerEdit" /></item>
 			<item text="Multiboot Image Selector" level="0" requires="canMultiBoot" entryID="restart"><screen module="MultiBootSelector" screen="MultiBootSelector" /></item>
+			<item text="QuickBoot Image Selector" level="0" requires="canMultiBoot" entryID="restart"><screen module="MultiBootSelector" screen="QuickBootSelector" /></item>
 			<item text="Recovery Mode" requires="RecoveryMode" entryID="maintenance_mode"><screen module="Standby" screen="TryQuitMainloop">16</screen></item>
 			<item text="PowerTimer" entryID="powertimer_edit"><screen module="PowerTimerEdit" screen="PowerTimerEditList" /></item>
 			<item text="Restart enigma" entryID="restart_enigma"><screen module="Standby" screen="TryQuitMainloop">3</screen></item>

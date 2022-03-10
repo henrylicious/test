@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from Components.HTMLComponent import HTMLComponent
 from Components.GUIComponent import GUIComponent
 from Components.VariableText import VariableText
 
@@ -9,7 +8,8 @@ import six
 from Tools.NumericalTextInput import NumericalTextInput
 
 
-class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
+
+class Input(VariableText, GUIComponent, NumericalTextInput):
 	TEXT = 0
 	PIN = 1
 	NUMBER = 2
@@ -65,7 +65,10 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 			self.currPos = 0
 			self.Text = u""
 		else:
-			self.Text = text.decode("utf-8", "ignore").decode("utf-8")
+			if isinstance(text, str):
+				self.Text = six.ensure_text(text, errors='ignore')
+			else:
+				self.Text = text
 		self.update()
 
 	def getText(self):
@@ -79,7 +82,7 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 
 	def getSize(self):
 		s = self.instance.calculateSize()
-		return s.width(), s.height()
+		return (s.width(), s.height())
 
 	def markAll(self):
 		self.allmarked = True
@@ -155,7 +158,7 @@ class Input(VariableText, HTMLComponent, GUIComponent, NumericalTextInput):
 		self.update()
 
 	def insertChar(self, ch, pos=False, owr=False, ins=False):
-		if isinstance(ch, str):
+		if isinstance(ch, bytes):
 			ch = six.ensure_text(ch, errors='ignore')
 		if not pos:
 			pos = self.currPos

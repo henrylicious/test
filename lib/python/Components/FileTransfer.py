@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from __future__ import division
-from Components.Task import Task, Job, job_manager, AbortedPostcondition, ReturncodePostcondition
+from Components.Task import Job, Task
 from Tools.Directories import fileExists, shellquote
 from Components.MovieList import MOVIE_EXTENSIONS
 from enigma import eTimer
@@ -53,7 +52,7 @@ class FileTransferTask(Task):
 			dst_size = float(self.dirSize(dst_dir_size))
 		else:
 			dst_size = float(os.path.getsize(self.dst_file))
-		progress = dst_size // self.src_size * 100.0
+		progress = dst_size / self.src_size * 100.0
 		self.setProgress(progress)
 		self.progressTimer.start(15000, True)
 

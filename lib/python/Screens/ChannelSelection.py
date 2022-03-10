@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 from boxbranding import getMachineBuild, getMachineBrand, getMachineName
 import os
 from Tools.Profile import profile
@@ -22,7 +21,7 @@ from Screens.TimerEdit import TimerSanityConflict
 profile("ChannelSelection.py 1")
 from Screens.EpgSelection import EPGSelection
 from enigma import eActionMap, eServiceReferenceDVB, eServiceReference, eEPGCache, eServiceCenter, eRCInput, eTimer, ePoint, eDVBDB, iPlayableService, iServiceInformation, getPrevAsciiCode, eEnv, loadPNG
-from Components.config import config, configfile, ConfigSubsection, ConfigText, ConfigYesNo
+from Components.config import ConfigSubsection, ConfigText, config, configfile
 from Tools.NumericalTextInput import NumericalTextInput
 profile("ChannelSelection.py 2")
 from Components.NimManager import nimmanager
@@ -49,12 +48,11 @@ from ServiceReference import ServiceReference
 from Tools.BoundFunction import boundFunction
 from Tools import Notifications
 from Tools.ServiceReference import service_types_tv_ref, service_types_radio_ref, serviceRefAppendPath
-from Plugins.Plugin import PluginDescriptor
-from Components.PluginComponent import plugins
 from RecordTimer import TIMERTYPE
 from time import localtime, time
 from os import remove
 import six
+SIGN = '°' if six.PY3 else str('\xc2\xb0')
 try:
 	from Plugins.SystemPlugins.PiPServiceRelation.plugin import getRelationDict
 	plugin_PiPServiceRelation_installed = True
@@ -325,7 +323,7 @@ class ChannelContextMenu(Screen):
 	def removeEntry(self):
 		if self.removeFunction and self.csel.servicelist.getCurrent() and self.csel.servicelist.getCurrent().valid():
 			if self.csel.confirmRemove:
-				list = [(_("yes"), True), (_("no"), False), (_("yes") + " " + _("and never ask again this session again"), "never")]
+				list = [(_("yes"), True), (_("no"), False), (_("yes") + " " + _("and never ask again this session"), "never")]
 				self.session.openWithCallback(self.removeFunction, MessageBox, _("Are you sure to remove this entry?") + "\n%s" % self.getCurrentSelectionName(), list=list)
 			else:
 				self.removeFunction(True)
@@ -1152,7 +1150,7 @@ class ChannelSelectionEdit:
 				direction = _("W")
 			else:
 				direction = _("E")
-			messageText = _("Are you sure to remove all %d.%d%s%s services?") % (unsigned_orbpos // 10, unsigned_orbpos % 10, "\xc2\xb0", direction)
+			messageText = _("Are you sure to remove all %d.%d%s%s services?") % (unsigned_orbpos / 10, unsigned_orbpos % 10, SIGN, direction)
 		self.session.openWithCallback(self.removeSatelliteServicesCallback, MessageBox, messageText)
 
 	def removeSatelliteServicesCallback(self, answer):
@@ -1656,7 +1654,7 @@ class ChannelSelectionBase(Screen):
 				if justSet:
 					addCableAndTerrestrialLater = []
 					serviceHandler = eServiceCenter.getInstance()
-					reflist = [service_types_tv, '1:7:11:0:0:0:0:0:0:0:(type == 17) || (type == 25) || (type == 134) || (type == 195)']
+					reflist = [service_types_tv, '1:7:11:0:0:0:0:0:0:0:(type == 17) || (type == 22) || (type == 25) || (type == 31) || (type == 32) || (type == 134) || (type == 195)']
 					for x in reflist:
 						ref = serviceRefAppendPath(x, 'FROM SATELLITES ORDER BY satellitePosition')
 						servicelist = serviceHandler.list(ref)
@@ -1722,7 +1720,7 @@ class ChannelSelectionBase(Screen):
 								self.servicelist.addService(uhdref, beforeCurrent=True)
 							skyref = eServiceReference('1:7:1:0:0:0:0:0:0:0:(type == 211) && (name != .) ORDER BY name')
 							if skyref and self.showSatDetails and not "(type == 1)" in x:
-								skyref.setName("%s - %s" % ("Sky Deutschland 19.2E", _("Subservices")) + " (%d)" % (self.getServicesCount(skyref)))
+								skyref.setName("%s - %s" % ("19.2E Sky Deutschland", _("Subservices")) + " (%d)" % (self.getServicesCount(skyref)))
 								self.servicelist.addService(skyref)
 							hdref = eServiceReference('1:7:1:0:0:0:0:0:0:0:(type == 25) && (name != .) ORDER BY name')
 							#if hdref:
@@ -2929,7 +2927,7 @@ class HistoryZapSelector(Screen):
 					begin = event.getBeginTime()
 					if begin is not None:
 						end = begin + event.getDuration()
-						remaining = (end - int(time())) // 60
+						remaining = (end - int(time())) / 60
 						prefix = ""
 						if remaining > 0:
 							prefix = "+"

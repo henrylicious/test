@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from Screens.Screen import Screen
 from Screens.Setup import setupdom
-from Screens.LocationBox import MovieLocationBox, TimeshiftLocationBox, AutorecordLocationBox
+from Screens.LocationBox import MovieLocationBox
 from Screens.MessageBox import MessageBox
 from Components.Label import Label
 from Components.config import config, configfile, ConfigYesNo, ConfigNothing, ConfigSelection, getConfigListEntry
@@ -15,8 +15,6 @@ from Components.Sources.StaticText import StaticText
 from Components.SystemInfo import SystemInfo
 
 import six
-from enigma import eEnv
-import xml.etree.cElementTree
 
 
 class SetupSummary(Screen):

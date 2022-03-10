@@ -1,19 +1,12 @@
 from __future__ import absolute_import
-from __future__ import division
 from Components.Converter.Converter import Converter
 from Components.Element import cached
-from ServiceReference import ServiceReference
-from enigma import eServiceCenter, eServiceReference, iServiceInformation, iPlayableService, eDVBFrontendParametersSatellite, eDVBFrontendParametersCable
-from string import upper
-from Components.ServiceEventTracker import ServiceEventTracker
-from Tools.Directories import fileExists, resolveFilename
-from os import environ, listdir, remove, rename, system
-from Components.ServiceEventTracker import ServiceEventTracker
-import gettext
+from enigma import eDVBFrontendParametersCable, eDVBFrontendParametersSatellite, eServiceCenter, eServiceReference, iServiceInformation
 from Components.Converter.Poll import Poll
 
 
-class ExtremeInfo(Poll, Converter, object):
+
+class ExtremeInfo(Poll, Converter):
     TUNERINFO = 0
     CAMNAME = 1
     NUMBER = 2
@@ -1254,8 +1247,8 @@ class ExtremeInfo(Poll, Converter, object):
             frontendData = feinfo and feinfo.getAll(True)
             if frontendData is not None:
                 if frontendData.get('tuner_type') == 'DVB-S' or frontendData.get('tuner_type') == 'DVB-C':
-                    frequency = str(frontendData.get('frequency') // 1000) + ' MHz'
-                    symbolrate = str(int(frontendData.get('symbol_rate', 0) // 1000))
+                    frequency = str(frontendData.get('frequency') / 1000) + ' MHz'
+                    symbolrate = str(int(frontendData.get('symbol_rate', 0) / 1000))
                     if frontendData.get('tuner_type') == 'DVB-S':
                         try:
                             orb = {3590: 'Thor/Intelsat (1.0W)',

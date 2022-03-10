@@ -1,15 +1,11 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 from Screens.Screen import Screen
 from Components.ActionMap import ActionMap
 from Components.config import config, configfile, getConfigListEntry
 from Components.ConfigList import ConfigListScreen
 from Components.SystemInfo import SystemInfo
 from Components.Sources.StaticText import StaticText
-from Components.Pixmap import Pixmap
-from Components.Console import Console
-from Components.Label import Label
 from Tools.Directories import fileExists
 from enigma import getDesktop
 from os import access, R_OK
@@ -17,7 +13,7 @@ from boxbranding import getBoxType, getBrandOEM
 
 
 def getFilePath(setting):
-	if getBrandOEM() in ('dreambox'):
+	if getBrandOEM() in ('dreambox',):
 		return "/proc/stb/vmpeg/0/dst_%s" % (setting)
 	else:
 		return "/proc/stb/fb/dst_%s" % (setting)
@@ -346,15 +342,15 @@ class UserInterfacePositioner2(Screen, ConfigListScreen):
 	def setPreviewPosition(self):
 		size_w = getDesktop(0).size().width()
 		size_h = getDesktop(0).size().height()
-		dsk_w = int(float(size_w)) // float(720)
-		dsk_h = int(float(size_h)) // float(576)
+		dsk_w = int(float(size_w)) / float(720)
+		dsk_h = int(float(size_h)) / float(576)
 		dst_left = int(config.osd.dst_left.value)
 		dst_width = int(config.osd.dst_width.value)
 		dst_top = int(config.osd.dst_top.value)
 		dst_height = int(config.osd.dst_height.value)
-		while dst_width + (dst_left // float(dsk_w)) >= 720.5 or dst_width + dst_left > 720:
+		while dst_width + (dst_left / float(dsk_w)) >= 720.5 or dst_width + dst_left > 720:
 			dst_width = int(dst_width) - 1
-		while dst_height + (dst_top // float(dsk_h)) >= 576.5 or dst_height + dst_top > 576:
+		while dst_height + (dst_top / float(dsk_h)) >= 576.5 or dst_height + dst_top > 576:
 			dst_height = int(dst_height) - 1
 
 		config.osd.dst_left.setValue(dst_left)
@@ -484,15 +480,15 @@ class UserInterfacePositioner(Screen, ConfigListScreen):
 	def setPreviewPosition(self):
 		size_w = getDesktop(0).size().width()
 		size_h = getDesktop(0).size().height()
-		dsk_w = int(float(size_w)) // float(720)
-		dsk_h = int(float(size_h)) // float(576)
+		dsk_w = int(float(size_w)) / float(720)
+		dsk_h = int(float(size_h)) / float(576)
 		dst_left = int(config.osd.dst_left.value)
 		dst_width = int(config.osd.dst_width.value)
 		dst_top = int(config.osd.dst_top.value)
 		dst_height = int(config.osd.dst_height.value)
-		while dst_width + (dst_left // float(dsk_w)) >= 720.5 or dst_width + dst_left > 720:
+		while dst_width + (dst_left / float(dsk_w)) >= 720.5 or dst_width + dst_left > 720:
 			dst_width = int(dst_width) - 1
-		while dst_height + (dst_top // float(dsk_h)) >= 576.5 or dst_height + dst_top > 576:
+		while dst_height + (dst_top / float(dsk_h)) >= 576.5 or dst_height + dst_top > 576:
 			dst_height = int(dst_height) - 1
 
 		config.osd.dst_left.setValue(dst_left)

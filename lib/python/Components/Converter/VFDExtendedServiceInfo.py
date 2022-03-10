@@ -12,7 +12,6 @@
 ## If you rename, move, delete or add a channel the numbers will not be OK any more. You have to restart E2 then
 ##
 from __future__ import absolute_import
-from __future__ import division
 from Components.config import config
 from Components.Converter.Converter import Converter
 from Components.Element import cached
@@ -22,7 +21,7 @@ from xml.etree.cElementTree import parse
 ##########################################################################
 
 
-class VFDExtendedServiceInfo(Converter, object):
+class VFDExtendedServiceInfo(Converter):
 	SERVICENAME = 0
 	SERVICENUMBER = 1
 	ORBITALPOSITION = 2
@@ -161,8 +160,8 @@ class VFDExtendedServiceInfo(Converter, object):
 					orbital = transponderData["orbital_position"]
 					orbital = int(orbital)
 					if orbital > 1800:
-						orbital = str((float(3600 - orbital)) // 10.0) + "W"
+						orbital = str((float(3600 - orbital)) / 10.0) + "W"
 					else:
-						orbital = str((float(orbital)) // 10.0) + "E"
+						orbital = str((float(orbital)) / 10.0) + "E"
 					return orbital
 		return ""

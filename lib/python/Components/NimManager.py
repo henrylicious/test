@@ -1,6 +1,5 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 import os
 from boxbranding import getBoxType, getBrandOEM
 from time import localtime, mktime
@@ -9,15 +8,14 @@ import xml.etree.cElementTree
 from os import path
 
 from enigma import eDVBSatelliteEquipmentControl as secClass, \
-	eDVBSatelliteLNBParameters as lnbParam, \
 	eDVBSatelliteDiseqcParameters as diseqcParam, \
 	eDVBSatelliteSwitchParameters as switchParam, \
 	eDVBSatelliteRotorParameters as rotorParam, \
-	eDVBResourceManager, eDVBDB, eEnv, iDVBFrontend, pNavigation
+	eDVBResourceManager, \
+	eDVBDB, eEnv, iDVBFrontend
 
 from Tools.HardwareInfo import HardwareInfo
 from Tools.BoundFunction import boundFunction
-from Components.About import about
 from Components.config import config, ConfigSubsection, ConfigSelection, ConfigFloat, ConfigSatlist, ConfigYesNo, ConfigInteger, ConfigSubList, ConfigNothing, ConfigSubDict, ConfigOnOff, ConfigDateTime, ConfigText
 import six
 
@@ -1152,15 +1150,15 @@ class NimManager:
 								dir = 'E'
 							if freq >= 10000000 and freq <= 13000000:
 								fake_sat_pos = sat_pos
-								tmp_sat.update({'name': '%3.1f%c Ku-band satellite' % (sat_pos // 10.0, dir)})
+								tmp_sat.update({'name': '%3.1f%c Ku-band satellite' % (sat_pos / 10.0, dir)})
 								#tmp_sat.update({"band":"Ku"})
 							if freq >= 3000000 and freq <= 4000000:
 								fake_sat_pos = sat_pos + 1
-								tmp_sat.update({'name': '%3.1f%c C-band satellite' % (sat_pos // 10.0, dir)})
+								tmp_sat.update({'name': '%3.1f%c C-band satellite' % (sat_pos / 10.0, dir)})
 								#tmp_sat.update({"band":"C"})
 							if freq >= 17000000 and freq <= 23000000:
 								fake_sat_pos = sat_pos + 2
-								tmp_sat.update({'name': '%3.1f%c Ka-band satellite' % (sat_pos // 10.0, dir)})
+								tmp_sat.update({'name': '%3.1f%c Ka-band satellite' % (sat_pos / 10.0, dir)})
 								#tmp_sat.update({"band":"Ka"})
 							tmp_tp.append((
 									0,			#???
@@ -1188,7 +1186,7 @@ class NimManager:
 
 				AddPopup(_("satellites.xml not found or corrupted!\nIt is possible to watch TV,\nbut it's not possible to search for new TV channels\nor to configure tuner settings"), type=MessageBox.TYPE_ERROR, timeout=0, id="SatellitesLoadFailed")
 				if not emergencyAid():
-					AddPopup(_("resoring satellites.xml not posibel!"), type=MessageBox.TYPE_ERROR, timeout=0, id="SatellitesLoadFailed")
+					AddPopup(_("restoring satellites.xml not possible!"), type=MessageBox.TYPE_ERROR, timeout=0, id="SatellitesLoadFailed")
 					return
 
 		if self.hasNimType("DVB-C") or self.hasNimType("DVB-T") or self.hasNimType("DVB-T2"):
@@ -1534,6 +1532,9 @@ class NimManager:
 	def getNimListForSat(self, orb_pos):
 		return [nim.slot for nim in self.nim_slots if nim.isCompatible("DVB-S") and not nim.isFBCLink() and orb_pos in [sat[0] for sat in self.getSatListForNim(nim.slot)]]
 
+	def getNimListForSat(self, orb_pos):
+		return [nim.slot for nim in self.nim_slots if nim.isCompatible("DVB-S") and not nim.isFBCLink() and orb_pos in [sat[0] for sat in self.getSatListForNim(nim.slot)]]
+
 	def getRotorSatListForNim(self, slotid):
 		_list = []
 		if self.nim_slots[slotid].isCompatible("DVB-S"):
@@ -1565,6 +1566,7 @@ class NimManager:
 							if str(user_sat[0]) in nim.advanced.sat[x].userSatellitesList.value and user_sat not in _list:
 								_list.append(user_sat)
 		return _list
+
 
 
 def InitSecParams():
@@ -1692,10 +1694,10 @@ def InitNimManager(nimmgr, update_slots=[]):
 	root = doc.getroot()
 
 	entry = root.find("lnb")
-	for manufacturer in entry.getchildren():
+	for manufacturer in entry:
 		m = {}
 		m_update = m.update
-		for product in manufacturer.getchildren():
+		for product in manufacturer:
 			p = {}												#new dict empty for new product
 			p_update = p.update
 			scr = []
@@ -1740,10 +1742,10 @@ def InitNimManager(nimmgr, update_slots=[]):
 		unicablelnbproducts.update({manufacturer.get("name"): m})
 
 	entry = root.find("matrix")
-	for manufacturer in entry.getchildren():
+	for manufacturer in entry:
 		m = {}
 		m_update = m.update
-		for product in manufacturer.getchildren():
+		for product in manufacturer:
 			p = {}												#new dict empty for new product
 			p_update = p.update
 			scr = []

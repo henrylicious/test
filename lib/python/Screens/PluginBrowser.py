@@ -5,14 +5,12 @@ import six
 from Screens.ParentalControlSetup import ProtectedScreen
 from Components.Language import language
 from enigma import eConsoleAppContainer, eDVBDB
-from boxbranding import getImageVersion
 
 from Components.ActionMap import ActionMap
 from Components.PluginComponent import plugins
 from Components.PluginList import *
 from Components.Label import Label
 from Components.Pixmap import Pixmap
-from Components.Button import Button
 from Components.Harddisk import harddiskmanager
 from Components.Sources.StaticText import StaticText
 from Components import Ipkg
@@ -23,10 +21,9 @@ from Screens.ChoiceBox import ChoiceBox
 from Screens.Console import Console
 from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Plugins.Plugin import PluginDescriptor
-from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_ACTIVE_SKIN
+from Tools.Directories import resolveFilename, SCOPE_PLUGINS, SCOPE_GUISKIN, isPluginInstalled
 from Tools.LoadPixmap import LoadPixmap
 
-from time import time
 import os
 
 config.pluginfilter = ConfigSubsection()
@@ -88,8 +85,8 @@ class PluginBrowserSummary(Screen):
 		self.parent.onChangedEntry.remove(self.selectionChanged)
 
 	def selectionChanged(self, name, desc):
-		self["entry"].text = name
-		self["desc"].text = desc
+		self["entry"].text = six.ensure_str(name)
+		self["desc"].text = six.ensure_str(desc)
 
 
 class PluginBrowser(Screen, ProtectedScreen):
@@ -101,9 +98,9 @@ class PluginBrowser(Screen, ProtectedScreen):
 
 		self.firsttime = True
 
-		self["red"] = Label(_("Remove plugins"))
-		self["green"] = Label(_("Download plugins"))
-		self["blue"] = Label(_("Hold plugins"))
+		self["red"] = Label(_("Remove Plugins"))
+		self["green"] = Label(_("Download Plugins"))
+		self["blue"] = Label(_("Hold Plugins"))
 
 		self.list = []
 		self["list"] = PluginList(self.list)
@@ -231,7 +228,7 @@ class PluginBrowser(Screen, ProtectedScreen):
 		self.checkWarnings()
 
 	def openExtensionmanager(self):
-		if fileExists(resolveFilename(SCOPE_PLUGINS, "SystemPlugins/SoftwareManager/plugin.py")):
+		if isPluginInstalled("SoftwareManager"):
 			try:
 				from Plugins.SystemPlugins.SoftwareManager.plugin import PluginManager
 			except ImportError:
@@ -633,9 +630,9 @@ class PluginDownloadBrowser(Screen):
 
 	def updateList(self):
 		_list = []
-		expandableIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/expandable-plugins.png"))
-		expandedIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/expanded-plugins.png"))
-		verticallineIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/verticalline-plugins.png"))
+		expandableIcon = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "icons/expandable-plugins.png"))
+		expandedIcon = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "icons/expanded-plugins.png"))
+		verticallineIcon = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "icons/verticalline-plugins.png"))
 
 		self.plugins = {}
 
@@ -679,16 +676,16 @@ class PluginDownloadBrowser(Screen):
 						tmpT = t[0].lower()
 						tmpT = tmpT.replace('_', '-')
 						if tmpT == x[2]:
-							countryIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + t[0] + ".png"))
+							countryIcon = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "countries/" + t[0] + ".png"))
 							if countryIcon is None:
-								countryIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/missing.png"))
+								countryIcon = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "countries/missing.png"))
 							self.plugins[split[0]].append((PluginDescriptor(name=x[0], description=x[2], icon=countryIcon), t[1], x[1]))
 							break
 					else:
 						if t[0][:2] == x[2] and t[0][3:] != 'GB':
-							countryIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/" + t[0] + ".png"))
+							countryIcon = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "countries/" + t[0] + ".png"))
 							if countryIcon is None:
-								countryIcon = LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "countries/missing.png"))
+								countryIcon = LoadPixmap(resolveFilename(SCOPE_GUISKIN, "countries/missing.png"))
 							self.plugins[split[0]].append((PluginDescriptor(name=x[0], description=x[2], icon=countryIcon), t[1], x[1]))
 							break
 
@@ -716,6 +713,7 @@ class PluginDownloadBrowser(Screen):
 				_list.append(PluginCategoryComponent(x, expandableIcon, self.listWidth))
 		self.list = _list
 		self["list"].l.setList(_list)
+
 
 
 class PluginFilter(ConfigListScreen, Screen):

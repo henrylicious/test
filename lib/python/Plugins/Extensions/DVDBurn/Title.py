@@ -3,6 +3,7 @@ from Components.config import ConfigSubsection, ConfigSubList, ConfigInteger, Co
 from . import TitleCutter
 
 
+
 class ConfigFixedText(ConfigText):
 	def __init__(self, text, visible_width=60):
 		ConfigText.__init__(self, default=text, fixed_size=True, visible_width=visible_width)
@@ -43,7 +44,7 @@ class Title:
 		from os import path
 		from enigma import eServiceCenter, iServiceInformation
 		from ServiceReference import ServiceReference
-		from time import localtime, time
+		from time import localtime
 		self.source = service
 		serviceHandler = eServiceCenter.getInstance()
 		info = serviceHandler.info(service)

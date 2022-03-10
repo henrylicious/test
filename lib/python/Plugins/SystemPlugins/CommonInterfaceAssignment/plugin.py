@@ -1,27 +1,24 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 from Screens.Screen import Screen
 from Screens.ChannelSelection import *
-from Components.ActionMap import HelpableActionMap, ActionMap, NumberActionMap
-from Components.Sources.List import List
+from Components.ActionMap import ActionMap
 from Components.Sources.StaticText import StaticText
 from Components.config import ConfigNothing
 from Components.ConfigList import ConfigList
-from Components.Label import Label
 from Components.SelectionList import SelectionList
-from Components.MenuList import MenuList
 from ServiceReference import ServiceReference
 from Plugins.Plugin import PluginDescriptor
 from xml.etree.cElementTree import parse as ci_parse
-from Tools.XMLTools import elementsWithTag, mergeText, stringToXML
+from Tools.XMLTools import stringToXML
 from Tools.CIHelper import cihelper
 from enigma import eDVBCI_UI, eDVBCIInterfaces, eEnv, eServiceCenter
 
-from os import system, path as os_path
+from os import path as os_path
 from boxbranding import getMachineBrand, getMachineName, getBoxType
 import os
 import six
+
 
 
 class CIselectMainMenu(Screen):
@@ -536,7 +533,7 @@ class myProviderSelection(ChannelSelectionBase):
 											h = _("W")
 										else:
 											h = _("E")
-										service_name = ("%d.%d" + h) % (orbpos // 10, orbpos % 10)
+										service_name = ("%d.%d" + h) % (orbpos / 10, orbpos % 10)
 								service.setName("%s - %s" % (service_name, service_type))
 								self.servicelist.addService(service)
 						self.servicelist.finishFill()

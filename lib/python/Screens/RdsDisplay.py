@@ -1,6 +1,5 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 from enigma import iPlayableService, iRdsDecoder
 from Screens.Screen import Screen
 from Components.ActionMap import NumberActionMap
@@ -8,7 +7,7 @@ from Components.ServiceEventTracker import ServiceEventTracker
 from Components.Pixmap import Pixmap
 from Components.Label import Label
 from Components.Sources.StaticText import StaticText
-from Tools.Directories import resolveFilename, SCOPE_ACTIVE_SKIN
+from Tools.Directories import resolveFilename, SCOPE_GUISKIN
 from Tools.LoadPixmap import LoadPixmap
 
 
@@ -150,10 +149,10 @@ class RassInteractive(Screen):
 			9: self["subpages_9"]}
 
 		self.subpage_png = {
-			1: LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/rass_page1.png")),
-			2: LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/rass_page2.png")),
-			3: LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/rass_page3.png")),
-			4: LoadPixmap(resolveFilename(SCOPE_ACTIVE_SKIN, "icons/rass_page4.png"))}
+			1: LoadPixmap(resolveFilename(SCOPE_GUISKIN, "icons/rass_page1.png")),
+			2: LoadPixmap(resolveFilename(SCOPE_GUISKIN, "icons/rass_page2.png")),
+			3: LoadPixmap(resolveFilename(SCOPE_GUISKIN, "icons/rass_page3.png")),
+			4: LoadPixmap(resolveFilename(SCOPE_GUISKIN, "icons/rass_page4.png"))}
 
 		self.current_page = 0
 		self.current_subpage = 0
@@ -209,7 +208,7 @@ class RassInteractive(Screen):
 				print("NO RDS DECODER in getMaskForPage")
 			masks = decoder.getRassInteractiveMask()
 		if masks:
-			mask = masks[(page * 4) // 8]
+			mask = masks[(page * 4) / 8]
 			if page % 2:
 				mask >>= 4
 			else:

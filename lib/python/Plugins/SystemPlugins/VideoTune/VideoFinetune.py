@@ -3,10 +3,9 @@ from __future__ import division
 from Screens.Screen import Screen
 from Components.config import config
 from Components.Sources.CanvasSource import CanvasSource
-from Components.ActionMap import ActionMap, NumberActionMap
-from Components.Console import Console
+from Components.ActionMap import NumberActionMap
 from Components.SystemInfo import SystemInfo
-from Tools.Directories import fileExists, resolveFilename, SCOPE_PLUGINS
+from Tools.Directories import fileExists
 from enigma import gFont, getDesktop, gMainDC, eSize, RT_HALIGN_RIGHT, RT_WRAP
 
 
@@ -172,7 +171,7 @@ class VideoFinetune(Screen):
 
 	def callNext(self):
 		if self.next:
-			next(self)
+			self.next()
 
 	def bbox(self, x, y, width, height, col, xx, yy):
 		c = self["Canvas"]
@@ -375,7 +374,7 @@ class VideoFinetune(Screen):
 			y = i * height // 14
 			h = y - l
 			gamma = 0.6 + i * 0.2
-			col = int(math.pow(.5, 1.0 // gamma) * 256.0)
+			col = int(math.pow(.5, 1.0 / gamma) * 256.0)
 			c.fill(offset_x + width // 2, offset_y + l, width // 2, h, RGB(col, col, col))
 
 			c.writeText(offset_x + width // 2, offset_y + l, width // 2, h, RGB(0, 0, 0), RGB(col, col, col), fnt, "%1.2f" % gamma, RT_WRAP | RT_HALIGN_RIGHT)
@@ -412,7 +411,7 @@ class VideoFinetune(Screen):
 	def testpicCallback(self, key):
 		if key:
 			if key == True:
-				next(self)
+				self.next()
 			else:
 				self.keyNumber(key)
 		else:

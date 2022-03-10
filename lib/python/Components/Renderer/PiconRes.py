@@ -4,9 +4,8 @@ import os
 from Components.Renderer.Renderer import Renderer
 from enigma import ePixmap, ePicLoad
 from Tools.Alternatives import GetWithAlternative
-from Tools.Directories import pathExists, SCOPE_SKIN_IMAGE, SCOPE_ACTIVE_SKIN, resolveFilename
+from Tools.Directories import pathExists, SCOPE_SKIN_IMAGE, SCOPE_GUISKIN, resolveFilename
 from Components.Harddisk import harddiskmanager
-from Components.config import config, ConfigBoolean
 
 searchPaths = []
 lastPiconPath = None
@@ -35,6 +34,7 @@ def onMountpointAdded(mountpoint):
 					break
 	except Exception as ex:
 		print("[Picon] Failed to investigate %s:" % mountpoint, ex)
+
 
 
 def onMountpointRemoved(mountpoint):
@@ -104,7 +104,7 @@ class PiconRes(Renderer):
 		pngname = findPicon("picon_default")
 		self.defaultpngname = None
 		if not pngname:
-			tmp = resolveFilename(SCOPE_ACTIVE_SKIN, "picon_default.png")
+			tmp = resolveFilename(SCOPE_GUISKIN, "picon_default.png")
 			if pathExists(tmp):
 				pngname = tmp
 			else:

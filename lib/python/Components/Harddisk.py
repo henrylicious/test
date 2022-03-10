@@ -7,7 +7,7 @@ from Tools.CList import CList
 from Components.SystemInfo import SystemInfo
 from Components.Console import Console
 from Tools.HardwareInfo import HardwareInfo
-from boxbranding import getBoxType, getMachineBuild
+from boxbranding import getMachineBuild
 import Components.Task
 import re
 import six
@@ -59,6 +59,7 @@ def isFileSystemSupported(filesystem):
 		print("[Harddisk] Failed to read /proc/filesystems:", ex)
 
 
+
 def findMountPoint(path):
 	"""Example: findMountPoint("/media/hdd/some/file") returns "/media/hdd\""""
 	path = os.path.abspath(path)
@@ -94,7 +95,7 @@ def getFolderSize(path):
 def Freespace(dev):
 	try:
 		statdev = os.statvfs(dev)
-		space = (statdev.f_bavail * statdev.f_frsize) // 1024
+		space = (statdev.f_bavail * statdev.f_frsize) / 1024
 	except:
 		space = 0
 	return space
@@ -209,10 +210,10 @@ class Harddisk:
 			if dev:
 				stat = os.statvfs(dev)
 				cap = int(stat.f_blocks * stat.f_bsize)
-				return cap // 1000 // 1000
+				return cap / 1000 / 1000
 			else:
 				return cap
-		return cap // 1000 * 512 // 1000
+		return cap / 1000 * 512 / 1000
 
 	def capacity(self):
 		cap = self.diskSize()
@@ -220,7 +221,7 @@ class Harddisk:
 			return ""
 		if cap < 1000:
 			return "%03d MB" % cap
-		return "%d.%03d GB" % (cap // 1000, cap % 1000)
+		return "%d.%03d GB" % (cap / 1000, cap % 1000)
 
 	def model(self):
 		try:
@@ -243,7 +244,7 @@ class Harddisk:
 		if dev:
 			try:
 				stat = os.statvfs(dev)
-				return int((stat.f_bfree // 1000) * (stat.f_bsize // 1024))
+				return int((stat.f_bfree / 1000) * (stat.f_bsize / 1024))
 			except:
 				pass
 		return -1

@@ -28,7 +28,7 @@ from Components.PluginComponent import plugins
 from Components.PackageInfo import PackageInfoHandler
 from Components.Language import language
 from Components.AVSwitch import AVSwitch
-from Tools.Directories import SCOPE_ACTIVE_SKIN, SCOPE_CURRENT_PLUGIN, SCOPE_METADIR, SCOPE_PLUGINS, fileExists, resolveFilename
+from Tools.Directories import SCOPE_GUISKIN, SCOPE_CURRENT_PLUGIN, SCOPE_METADIR, SCOPE_PLUGINS, fileExists, resolveFilename
 from Tools.LoadPixmap import LoadPixmap
 from Tools.NumericalTextInput import NumericalTextInput
 from enigma import eEnv, ePicLoad, eRCInput, eTimer, getDesktop, getEnigmaVersionString, getPrevAsciiCode
@@ -126,7 +126,7 @@ def write_cache(cache_file, cache_data):
 			mkdir(os_path.dirname(cache_file))
 		except OSError:
 			print(os_path.dirname(cache_file), 'is a file')
-	fd = open(cache_file, 'w')
+	fd = open(cache_file, 'wb')
 	dump(cache_data, fd, -1)
 	fd.close()
 
@@ -146,7 +146,7 @@ def valid_cache(cache_file, cache_ttl):
 
 def load_cache(cache_file):
 	#Does a cPickle load
-	fd = open(cache_file)
+	fd = open(cache_file, 'rb')
 	cache_data = load(fd)
 	fd.close()
 	return cache_data
@@ -300,17 +300,17 @@ class UpdatePluginMenu(Screen):
 			hdfonlinestatus = urlopen("https://status.hdfreaks.cc/index.php")
 			hdfstatus = hdfonlinestatus.read()
 			hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_red.png"
-			if 'rot.png' in hdfstatus:
+			if b'rot.png' in hdfstatus:
 				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_red.png"
 				self["Arrow1"].setPosition("300", "427")
 				self["Arrow2"].setPosition("270", "432")
 				print("[status] red")
-			elif 'gelb.png' in hdfstatus:
+			elif b'gelb.png' in hdfstatus:
 				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_yellow.png"
 				self["Arrow1"].setPosition("300", "460")
 				self["Arrow2"].setPosition("270", "465")
 				print("[status] yellow")
-			elif 'gruen.png' in hdfstatus:
+			elif b'gruen.png' in hdfstatus:
 				hdfbutton = "/usr/share/enigma2/skin_default/hdf_status_green.png"
 				self["Arrow1"].setPosition("300", "500")
 				self["Arrow2"].setPosition("270", "505")
@@ -890,7 +890,7 @@ class PluginManager(Screen, PackageInfoHandler):
 			self["key_green"].setText("")
 			self["key_blue"].setText("")
 			self["key_yellow"].setText("")
-			divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+			divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 			if status == 'update':
 				statuspng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/upgrade.png"))
 				self.statuslist.append((_("Updating software catalog"), '', _("Searching for available updates. Please wait..."), '', '', statuspng, divpng, None, ''))
@@ -1057,7 +1057,7 @@ class PluginManager(Screen, PackageInfoHandler):
 				iSoftwareTools.startIpkgListInstalled(self.rebuildList)
 
 	def buildEntryComponent(self, name, details, description, packagename, state, selected=False):
-		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 		installedpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/installed.png"))
 		installablepng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/installable.png"))
 		removepng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/remove.png"))
@@ -1136,7 +1136,7 @@ class PluginManager(Screen, PackageInfoHandler):
 		self.selectionChanged()
 
 	def buildCategoryComponent(self, tag=None):
-		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 		if tag is not None:
 			if tag == 'System':
 				return((_("System"), _("View list of available system extensions"), tag, divpng))
@@ -1307,7 +1307,7 @@ class PluginManagerInfo(Screen):
 			self['list'].updateList(self.list)
 
 	def buildEntryComponent(self, action, info):
-		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 		upgradepng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/upgrade.png"))
 		installpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/install.png"))
 		removepng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/remove.png"))
@@ -1389,7 +1389,7 @@ class PluginManagerHelp(Screen):
 		self['list'].updateList(self.list)
 
 	def buildEntryComponent(self, state):
-		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 		installedpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/installed.png"))
 		installablepng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/installable.png"))
 		removepng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/remove.png"))
@@ -2174,7 +2174,7 @@ class PacketManager(Screen, NumericalTextInput):
 			self["list"].setIndex(0)
 		else:
 			idx = self.getNextIdx(char)
-			if idx and idx <= self["list"].count:
+			if idx and idx <= self["list"].count():
 				self["list"].setIndex(idx)
 
 	def getNextIdx(self, char):
@@ -2204,7 +2204,7 @@ class PacketManager(Screen, NumericalTextInput):
 	def setStatus(self, status=None):
 		if status:
 			self.statuslist = []
-			divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+			divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 			if status == 'update':
 				statuspng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/upgrade.png"))
 				self.statuslist.append((_("Package list update"), '', _("Trying to download a new packetlist. Please wait..."), '', statuspng, divpng))
@@ -2304,7 +2304,7 @@ class PacketManager(Screen, NumericalTextInput):
 		#print(event, "-", param)
 
 	def IpkgList_Finished(self, result, retval, extra_args=None):
-		result = result.replace('\n ', ' - ')
+		result = result.replace(b'\n ', b' - ')
 		if result:
 			result = six.ensure_str(result)
 			result = result.replace('\n ', ' - ')
@@ -2357,7 +2357,7 @@ class PacketManager(Screen, NumericalTextInput):
 		self.buildPacketList()
 
 	def buildEntryComponent(self, name, version, description, state):
-		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 		if not description:
 			description = "No description available."
 		if state == 'installed':
@@ -2423,10 +2423,11 @@ class IpkgInstaller(Screen):
 	def __init__(self, session, list):
 		Screen.__init__(self, session)
 
+		_list = list
 		self.list = SelectionList()
 		self["list"] = self.list
-		for listindex in list(range(len(list))):
-			self.list.addSelection(list[listindex], list[listindex], listindex, False)
+		for listindex in list(range(len(_list))):
+			self.list.addSelection(_list[listindex], _list[listindex], listindex, False)
 
 		self["key_red"] = StaticText(_("Close"))
 		self["key_green"] = StaticText(_("Install"))
@@ -2444,9 +2445,9 @@ class IpkgInstaller(Screen):
 		}, -1)
 
 	def install(self):
-		list = self.list.getSelectionsList()
+		_list = self.list.getSelectionsList()
 		cmdList = []
-		for item in list:
+		for item in _list:
 			cmdList.append((IpkgComponent.CMD_INSTALL, {"package": item[1]}))
 		self.session.open(Ipkg, cmdList=cmdList)
 
@@ -2569,7 +2570,7 @@ class ShowUpdatePackages(Screen, NumericalTextInput):
 	def setStatus(self, status=None):
 		if status:
 			self.statuslist = []
-			divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+			divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 			if status == 'update':
 				statuspng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_CURRENT_PLUGIN, "SystemPlugins/SoftwareManager/upgrade.png"))
 				self.statuslist.append((_("Package list update"), '', _("Trying to download a new updatelist. Please wait..."), '', statuspng, divpng))
@@ -2590,7 +2591,7 @@ class ShowUpdatePackages(Screen, NumericalTextInput):
 			self.buildPacketList()
 
 	def buildEntryComponent(self, name, version, description, state):
-		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_ACTIVE_SKIN, "div-h.png"))
+		divpng = LoadPixmap(cached=True, path=resolveFilename(SCOPE_GUISKIN, "div-h.png"))
 		if not description:
 			description = "No description available."
 		if state == 'installed':
@@ -2642,7 +2643,7 @@ def Plugins(path, **kwargs):
 	plugin_path = path
 	list = [
 		PluginDescriptor(name=_("Software management"), description=_("Manage your %s %s's software") % (getMachineBrand(), getMachineName()), where=PluginDescriptor.WHERE_MENU, needsRestart=False, fnc=startSetup),
-		PluginDescriptor(name=_("Ipkg"), where=PluginDescriptor.WHERE_FILESCAN, needsRestart=False, fnc=filescan)
+		#PluginDescriptor(name=_("Ipkg"), where=PluginDescriptor.WHERE_FILESCAN, needsRestart=False, fnc=filescan)
 	]
 	list.append(PluginDescriptor(name=_("Software management"), description=_("Manage your %s %s's software") % (getMachineBrand(), getMachineName()), where=PluginDescriptor.WHERE_PLUGINMENU, needsRestart=False, fnc=UpgradeMain))
 	list.append(PluginDescriptor(name=_("Software management"), description=_("Manage your %s %s's software") % (getMachineBrand(), getMachineName()), where=PluginDescriptor.WHERE_EXTENSIONSMENU, needsRestart=False, fnc=UpgradeMain))

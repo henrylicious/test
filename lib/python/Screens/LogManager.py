@@ -1,6 +1,5 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from __future__ import division
 from Screens.Screen import Screen
 from Components.GUIComponent import GUIComponent
 from Components.VariableText import VariableText
@@ -9,7 +8,6 @@ from Components.Label import Label
 from Components.Button import Button
 from Components.FileList import FileList
 from Components.MenuList import MenuList
-from Components.ScrollLabel import ScrollLabel
 from Components.config import config, configfile
 from Components.FileList import MultiFileSelectList
 from Screens.MessageBox import MessageBox
@@ -44,7 +42,9 @@ def get_size(start_path=None):
 		for dirpath, dirnames, filenames in walk(start_path):
 			for f in filenames:
 				fp = path.join(dirpath, f)
-				total_size += path.getsize(fp)
+				total_size = 0
+				if not path.islink(fp):
+					total_size += path.getsize(fp)
 		return total_size
 	return 0
 
@@ -545,7 +545,7 @@ class LogManagerViewLog(Screen):
 			font = gFont("Regular", int(16 * f))
 		self["list"].instance.setFont(font)
 		fontwidth = getTextBoundarySize(self.instance, font, self["list"].instance.size(), _(" ")).width()
-		listwidth = int(self["list"].instance.size().width() // fontwidth) - 2
+		listwidth = int(self["list"].instance.size().width() / fontwidth) - 2
 		if path.exists(self.logfile):
 			for line in open(self.logfile).readlines():
 				line = line.replace('\t', ' ' * 9)

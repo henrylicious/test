@@ -4,16 +4,15 @@ from Components.ActionMap import ActionMap, HelpableActionMap
 from Components.Button import Button
 from Components.ChoiceList import ChoiceList, ChoiceEntryComponent
 from Components.SystemInfo import SystemInfo
-from Components.config import config, ConfigSubsection, ConfigText, ConfigYesNo
+from Components.config import ConfigSubsection, ConfigYesNo, ConfigText, config
 from Components.PluginComponent import plugins
-from Screens.ChannelSelection import SimpleChannelSelection
 from Screens.ChoiceBox import ChoiceBox
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Plugins.Plugin import PluginDescriptor
 from Tools.BoundFunction import boundFunction
 from ServiceReference import ServiceReference
-from enigma import eServiceReference, eActionMap
+from enigma import eServiceReference
 from Components.Label import Label
 from boxbranding import getHaveHDMIinHD, getHaveHDMIinFHD, getHaveCI
 import os
@@ -128,8 +127,8 @@ def getHotkeys():
 	(_("Prov/Fav long"), "ab_long", ""),
 	(_("Eject"), "ejectcd", "Infobar/vmodeSelection"),
 	(_("Eject long"), "ejectcd_long", ""),
-	(_("Power (use button menu)"), "powerstandby", ""),
-	(_("Power long (use button menu)"), "powerstandby_long", ""),
+#	(_("Power (use button menu settings)"), "powerstandby", ""),
+#	(_("Power long (use button menu settings)"), "powerstandby_long", ""),
 	(_("Previous"), "previous", "Infobar/historyZapBackward"),
 	(_("Previous long"), "previous_long", ""),
 	(_("Radio"), "radio", "Infobar/showRadio"),
@@ -180,6 +179,7 @@ config.misc.hotkey = ConfigSubsection()
 config.misc.hotkey.additional_keys = ConfigYesNo(default=True)
 for x in getHotkeys():
 	exec("config.misc.hotkey." + x[1] + " = ConfigText(default='" + x[2] + "')")
+
 
 
 def getHotkeyFunctions():
@@ -259,6 +259,7 @@ def getHotkeyFunctions():
 		hotkeyFunctions.append((_("Swap Picture In Picture"), "Infobar/swapPiP", "InfoBar"))
 		hotkeyFunctions.append((_("Move Picture In Picture"), "Infobar/movePiP", "InfoBar"))
 		hotkeyFunctions.append((_("Toggle Picture In Picture Zap"), "Infobar/togglePipzap", "InfoBar"))
+		hotkeyFunctions.append((_("Cycle Picture In Picture"), "Infobar/activePiP", "InfoBar"))
 	hotkeyFunctions.append((_("Activate HbbTV (Redbutton)"), "Infobar/activateRedButton", "InfoBar"))
 	if getHaveHDMIinHD() in ('True') or getHaveHDMIinFHD() in ('True'):
 		hotkeyFunctions.append((_("Toggle HDMI-In Full Screen"), "Infobar/HDMIInFull", "InfoBar"))
@@ -672,7 +673,6 @@ class InfoBarHotkey():
 				except:
 					print("[Hotkey] error during executing module %s, screen %s" % (selected[1], selected[2]))
 			elif selected[0] == "Setup":
-				from Screens.Setup import Setup
 				exec("self.session.open(Setup, \"%s\")" % selected[1])
 			elif selected[0].startswith("Zap"):
 				if selected[0] == "ZapPanic":
