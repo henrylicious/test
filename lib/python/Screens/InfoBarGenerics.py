@@ -9,6 +9,7 @@ from Components.MovieList import AUDIO_EXTENSIONS, MOVIE_EXTENSIONS, DVD_EXTENSI
 import Screens.MovieSelection
 from Components.PluginComponent import plugins
 from Components.ServiceEventTracker import ServiceEventTracker
+from Components.Sources.ServiceEvent import ServiceEvent
 from Components.Sources.Boolean import Boolean
 from Components.Sources.List import List
 from Components.config import config, configfile, ConfigBoolean, ConfigClock
@@ -242,8 +243,9 @@ def getActiveSubservicesForCurrentChannel(current_service):
 				if title and "Sendepause" not in title:
 					starttime = datetime.datetime.fromtimestamp(event[0]).strftime('%H:%M')
 					endtime = datetime.datetime.fromtimestamp(event[0] + event[1]).strftime('%H:%M')
-					current_show_name = title + " " + str(starttime) + "-" + str(endtime)
-					activeSubservices.append((current_show_name, subservice))
+					servicename = ServiceReference(subservice).getServiceName()
+					schedule = str(starttime) + "-" + str(endtime)
+					activeSubservices.append((servicename + " " + "[ " + schedule + " ]  - " + " " + title, subservice))
 		return activeSubservices
 
 
@@ -381,7 +383,7 @@ class InfoBarScreenSaver:
 			ref = self.session.nav.getCurrentlyPlayingServiceOrGroup()
 			if ref and not (hasattr(self.session, "pipshown") and self.session.pipshown):
 				ref = ref.toString().split(":")
-				flag = ref[2] == "2" or os.path.splitext(ref[10])[1].lower() in AUDIO_EXTENSIONS
+				flag = ref[2] == "2" or ref[2] == "A" or os.path.splitext(ref[10])[1].lower() in AUDIO_EXTENSIONS
 		if time and flag:
 			self.screenSaverTimer.startLongTimer(time)
 		else:
@@ -1146,12 +1148,22 @@ class NumberZap(Screen):
 
 		self.handleServiceName()
 		self["service_summary"].setText(self["servicename"].getText())
+		if config.usage.numzappicon.value:
+			self.showPicon()
 
 		if len(self.numberString) >= int(config.usage.maxchannelnumlen.value):
 			self.keyOK()
 
+	def showPicon(self):
+		self["Service"].newService(self.service)
+
 	def __init__(self, session, number, searchNumberFunction=None):
 		Screen.__init__(self, session)
+
+		if config.usage.numzappicon.value:
+			self.onLayoutFinish.append(self.showPicon)
+			self.skinName = ["NumberZapPicon", "NumberZapWithName"]
+
 		self.onChangedEntry = []
 		self.numberString = str(number)
 		self.field = str(number)
@@ -1162,10 +1174,11 @@ class NumberZap(Screen):
 		self["channel_summary"] = StaticText(_("Channel:"))
 
 		self["number"] = Label(self.numberString)
+		self["servicenumber"] = Label(self.numberString)
 		self["number_summary"] = StaticText(self.numberString)
 		self["servicename"] = Label()
 		self["service_summary"] = StaticText("")
-
+		self["Service"] = ServiceEvent()
 		self.handleServiceName()
 		self["service_summary"].setText(self["servicename"].getText())
 

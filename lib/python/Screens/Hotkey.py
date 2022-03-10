@@ -18,7 +18,7 @@ from Components.Label import Label
 from boxbranding import getHaveHDMIinHD, getHaveHDMIinFHD, getHaveCI
 import os
 
-updateversion = "11.07.2019"
+updateversion = "09.01.2022"
 
 if os.uname()[4] == "aarch64":
 	pathLen = 26
@@ -75,7 +75,7 @@ def getHotkeys():
 	(_("Volume down long *"), "volumeDownlong", ""),
 	(_("Context"), "contextMenu", "Infobar/showExtensionSelection"),
 	(_("Context long"), "context_long", "Infobar/showExtensionSelection"),
-	(_("Option"), "option", "Infobar/audioSelection"),
+	(_("Option"), "option", "Infobar/showHelp"),
 	(_("Option long"), "option_long", ""),
 	(_("End"), "end", "Infobar/historyBack"),
 	(_("End long"), "end_long", ""),
@@ -128,8 +128,8 @@ def getHotkeys():
 	(_("Prov/Fav long"), "ab_long", ""),
 	(_("Eject"), "ejectcd", "Infobar/vmodeSelection"),
 	(_("Eject long"), "ejectcd_long", ""),
-	(_("Power (use button menu)"), "powerstandby", ""),
-	(_("Power long (use button menu)"), "powerstandby_long", ""),
+#	(_("Power (use button menu settings)"), "powerstandby", ""),
+#	(_("Power long (use button menu settings)"), "powerstandby_long", ""),
 	(_("Previous"), "previous", "Infobar/historyZapBackward"),
 	(_("Previous long"), "previous_long", ""),
 	(_("Radio"), "radio", "Infobar/showRadio"),
@@ -173,6 +173,12 @@ def getHotkeys():
 	(_("MOUSE long"), "mouse_long", ""),
 	(_("VOD"), "vod", "Infobar/seekFwdVod"),
 	(_("VOD long"), "vod_long", ""),
+	(_("Kodi"), "kodi", "Plugins/Extensions/EnhancedMovieCenter/1"),
+	(_("Kodi long"), "kodi_long", "Infobar/showMovies"),
+	(_("YouTube"), "youtube", ""),
+	(_("YouTube long"), "youtube_long", ""),
+	(_("Netflix"), "netflix", "Plugins/Extensions/EnhancedMovieCenter/1"),
+	(_("Netflix long"), "netflix_long", "Infobar/showMovies"),
 	(_("Zoom"), "ZoomInOut", "InfobarGenerics/ZoomInOut"), ]
 
 
@@ -259,6 +265,7 @@ def getHotkeyFunctions():
 		hotkeyFunctions.append((_("Swap Picture In Picture"), "Infobar/swapPiP", "InfoBar"))
 		hotkeyFunctions.append((_("Move Picture In Picture"), "Infobar/movePiP", "InfoBar"))
 		hotkeyFunctions.append((_("Toggle Picture In Picture Zap"), "Infobar/togglePipzap", "InfoBar"))
+		hotkeyFunctions.append((_("Cycle Picture In Picture"), "Infobar/activePiP", "InfoBar"))
 	hotkeyFunctions.append((_("Activate HbbTV (Redbutton)"), "Infobar/activateRedButton", "InfoBar"))
 	if getHaveHDMIinHD() in ('True') or getHaveHDMIinFHD() in ('True'):
 		hotkeyFunctions.append((_("Toggle HDMI-In Full Screen"), "Infobar/HDMIInFull", "InfoBar"))

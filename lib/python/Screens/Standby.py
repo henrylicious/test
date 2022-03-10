@@ -164,6 +164,12 @@ class Standby2(Screen):
 		print("[Standby] enter standby")
 		SystemInfo["StandbyState"] = True
 
+		if os.path.exists("/usr/scripts/enterstandby.sh") is True:
+			os.system("chmod 755 /usr/scripts/enterstandby.sh")
+			os.system("/usr/scripts/enterstandby.sh")
+		else:
+			print "/usr/scripts/enterstandby.sh not found"
+
 		self["actions"] = ActionMap(["StandbyActions"],
 		{
 			"power": self.Power,
@@ -419,6 +425,8 @@ class TryQuitMainloop(MessageBox):
 				# set LCDminiTV off / fix a deep-standby-crash on some boxes / gb4k
 				print("[Standby] LCDminiTV off")
 				setLCDModeMinitTV("0")
+			if getBoxType() in ('pulse4k'):
+				open("/proc/stb/lcd/oled_brightness", "w").write("0")
 			quitMainloop(self.retval)
 		else:
 			MessageBox.close(self, True)

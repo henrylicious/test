@@ -4,8 +4,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tuxbox-enigma 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-16 22:56+0200\n"
-"PO-Revision-Date: 2021-04-16 23:58+0200\n"
+"POT-Creation-Date: 2021-10-14 22:48+0200\n"
+"PO-Revision-Date: 2022-03-04 06:33+0100\n"
 "Last-Translator: Koivo <koivo@hdfreaks.cc>\n"
 "Language-Team: openHDF\n"
 "Language: de\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
 msgid ""
@@ -464,9 +464,9 @@ msgstr "%d kB"
 msgid "%d min"
 msgstr "%d Mins"
 
-#, fuzzy, python-format
+#, python-format
 msgid "%d minute"
-msgid_plural "%d minuts"
+msgid_plural "%d minutes"
 msgstr[0] "%d Minute"
 msgstr[1] "%d Minuten"
 
@@ -552,9 +552,9 @@ msgstr "%s %s Fernbedienung (native)"
 msgid "%s %s software because updates are available."
 msgstr "%s %s Software, da Aktualisierungen verfügbar sind."
 
-#, fuzzy, python-format
+#, python-format
 msgid "%s ( %s Cards )"
-msgstr "%s (%s)\n"
+msgstr "%s (%s Karten)"
 
 #, python-format
 msgid "%s (%s)\n"
@@ -564,9 +564,9 @@ msgstr "%s (%s)\n"
 msgid "%s - Setup"
 msgstr "Benutzereinstellungen"
 
-#, fuzzy, python-format
+#, python-format
 msgid "%s Setup"
-msgstr "Einstellungen"
+msgstr "%s Einstellungen"
 
 #, fuzzy, python-format
 msgid "%s additional screens"
@@ -577,9 +577,9 @@ msgstr "Durchsuche weitere SR"
 msgid "%s is no longer used. Should it be deleted?"
 msgstr "%s wird nicht mehr benötigt. Soll es gelöscht werden?"
 
-#, fuzzy, python-format
+#, python-format
 msgid "%s not available."
-msgstr "nichts ausgewählt"
+msgstr "%s nichts verfügbar."
 
 #, python-format
 msgid "%s release %s"
@@ -755,9 +755,8 @@ msgstr ""
 msgid "1.7s"
 msgstr ""
 
-#, fuzzy
 msgid "10%"
-msgstr "1.0"
+msgstr "10%"
 
 msgid "1024 MB"
 msgstr ""
@@ -795,13 +794,11 @@ msgstr ""
 msgid "1080p50: 24p/50p/60p"
 msgstr ""
 
-#, fuzzy
 msgid "10bit"
-msgstr "Erlaube 10bit"
+msgstr "10bit"
 
-#, fuzzy
 msgid "128"
-msgstr "1.2"
+msgstr "128"
 
 msgid "128 MB"
 msgstr ""
@@ -812,9 +809,8 @@ msgstr "12V-Ausgang"
 msgid "12V output."
 msgstr "12V-Ausgang."
 
-#, fuzzy
 msgid "12bit"
-msgstr "Erlaube 12bit"
+msgstr "12bit"
 
 msgid "12bit 4:2:0/4:2:2 no PIP"
 msgstr "12bit 4:2:0/4:2:2 ohne PIP"
@@ -822,9 +818,8 @@ msgstr "12bit 4:2:0/4:2:2 ohne PIP"
 msgid "13 V"
 msgstr "13 V"
 
-#, fuzzy
 msgid "16"
-msgstr "16:9"
+msgstr "16"
 
 msgid "16 MB"
 msgstr ""
@@ -847,7 +842,6 @@ msgstr "16:9 Letterbox"
 msgid "16:9 always"
 msgstr "immer 16:9"
 
-#, fuzzy
 msgid "16_10_letterbox"
 msgstr "16:10 Letterbox"
 
@@ -868,9 +862,8 @@ msgstr "16:9 Letterbox"
 msgid "18 V"
 msgstr "18 V"
 
-#, fuzzy
 msgid "1:1"
-msgstr "16:10"
+msgstr "1:1"
 
 msgid "1X"
 msgstr "1X"
@@ -932,9 +925,8 @@ msgstr ""
 msgid "25"
 msgstr "25"
 
-#, fuzzy
 msgid "256"
-msgstr "25"
+msgstr ""
 
 msgid "256 MB"
 msgstr ""
@@ -991,9 +983,8 @@ msgstr ""
 msgid "30"
 msgstr "30"
 
-#, fuzzy
 msgid "30 minutes"
-msgstr "Minuten"
+msgstr "30 Minuten"
 
 #, fuzzy
 msgid "30%"
@@ -1239,6 +1230,13 @@ msgstr ""
 "%s %s nach dem Aufnahme oder Powertimer Ereignis ab.\n"
 "Jetzt in den Standby gehen?"
 
+msgid ""
+"PowerOff while Recording in progress!\n"
+"Entering standby, after recording the box will shutdown."
+msgstr ""
+"Ausschalten, während eine Aufnahme läuft!\n"
+"Die Box geht jetzt in Standby und wird nach der Aufnahme ausgeschaltet."
+
 msgid "A background update check is in progress, please wait a few minutes and try again."
 msgstr "Eine Updateprüfung läuft im Hintergrund. Bitte ein paar Minuten warten und erneut versuchen."
 
@@ -1427,9 +1425,8 @@ msgstr "AAC+-Downmix"
 msgid "AAC transcoding"
 msgstr "AAC-Transcoding"
 
-#, fuzzy
 msgid "AC3"
-msgstr "DAC"
+msgstr "AC3"
 
 msgid "AC3 downmix"
 msgstr "AC3-Downmix"
@@ -1463,9 +1460,8 @@ msgstr "AV Aspect ist %s."
 msgid "Abort"
 msgstr "Abbrechen"
 
-#, fuzzy
 msgid "Aborted a pseudo recording.\n"
-msgstr "echte/Pseudo-Aufnahmen"
+msgstr "Pseudo Aufnahme abgebrochen.\n"
 
 msgid "Aborted a streaming service.\n"
 msgstr ""
@@ -1494,9 +1490,8 @@ msgstr "Aktiviere"
 msgid "Activate HbbTV (Redbutton)"
 msgstr "Startet HbbTV (RedButton)"
 
-#, fuzzy
 msgid "Activate MAC-address configuration"
-msgstr "Aktiviere aktuelle Konfiguration"
+msgstr "Aktiviere MAC-Adressen Konfiguration"
 
 msgid "Activate Picture in Picture"
 msgstr "Aktiviere Bild in Bild"
@@ -1682,11 +1677,8 @@ msgstr "Nach der Aufnahme"
 msgid "After event"
 msgstr "Nach der Sendung"
 
-#, fuzzy
 msgid "After pressing OK, please wait!"
-msgstr ""
-"\n"
-"Nachdem OK gedrückt wurde, bitte warten!"
+msgstr "Nachdem OK gedrückt wurde, bitte warten!"
 
 msgid "Aland Islands"
 msgstr ""
@@ -1712,9 +1704,8 @@ msgstr "Ausrichtung der Sendernamen"
 msgid "All"
 msgstr "Alle"
 
-#, fuzzy
 msgid "All Services"
-msgstr "Sender"
+msgstr "Alle Dienste"
 
 msgid "All ages"
 msgstr "Alle Alter"
@@ -1722,25 +1713,20 @@ msgstr "Alle Alter"
 msgid "All resolutions"
 msgstr "Alle Auflösungen"
 
-#, fuzzy
 msgid "All satellites 1 (USALS)"
-msgstr "Alle Satelliten"
+msgstr "Alle Satelliten 1 (USALS)"
 
-#, fuzzy
 msgid "All satellites 2 (USALS)"
-msgstr "Alle Satelliten"
+msgstr "Alle Satelliten 2 (USALS)"
 
-#, fuzzy
 msgid "All satellites 3 (USALS)"
-msgstr "Alle Satelliten"
+msgstr "Alle Satelliten 3 (USALS)"
 
-#, fuzzy
 msgid "All satellites 4 (USALS)"
-msgstr "Alle Satelliten"
+msgstr "Alle Satelliten 4 (USALS)"
 
-#, fuzzy
 msgid "All services provider"
-msgstr "Zugewiesene Sender/Anbieter:"
+msgstr "Alle Serviceanbieter"
 
 msgid "Allocate"
 msgstr "Reservieren"
@@ -1820,9 +1806,8 @@ msgstr "Fast fertig... "
 msgid "Alpha"
 msgstr "Buchstabe"
 
-#, fuzzy
 msgid "Alpha Value"
-msgstr "Buchstabe"
+msgstr "Alpha Wert"
 
 msgid "Alphanumeric"
 msgstr "Alphanumerisch"
@@ -1879,9 +1864,8 @@ msgstr "Es ist ein unbekannter Fehler aufgetreten!"
 msgid "Andorra"
 msgstr ""
 
-#, fuzzy
 msgid "Angle"
-msgstr "Einzeln"
+msgstr "Winkel"
 
 msgid "Angle long"
 msgstr "Angel lang"
@@ -1892,9 +1876,8 @@ msgstr ""
 msgid "Anguilla"
 msgstr ""
 
-#, fuzzy
 msgid "Animation Setup"
-msgstr "Animations Geschwindigkeit"
+msgstr "Animations Einstellungen"
 
 msgid "Animation Speed"
 msgstr "Animations Geschwindigkeit"
@@ -1939,9 +1922,8 @@ msgstr "Sind Sie sicher, dass alle Kabel-Dienste entfernt werden sollen?"
 msgid "Are you sure to remove all terrestrial services?"
 msgstr "Sind Sie sicher, dass alle Terrestrischen Dienste entfernt werden sollen?"
 
-#, fuzzy
 msgid "Are you sure to remove this entry?"
-msgstr "Sind Sie sicher, dass alle Kabel-Dienste entfernt werden sollen?"
+msgstr "Sind Sie sicher, dass Sie diesen Eintrag entfernen wollen?"
 
 msgid "Are you sure to restore all deleted userbouquets?"
 msgstr "Sollen die gelöschten Userbouquets wiederhergestellt werden?"
@@ -2077,9 +2059,8 @@ msgstr "Am Ende:"
 msgid "Attach a file"
 msgstr "Eine Datei anhängen"
 
-#, fuzzy
 msgid "Audio"
-msgstr "Audio PID"
+msgstr "Audio"
 
 msgid "Audio Auto Volume Level"
 msgstr "Automatische Tonanpassung für"
@@ -2087,9 +2068,8 @@ msgstr "Automatische Tonanpassung für"
 msgid "Audio PID"
 msgstr "Audio PID"
 
-#, fuzzy
 msgid "Audio Source"
-msgstr "Audio lang"
+msgstr "Audio Quelle"
 
 msgid "Audio language selection 1"
 msgstr "Audio Sprachwahl 1"
@@ -2123,13 +2103,11 @@ msgstr ""
 msgid "August"
 msgstr ""
 
-#, fuzzy
 msgid "Australia"
-msgstr "Italienisch"
+msgstr "Australien"
 
-#, fuzzy
 msgid "Austria"
-msgstr "Reiter"
+msgstr "Österreich"
 
 msgid "Author: "
 msgstr "Autor: "
@@ -2149,9 +2127,8 @@ msgstr "Automodus ausgewählt."
 msgid "Auto Standby"
 msgstr "Automatisch Bereitschaft"
 
-#, fuzzy
 msgid "Auto Volume Level"
-msgstr "Automatische Tonanpassung für"
+msgstr "Automatische Lautstärke"
 
 msgid "Auto chapter split every ? minutes (0=never)"
 msgstr "Automatische Kapitelwechsel alle ? Minuten (0=nie)"
@@ -2273,13 +2250,11 @@ msgstr ""
 msgid "Back"
 msgstr "Zurück"
 
-#, fuzzy
 msgid "Back "
-msgstr "Zurück"
+msgstr "Zurück "
 
-#, fuzzy
 msgid "Back USB"
-msgstr "Zurück"
+msgstr "Rückseiten USB"
 
 msgid "Back USB 3.0"
 msgstr ""
@@ -2317,13 +2292,12 @@ msgstr "Löschen im Hintergrund"
 msgid "Background delete speed"
 msgstr "Löschen im Hintergrund Geschwindigkeit"
 
-#, fuzzy
 msgid "Backup"
-msgstr "Zurück"
+msgstr "Sicherung"
 
-#, fuzzy, python-format
+#, python-format
 msgid "Backup Date: %s\n"
-msgstr "Letztes Update: %s"
+msgstr "Sicherungsdatum: %s\n"
 
 #, fuzzy
 msgid "Backup Location"
@@ -2332,13 +2306,11 @@ msgstr "Auswahl das Sicherungsverzeichnis"
 msgid "Backup Manager"
 msgstr "Backup Verwaltung"
 
-#, fuzzy
 msgid "Backup Mode"
-msgstr "Backup Verwaltung"
+msgstr "Backup Modus"
 
-#, fuzzy
 msgid "Backup Settings..."
-msgstr "Generelle Einstellungen"
+msgstr "Backupeinstellungen…"
 
 msgid "Backup Tool for"
 msgstr "Backup Tool für"
@@ -2362,9 +2334,8 @@ msgstr ""
 "Gesicherte Plugins gefunden!\n"
 "Sollen die Plugins nun installiert werden?"
 
-#, fuzzy
 msgid "Backup settings"
-msgstr "Grundeinstellungen"
+msgstr "Backupeinstellungen"
 
 msgid "Backup system settings"
 msgstr "Einstellungen sichern"
@@ -2375,9 +2346,8 @@ msgstr "Soll jetzt ein komplettes Backup vom Image erstellt werden?"
 msgid "Backup your settings now?"
 msgstr "Sollen jetzt die Einstellungen gesichert werden?"
 
-#, fuzzy
 msgid "Backward <"
-msgstr "Springe Rückwärts"
+msgstr "Rückwärts <"
 
 msgid "Bahamas"
 msgstr ""
@@ -2457,16 +2427,14 @@ msgstr ""
 msgid "Bhutan"
 msgstr ""
 
-#, fuzzy
 msgid "Big PiP"
-msgstr "Großes Logo"
+msgstr "Großes PIP"
 
 msgid "Bildbetrachter"
 msgstr ""
 
-#, fuzzy
 msgid "Bitrate"
-msgstr "Bitrate:"
+msgstr "Bitrate"
 
 msgid "Bitrate:"
 msgstr "Bitrate:"
@@ -2533,9 +2501,8 @@ msgstr "Favoritenliste"
 msgid "Bouvet Island"
 msgstr ""
 
-#, fuzzy
 msgid "Box or driver is not support Quad PiP."
-msgstr "Ihre %s %s unterstützt kein Bild im Bild HD"
+msgstr "Receiver oder Treiber unterstützt kein Quad PIP."
 
 msgid "Brazil"
 msgstr ""
@@ -2565,9 +2532,8 @@ msgstr "Puffer:"
 msgid "Build: %s"
 msgstr "%s"
 
-#, fuzzy
 msgid "Bulgaria"
-msgstr "Bulgarisch"
+msgstr "Bulgarien"
 
 msgid "Bulgarian"
 msgstr "Bulgarisch"
@@ -2601,9 +2567,8 @@ msgstr "Es ist aber die Option \"Installiere unstabile Updates\" aktiviert"
 msgid "Button"
 msgstr "Taste"
 
-#, fuzzy
 msgid "Button : "
-msgstr "Taste"
+msgstr "Taste: "
 
 msgid "Button setup"
 msgstr "Tasten Einstellungen"
@@ -2956,9 +2921,8 @@ msgstr "DVB Untertitel zentrieren"
 msgid "Center time-labels and remove date"
 msgstr "Zentriere Zeit und entferne Datum"
 
-#, fuzzy
 msgid "Center:"
-msgstr "zentriert"
+msgstr "Zentriert:"
 
 msgid "Central African Republic"
 msgstr ""
@@ -3379,6 +3343,9 @@ msgstr "Dialog schließen"
 msgid "Close title selection"
 msgstr "Titelauswahl schließen"
 
+msgid "Cloudflare"
+msgstr ""
+
 msgid "Cocos (Keeling) Islands"
 msgstr ""
 
@@ -3517,6 +3484,12 @@ msgstr "Konfiguriert ob das EPG immer gespeichert werden soll."
 
 msgid "Configure if service picons will be shown in the servicelist."
 msgstr "Konfigurieren ob und wie Picons in der Senderliste gezeigt werden."
+
+msgid "Keep focus on current service while entering servicelist."
+msgstr "Halte den Fokus auf den aktuell gespielten Sender in der Senderliste."
+
+msgid "Configure to keep focus on the current played service while entering the servicelist via the bouquet buttons."
+msgstr "Halte den Fokus auf den aktuell gespielten Sender, während die Senderliste über die Bouquet-Tasten aufgerufen wird."
 
 msgid "Configure interface"
 msgstr "Netzwerkkarte konfigurieren"
@@ -4156,6 +4129,9 @@ msgstr "DAC"
 msgid "DHCP"
 msgstr "DHCP"
 
+msgid "DHCP Router"
+msgstr "DNS über DHCP vom Router"
+
 msgid "DLNA support"
 msgstr "DLNA-Unterstützung"
 
@@ -4541,6 +4517,21 @@ msgstr "Verzeichnis Browser"
 msgid "Directory long"
 msgstr "Directory lang"
 
+msgid "MOUSE long"
+msgstr "MOUSE lang"
+
+msgid "VOD long"
+msgstr "VOD lang"
+
+msgid "Kodi long"
+msgstr "Kodi lang"
+
+msgid "YouTube long"
+msgstr "YouTube lang"
+
+msgid "Netflix long"
+msgstr "Netflix lang"
+
 msgid "Disable"
 msgstr "Aus"
 
@@ -4915,8 +4906,11 @@ msgstr "%s vom Server herunterladen"
 msgid "Download .NFI-files for USB-flasher"
 msgstr ".NFI-Files für USB-Flasher runterladen"
 
-msgid "Download plugins"
-msgstr "Plugins installieren"
+msgid "Download Plugins"
+msgstr "Installieren"
+
+msgid "Lock Plugins"
+msgstr "Sperren"
 
 msgid "Downloadable plugins"
 msgstr "Plugins herunterladen"
@@ -5266,6 +5260,9 @@ msgstr "Aktiviere Infobar Ausblendung"
 
 msgid "Enable installation of HDF default picons"
 msgstr "Aktiviere Installation der HDF Default Picons"
+
+msgid "Enable installation of ServiceApp to support 5001 and 5002 streams"
+msgstr "Aktiviere die ServiceApp für 5001 und 5002 Streams"
 
 msgid "Enable intro screen"
 msgstr "Begrüßungsbildschirm aktivieren"
@@ -6344,6 +6341,9 @@ msgid "Go up the list"
 msgstr "In der Liste rauf gehen"
 
 msgid "Gold"
+msgstr ""
+
+msgid "Google DNS"
 msgstr ""
 
 msgid "Goto"
@@ -7981,10 +7981,6 @@ msgstr ""
 msgid "MOUSE"
 msgstr ""
 
-#, fuzzy
-msgid "MOUSE long"
-msgstr "OK lang"
-
 msgid "MQB Functions and Plugins"
 msgstr ""
 
@@ -8605,6 +8601,9 @@ msgstr "DNS"
 #, python-format
 msgid "Nameserver %d"
 msgstr "DNS %d"
+
+msgid "Nameserver configuration"
+msgstr "Nameserver Dienst"
 
 msgid "Nameserver settings"
 msgstr "DNS Einstellungen"
@@ -9292,6 +9291,13 @@ msgstr "Open/Media lang"
 
 msgid "Open/Media long"
 msgstr "Open/Media lang"
+
+msgid "OpenDNS FamilyShield"
+msgstr ""
+
+#, fuzzy
+msgid "OpenDNS Home"
+msgstr "Öffnet den AutoTimer"
 
 #, fuzzy
 msgid "OpenHDF"
@@ -10229,8 +10235,11 @@ msgstr "Rotoreinstellungen"
 msgid "Power"
 msgstr "Einschalt / Ausschalt Timer"
 
-msgid "Power (use button menu)"
-msgstr "Power (Tasten Einstellungen)"
+msgid "Power (use button menu settings)"
+msgstr "Power (in den Tasten Einstellungen ändern)"
+
+msgid "Power long (use button menu settings)"
+msgstr "Power lang (in den Tasten Einstellungen ändern)"
 
 msgid "Power LED State in Deep-Standby"
 msgstr "Power LED Anzeige im Deep-Standby"
@@ -10249,9 +10258,6 @@ msgstr "Hier können Sie einstellen, ob die Power-LED im Deep-Standby an oder au
 
 msgid "Power LED state during standby."
 msgstr "Power LED Anzeige im Standby."
-
-msgid "Power long (use button menu)"
-msgstr "Power lang (Tasten Einstellungen)"
 
 msgid "Power management. Consult your receiver's manual for more information."
 msgstr ""
@@ -10981,8 +10987,8 @@ msgstr "Löschen beendet."
 msgid "Remove items from trash can after (days)"
 msgstr "Lösche Mülleimer nach (Tagen)"
 
-msgid "Remove plugins"
-msgstr "Plugins löschen"
+msgid "Remove Plugins"
+msgstr "Löschen"
 
 msgid "Remove texts for the hearing impaired from external subtitles (instrumental music or environmental sounds, e.g., when a doorbell rings or a gun shot is heard)."
 msgstr "Entfernt Texte für Hörgeschädigte aus externen Untertiteln (z.B. Beschreibungen von Geräuschen)."
@@ -11047,6 +11053,12 @@ msgstr "Wiederholungen"
 
 msgid "Require authentication for http streams"
 msgstr "Authentifizierung für HTTP Streams"
+
+msgid "Http(s) stream start delay"
+msgstr "Http(s) Verzögerung beim Streamstart"
+
+msgid "Define additional delay in milliseconds before start of http(s) streams."
+msgstr "Definieren Sie eine zusätzliche Verzögerung in Millisekunden vor dem Start von http(s) Streams."
 
 msgid "Required medium type:"
 msgstr "Benötigte Rohlingsorte:"
@@ -12874,6 +12886,12 @@ msgstr "Zeige Hintergrundfarbe von Picon"
 msgid "Show picons in service list"
 msgstr "Zeige Picon in der Senderliste"
 
+msgid "Show picons in quickzap"
+msgstr "Senderlogos (Picons) falls vorhanden beim Quickzap anzeigen"
+
+msgid "Configure if service picons will be shown in quickzap."
+msgstr "Bei 'Ja' werden Senderlogos (Picons) falls vorhanden beim Quickzap (Umschalten) angezeigt."
+
 msgid "Show picons packages"
 msgstr "Zeige Senderlogo Pakete an"
 
@@ -12887,7 +12905,7 @@ msgid "Show pressed buttons in GUI"
 msgstr "Zeige gedrückte Tasten auf der Benutzeroberfläche"
 
 msgid "Show pressed buttons in telnet debug mode"
-msgstr "Zeige gedrückte Tasten im Telnet Debug Modus"
+msgstr "Zeige gedrückte Tasten im Telnet Debug Modus und im Skin"
 
 msgid "Show preview of current mode (*)."
 msgstr "Zeige Vorschau des aktuellen Modus (*)."
@@ -13515,6 +13533,9 @@ msgstr ""
 
 msgid "Starting on"
 msgstr "Beginnend ab"
+
+msgid "Static IP or Custom"
+msgstr "Statische IP oder frei definiert"
 
 msgid "Status"
 msgstr "Aktiviere die Stream Puffer Status Anzeige"
@@ -14756,6 +14777,9 @@ msgstr "Diese Option erlaubt es den Videoausgang oder die Bildauflösung einzust
 msgid "This option configures you can set Auto Volume Level."
 msgstr "Diese Option erlaubt es 3D Surround Sound zu aktivieren."
 
+msgid "This option install newest ServiceApp from feed and remove ServiceHisilicon, if its installed. The installation of ServiceApp needs a reboot!"
+msgstr "Diese Option installiert die aktuelle ServiceApp vom Feed und entfernt die ServiceHisilicon, wenn installiert. Die Installation der ServiceApp braucht einen Neustart!"
+
 msgid "This option install the plugin ClearMem-Lite. After restart Enigma2, you can activate this plugin under extensions. Set the option 'Auto timeout' to 10 seconds and try to play your recordings again. This plugin is needed for Gigablue Quad+ STB."
 msgstr "Diese Option installiert das Plugin ClearMem-Lite. Nach einem Enigma2 Neustart kann es unter Erweiterungen aktiviert werden. Im Plugin die Option 'Auto timeout' auf 10 Sekunden stellen und die Wiedergabe der Aufnahmen testen. Dieses Plugin wird für die Gigablue Quad+ benötigt."
 
@@ -15165,6 +15189,9 @@ msgstr "Bild in Grafik umschalten"
 
 msgid "Toggle Picture In Picture Zap"
 msgstr "Bild in Bild Umschaltung wechseln"
+
+msgid "Cycle Picture In Picture"
+msgstr "Bild in Bild Modus wechseln"
 
 msgid "Toggle a cut mark at the current position"
 msgstr "Schnittmarke an der aktuellen Position ändern"
@@ -15774,9 +15801,6 @@ msgstr "Benutze MHW EPG-Informationen, wenn sie vorhanden sind."
 msgid "Use MP (mediaportal) files over Ethernet"
 msgstr ""
 
-msgid "Use Manual dns-nameserver"
-msgstr "DNS-Server manuell einstellen"
-
 msgid "Use Netmed EPG information when it is available."
 msgstr "Benutze NetMed EPG-Informationen, wenn sie vorhanden sind."
 
@@ -16025,10 +16049,6 @@ msgstr "VMGM (Intro-Trailer)"
 
 msgid "VOD"
 msgstr ""
-
-#, fuzzy
-msgid "VOD long"
-msgstr "OK lang"
 
 msgid "VPN"
 msgstr ""
@@ -17499,13 +17519,10 @@ msgstr ""
 msgid "any recordings"
 msgstr "alle Aufnahmen"
 
-#, fuzzy
 msgid ""
 "are you sure you want to restore\n"
 "following backup:\n"
-msgstr ""
-"Sicher das folgendes gelöscht werden soll?\n"
-"Backup(s):\n"
+msgstr "Wollen Sie folgendes Backup wiederherstellen?\n"
 
 msgid "arts/culture (without music, general)"
 msgstr "Kunst/Kultur (ohne Musik, allgemein)"

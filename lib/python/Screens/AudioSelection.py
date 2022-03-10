@@ -40,6 +40,8 @@ class AudioSelection(Screen, ConfigListScreen):
 		self.protectContextMenu = True
 		ConfigListScreen.__init__(self, [])
 		self.infobar = infobar or self.session.infobar
+		if not hasattr(self.infobar, "selected_subtitle"):
+			self.infobar.selected_subtitle = None
 
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap={
 				iPlayableService.evUpdatedInfo: self.__updatedInfo
@@ -427,7 +429,7 @@ class AudioSelection(Screen, ConfigListScreen):
 		config.av.downmix_dts.save()
 
 	def setAACTranscode(self, transcode):
-		config.av.transcodeaac.setValue(transcode)
+		config.av.transcodeaac.setValue(transcode.value)
 		config.av.transcodeaac.save()
 
 	def changeMode(self, mode):

@@ -20,7 +20,7 @@ from Tools.BoundFunction import boundFunction
 from boxbranding import getBrandOEM, getBoxType
 import time
 
-if getBoxType() in ('zgemmah9combo'):
+if getBoxType() in ('zgemmah9combo', 'pulse4kmini'):
 	MAX_NUM_CI = 1
 else:
 	MAX_NUM_CI = 4
@@ -233,10 +233,10 @@ class MMIDialog(Screen):
 			pinlength = entry[1]
 			if entry[3] == 1:
 				# masked pins:
-				x = ConfigPIN(0, len=pinlength, censor="*")
+				x = ConfigPIN(0, pinlength=pinlength, censor="*")
 			else:
 				# unmasked pins:
-				x = ConfigPIN(0, len=pinlength)
+				x = ConfigPIN(0, pinlength=pinlength)
 			self["subtitle"].setText(entry[2])
 			_list.append(getConfigListEntry("", x))
 			self["bottom"].setText(_("please press OK when ready"))

@@ -13,6 +13,7 @@
 #include <dvbsi++/simple_application_location_descriptor.h>
 #include <dvbsi++/simple_application_boundary_descriptor.h>
 #include <dvbsi++/transport_protocol_descriptor.h>
+#include <dvbsi++/ancillary_data_descriptor.h>
 
 eDVBPMTParser::eDVBPMTParser()
 {
@@ -119,6 +120,12 @@ int eDVBPMTParser::getProgramInfo(program &program)
 					if (!isvideo)
 					{
 						video.type = videoStream::vtCAVS;
+						isvideo = 1;
+					}
+				case 0xD2: // AVS2
+					if (!isvideo)
+					{
+						video.type = videoStream::vtAVS2;
 						isvideo = 1;
 					}
 				case 0x10: // MPEG 4 Part 2
@@ -445,6 +452,23 @@ int eDVBPMTParser::getProgramInfo(program &program)
 							program.dsmccPid = (*es)->getPid();
 							break;
 						case STREAM_IDENTIFIER_DESCRIPTOR:
+							break;
+						}
+					}
+					break;
+				}
+				case 0x89: /* User private */
+				{
+					for (DescriptorConstIterator desc = (*es)->getDescriptors()->begin();
+						desc != (*es)->getDescriptors()->end(); ++desc)
+					{
+						switch ((*desc)->getTag())
+						{
+						case ANCILLARY_DATA_DESCRIPTOR:
+							AncillaryDataDescriptor* d = (AncillaryDataDescriptor*)(*desc);
+							if ((d->getAncillaryDataIdentifier() == 0x40) && prev_audio) /* RDS via UECP */
+								prev_audio->rdsPid = (*es)->getPid();
+							prev_audio = 0;
 							break;
 						}
 					}

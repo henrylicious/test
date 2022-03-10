@@ -106,6 +106,19 @@ def resolveFilename(scope, base="", path_prefix=None):
 		base = data[0]
 		suffix = data[1]
 	path = base
+
+	def itemExists(resolveList, base):
+		baseList = [base]
+		if base.endswith(".png"):
+			baseList.append("%s%s" % (base[:-3], "svg"))
+		elif base.endswith(".svg"):
+			baseList.append("%s%s" % (base[:-3], "png"))
+		for item in resolveList:
+			for base in baseList:
+				file = pathjoin(item, base)
+				if pathExists(file):
+					return file
+
 	# If base is "" then set path to the scope.  Otherwise use the scope to resolve the base filename.
 	if base == "":
 		path, flags = defaultPaths.get(scope)
@@ -316,6 +329,15 @@ def fileHas(f, content, mode="r"):
 			result = True
 	return result
 
+def fileContains(file, content, mode="r"):
+	result = False
+	if fileExists(file, mode):
+		fd = open(file, mode)
+		text = fd.read()
+		fd.close()
+		if content in text:
+			result = True
+	return result
 
 def getRecordingFilename(basename, dirname=None):
 	# Filter out non-allowed characters.
@@ -520,6 +542,15 @@ def mediafilesInUse(session):
 		else:
 			filename = os.path.basename(filename)
 	return set([_file for _file in files if not(filename and _file == filename and files.count(filename) < 2)])
+
+def isPluginInstalled(pluginName, pluginFile="plugin", pluginType=None):
+	for type in [x for x in listdir(scopePlugins) if x != "__pychache__" and isdir(pathjoin(scopePlugins, x))]:
+		for extension in ["", "c"]:
+			if isfile(pathjoin(scopePlugins, type, pluginName, "%s.py%s" % (pluginFile, extension))):
+				if pluginType and type != pluginType:
+					continue
+				return True
+	return False
 
 # Prepare filenames for use in external shell processing. Filenames may
 # contain spaces or other special characters.  This method adjusts the

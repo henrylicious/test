@@ -6,8 +6,8 @@ from time import time
 from enigma import eDVBDB, eEPGCache, setTunerTypePriorityOrder, setPreferredTuner, setSpinnerOnOff, setEnableTtCachingOnOff, eEnv, Misc_Options, eBackgroundFileEraser, eServiceEvent, eDVBFrontend, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER, RT_VALIGN_CENTER, RT_WRAP
 from Components.About import about
 from Components.Harddisk import harddiskmanager
-from Components.config import ConfigSubsection, ConfigYesNo, config, ConfigSelection, ConfigText, ConfigNumber, ConfigSet, ConfigLocations, NoSave, ConfigClock, ConfigInteger, ConfigBoolean, ConfigPassword, ConfigIP, ConfigSlider, ConfigSelectionNumber
-from Tools.Directories import resolveFilename, SCOPE_HDD, SCOPE_TIMESHIFT, SCOPE_AUTORECORD, SCOPE_SYSETC, defaultRecordingLocation, fileExists, fileCheck
+from config import ConfigSubsection, ConfigYesNo, config, ConfigSelection, ConfigText, ConfigNumber, ConfigSet, ConfigLocations, NoSave, ConfigClock, ConfigInteger, ConfigBoolean, ConfigPassword, ConfigIP, ConfigSlider, ConfigSelectionNumber
+from Tools.Directories import resolveFilename, SCOPE_HDD, SCOPE_TIMESHIFT, SCOPE_AUTORECORD, SCOPE_SYSETC, defaultRecordingLocation, fileExists, fileCheck, fileContains
 from boxbranding import getBoxType, getMachineBuild, getMachineName, getBrandOEM, getDisplayType
 from Components.NimManager import nimmanager
 from Components.ServiceList import refreshServiceList
@@ -61,6 +61,25 @@ def InitUsageConfig():
 	config.usage.numzaptimeoutmode = ConfigSelection(default="standard", choices=[("standard", _("Standard")), ("userdefined", _("User defined")), ("off", _("off"))])
 	config.usage.numzaptimeout1 = ConfigSelectionNumber(default=3000, stepwidth=250, min=250, max=10000, wraparound=True)
 	config.usage.numzaptimeout2 = ConfigSelectionNumber(default=1000, stepwidth=250, min=250, max=10000, wraparound=True)
+	config.usage.numzappicon = ConfigYesNo(default=True)
+	if fileContains("/etc/network/interfaces", "iface eth0 inet static") and not fileContains("/etc/network/interfaces", "iface wlan0 inet dhcp") or fileContains("/etc/network/interfaces", "iface wlan0 inet static") and fileContains("/run/ifstate", "wlan0=wlan0"):
+		config.usage.dns = ConfigSelection(default="custom", choices=[
+			("custom", _("Static IP or Custom")),
+			("google", _("Google DNS")),
+			("cloudflare", _("Cloudflare")),
+			("opendns-familyshield", _("OpenDNS FamilyShield")),
+			("opendns-home", _("OpenDNS Home"))
+		])
+	else:
+		config.usage.dns = ConfigSelection(default="dhcp-router", choices=[
+			("dhcp-router", _("DHCP Router")),
+			("custom", _("Static IP or Custom")),
+			("google", _("Google DNS")),
+			("cloudflare", _("Cloudflare")),
+			("opendns-familyshield", _("OpenDNS FamilyShield")),
+			("opendns-home", _("OpenDNS Home"))
+		])
+
 	config.usage.subnetwork = ConfigYesNo(default=True)
 	config.usage.subnetwork_cable = ConfigYesNo(default=True)
 	config.usage.subnetwork_terrestrial = ConfigYesNo(default=True)
@@ -113,7 +132,7 @@ def InitUsageConfig():
 	config.usage.use_extended_pig = ConfigYesNo(default=False)
 	config.usage.use_extended_pig_channelselection = ConfigYesNo(default=False)
 	config.usage.servicelist_preview_mode = ConfigYesNo(default=False)
-	config.usage.numberzap_show_picon = ConfigYesNo(default=False)
+	config.usage.numberzap_show_picon = ConfigYesNo(default=True)
 	config.usage.numberzap_show_servicename = ConfigYesNo(default=False)
 #####################################################
 
@@ -363,6 +382,13 @@ def InitUsageConfig():
 	config.usage.remote_fallback_enabled = ConfigYesNo(default=False)
 	config.usage.remote_fallback = ConfigText(default="http://192.168.123.123:8001", fixed_size=False)
 
+
+	choicelist = [("0", _("Disabled"))]
+	for i in (10, 50, 100, 500, 1000, 2000):
+		choicelist.append(("%d" % i, _("%d ms") % i))
+
+	config.usage.http_startdelay = ConfigSelection(default="0", choices=choicelist)
+
 	nims = [("-1", _("auto")), ("expert_mode", _("Expert mode")), ("experimental_mode", _("Experimental mode"))]
 	rec_nims = [("-2", _("Disabled")), ("-1", _("auto")), ("expert_mode", _("Expert mode")), ("experimental_mode", _("Experimental mode"))]
 	nims_multi = [("-1", _("auto"))]
@@ -580,6 +606,7 @@ def InitUsageConfig():
 	config.epg.opentv = ConfigYesNo(default=True)
 	config.epg.saveepg = ConfigYesNo(default=True)
 	config.usage.streamlinkserver = ConfigYesNo(default=False)
+	config.usage.serviceapp = ConfigYesNo(default=False)
 	config.usage.cleanmemlite = ConfigYesNo(default=False)
 	config.usage.hdfpicon = ConfigYesNo(default=True)
 
